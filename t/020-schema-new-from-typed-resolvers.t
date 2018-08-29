@@ -70,6 +70,12 @@ $pollock->{friends}->[0] = $de_kooning;
 
 my $transform = $schema->resolve( 'Person', $de_kooning, $query );
 
+is(
+    $transform,
+    $schema->resolve( 'Person', $de_kooning, $query ),
+    '... the cache is working'
+);
+
 # diag 'START:';
 # diag Dumper $de_kooning;
 # diag 'END:';
