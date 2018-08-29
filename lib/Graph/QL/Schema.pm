@@ -3,54 +3,93 @@ package Graph::QL::Schema;
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
+use decorators ':accessors';
+
+use Graph::QL::Field;
+use Graph::QL::Resolver;
 
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object';
 use slots (
-    typemap   => sub { die 'You must supply a `typemap`' },
-    resolvers => sub { die 'You must supply a set of `resolvers`' },
+    types => sub { die 'You must supply a set of `types`' },
 );
 
 sub new_from_typed_resolvers ($self, $typed_resolvers) {
 
-    my %typemap;
+    # inflate decorated code references to be resolver objects
+    my %types;
     foreach my $type ( keys $typed_resolvers->%* ) {
         my $resolver_fields = $typed_resolvers->{ $type };
-        $typemap{ $type } ||= {};
+        $types{ $type }    = {};
         foreach my $field_name ( keys $resolver_fields->%* ) {
-            $typemap{ $type }->{ $field_name } = (
-                MOP::Method->new(
-                    body => $resolver_fields->{ $field_name }
-                )->get_code_attributes('Type')
-            )[0]->args->[0];
+            my $meta = MOP::Method->new( body => $resolver_fields->{ $field_name } );
+            # TODO: die if there is no Type attribute ...
+            $types{ $type }->{ $field_name } = Graph::QL::Field->new(
+                type     => ($meta->get_code_attributes('Type'))[0]->args->[0],
+                resolver => Graph::QL::Resolver->new( body => $resolver_fields->{ $field_name } ),
+            );
         }
     }
 
-    return $self->new(
-        typemap   => \%typemap,
-        resolvers => $typed_resolvers,
-    );
+    return $self->new( types => \%types );
 }
 
+# accessors
+
+sub types : ro;
+
+sub has_type ($self, $name) { exists $self->{types}->{$name} }
+sub get_type ($self, $name) {        $self->{types}->{$name} }
+
+# ...
+
+my %cache;
 sub resolve ( $self, $root_type, $input ) {
 
+    #warn "Resolving $root_type with input: $input\n";
+    #warn "Looking for ${root_type}:${input} in cache [" . (join ', ' => keys %cache)  . "]\n";
+
+    return do {
+        #warn 'found something in the cache!!!!!!!!!!!!';
+        #use Data::Dumper;
+        #warn Dumper $cache{ $root_type.':'.$input };
+        $cache{ $root_type.':'.$input };
+    } if exists $cache{ $root_type.':'.$input };
+
+    my %errors;
     my %output;
-    foreach my $field ( keys $self->{typemap}->{ $root_type }->%* ) {
-        my $type     = $self->{typemap}->{ $root_type }->{ $field };
-        my $resolver = $self->{resolvers}->{ $root_type }->{ $field };
+
+    $cache{ $root_type.':'.$input } = \%output;
+
+    foreach my $field_name ( sort keys $self->{types}->{ $root_type }->%* ) {
+        my $field = $self->{types}->{ $root_type }->{ $field_name };
+
         # if we have a definition for this subtype, ...
-        if ( exists $self->{typemap}->{ $type } ) {
-            # then we call our resolver and then
-            # pass it only the subtype resolver
-            $output{ $field } = $self->resolve( $type, $resolver->( $input ) );
+        if ( exists $self->{types}->{ $field->type } ) {
+            if ( $field->is_array ) {
+                # then we call our resolver and then
+                # pass it only the subtype resolver
+                $output{ $field_name } = [ map $self->resolve( $field->type, $_ ), $field->resolver->body->( $input )->@* ];
+            }
+            else {
+                # then we call our resolver and then
+                # pass it only the subtype resolver
+                $output{ $field_name } = $self->resolve( $field->type, $field->resolver->body->( $input ) );
+            }
         }
         else {
             # if we do not know about this type
             # then we can just call the resolver
-            $output{ $field } = $resolver->( $input );
+            $output{ $field_name } = $field->resolver->body->( $input );
+        }
+
+        if ( $field->is_non_nullable ) {
+            $errors{ $root_type.'.'.$field_name }++ unless defined $output{ $field_name };
         }
     }
+
+    die 'Errors in the following fields: '.(join ', ' => keys %errors) if %errors;
 
     return \%output;
 }
