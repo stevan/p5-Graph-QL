@@ -45,24 +45,26 @@ sub get_type ($self, $name) {        $self->{types}->{$name} }
 # ...
 
 my %cache;
-sub resolve ( $self, $root_type, $input ) {
+sub resolve ( $self, $root_type, $input, $query ) {
 
     #warn "Resolving $root_type with input: $input\n";
-    #warn "Looking for ${root_type}:${input} in cache [" . (join ', ' => keys %cache)  . "]\n";
+    #warn "Looking for $cache_key in cache [" . (join ', ' => keys %cache)  . "]\n";
+
+    my $cache_key = $root_type.':'.$input.':'.$query;
 
     return do {
         #warn 'found something in the cache!!!!!!!!!!!!';
         #use Data::Dumper;
-        #warn Dumper $cache{ $root_type.':'.$input };
-        $cache{ $root_type.':'.$input };
-    } if exists $cache{ $root_type.':'.$input };
+        #warn Dumper $cache{ $cache_key };
+        $cache{ $cache_key };
+    } if exists $cache{ $cache_key };
 
     my %errors;
     my %output;
 
-    $cache{ $root_type.':'.$input } = \%output;
+    $cache{ $cache_key } = \%output;
 
-    foreach my $field_name ( sort keys $self->{types}->{ $root_type }->%* ) {
+    foreach my $field_name ( sort keys $query->%* ) {
         my $field = $self->{types}->{ $root_type }->{ $field_name };
 
         # TODO:
@@ -72,18 +74,21 @@ sub resolve ( $self, $root_type, $input ) {
         #   with the expectations of $field->is_non_nullable
         my $result = $field->resolver->body->( $input );
 
-        # if we have a definition for this subtype, ...
-        if ( exists $self->{types}->{ $field->type } ) {
+        #use Data::Dumper;
+        #warn Dumper [ $field_name, $query, $field, $result ];
+
+        # if we have a subquery and we have a definition for this subtype, ...
+        if ( ref $query->{ $field_name } eq 'HASH' && exists $self->{types}->{ $field->type } ) {
 
             if ( $field->is_array ) {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = [ map $self->resolve( $field->type, $_ ), $result->@* ];
+                $output{ $field_name } = [ map $self->resolve( $field->type, $_, $query->{ $field_name } ), $result->@* ];
             }
             else {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = $self->resolve( $field->type, $result );
+                $output{ $field_name } = $self->resolve( $field->type, $result, $query->{ $field_name } );
             }
         }
         else {

@@ -34,6 +34,14 @@ my $schema = Graph::QL::Schema->new_from_typed_resolvers(
     }
 );
 
+my $query = {
+    name    => 1,
+    friends => { name => 1, birth => { date => 1 }, death => { date => 1 } },
+    birth   => { date => 1 },
+    death   => { date => 1 },
+};
+
+$query->{friends}->{friends} = $query;
 
 my $de_kooning = {
     displayname => 'Willem De Kooning',
@@ -60,7 +68,7 @@ my $pollock = {
 $de_kooning->{friends}->[0] = $pollock;
 $pollock->{friends}->[0] = $de_kooning;
 
-my $transform = $schema->resolve( 'Person', $de_kooning );
+my $transform = $schema->resolve( 'Person', $de_kooning, $query );
 
 # diag 'START:';
 # diag Dumper $de_kooning;
@@ -69,31 +77,31 @@ my $transform = $schema->resolve( 'Person', $de_kooning );
 
 my $result = {
     name        => 'Willem De Kooning',
-    gender      => 'Male',
-    nationality => 'Dutch',
+    # gender      => 'Male',
+    # nationality => 'Dutch',
     friends     => [
         {
             name        => 'Jackson Pollock',
-            gender      => 'Male',
-            nationality => 'United States',
+            # gender      => 'Male',
+            # nationality => 'United States',
             friends     => [],
             birth       => {
                 date  => 'January 28, 1912',
-                place => 'Cody, Wyoming, United States',
+                #place => 'Cody, Wyoming, United States',
             },
             death       => {
                 date   => 'August 11, 1956',
-                place  => 'Springs, New York, United States',,
+                #place  => 'Springs, New York, United States',,
             },
         }
     ],
     birth => {
         date  => 'April 24, 1904',
-        place => 'Rotterdam, Netherlands',
+        #place => 'Rotterdam, Netherlands',
     },
     death => {
         date  => 'March 19, 1997',
-        place => 'East Hampton, New York, U.S.',
+        #place => 'East Hampton, New York, U.S.',
     },
 };
 
