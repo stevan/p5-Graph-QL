@@ -65,23 +65,31 @@ sub resolve ( $self, $root_type, $input ) {
     foreach my $field_name ( sort keys $self->{types}->{ $root_type }->%* ) {
         my $field = $self->{types}->{ $root_type }->{ $field_name };
 
+        # TODO:
+        # this call need to be checked
+        # - first to see if there is actually a resolver
+        # - then that it returns something that works
+        #   with the expectations of $field->is_non_nullable
+        my $result = $field->resolver->body->( $input );
+
         # if we have a definition for this subtype, ...
         if ( exists $self->{types}->{ $field->type } ) {
+
             if ( $field->is_array ) {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = [ map $self->resolve( $field->type, $_ ), $field->resolver->body->( $input )->@* ];
+                $output{ $field_name } = [ map $self->resolve( $field->type, $_ ), $result->@* ];
             }
             else {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = $self->resolve( $field->type, $field->resolver->body->( $input ) );
+                $output{ $field_name } = $self->resolve( $field->type, $result );
             }
         }
         else {
             # if we do not know about this type
             # then we can just call the resolver
-            $output{ $field_name } = $field->resolver->body->( $input );
+            $output{ $field_name } = $result;
         }
 
         if ( $field->is_non_nullable ) {
