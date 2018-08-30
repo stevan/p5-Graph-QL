@@ -16,28 +16,28 @@ BEGIN {
 my $schema = Graph::QL::Schema->new(
     types => {
         BirthEvent => {
-            date  => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{datebegin}  } ) ),
-            place => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{birthplace} } ) ),
+            date  => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{datebegin}  } ) ),
+            place => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{birthplace} } ) ),
         },
         DeathEvent => {
-            date  => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{dateend}    } ) ),
-            place => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{deathplace} } ) ),
+            date  => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{dateend}    } ) ),
+            place => Graph::QL::Field->new( type => 'String!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{deathplace} } ) ),
         },
         Person => {
-            name        => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{displayname} } ) ),
-            gender      => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{gender}      } ) ),
-            nationality => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent->{culture}     } ) ),
-            birth       => Graph::QL::Field->new( type => 'BirthEvent!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent } ) ),
-            death       => Graph::QL::Field->new( type => 'DeathEvent!', resolver => Graph::QL::Resolver->new( body => sub ($parent) { $parent } ) ),
-            friends     => Graph::QL::Field->new( type => '[Person]!',   resolver => Graph::QL::Resolver->new( body => sub ($parent) { [ $parent->{friends}->@* ] } ) ),
+            name        => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{displayname} } ) ),
+            gender      => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{gender}      } ) ),
+            nationality => Graph::QL::Field->new( type => 'String!',     resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{culture}     } ) ),
+            birth       => Graph::QL::Field->new( type => 'BirthEvent!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data } ) ),
+            death       => Graph::QL::Field->new( type => 'DeathEvent!', resolver => Graph::QL::Resolver->new( body => sub ($data) { $data } ) ),
+            friends     => Graph::QL::Field->new( type => '[Person]!',   resolver => Graph::QL::Resolver->new( body => sub ($data) { $data->{friends} } ) ),
         }
     }
 );
 
 my $query = {
     name    => 1,
-    friends => { name => 1, birth => { date => 1 }, death => { date => 1 } },
-    birth   => { date => 1 },
+    friends => { name => 1, birth => { date => 1, place => 1 }, death => { date => 1 } },
+    birth   => { date => 1, place => 1 },
     death   => { date => 1 },
 };
 
@@ -76,6 +76,14 @@ is(
     '... the cache is working'
 );
 
+$schema->flush_cache;
+
+isnt(
+    $transform,
+    $schema->resolve( 'Person', $de_kooning, $query ),
+    '... the cache is working'
+);
+
 # diag 'START:';
 # diag Dumper $de_kooning;
 # diag 'END:';
@@ -93,29 +101,29 @@ my $result = {
             friends     => [],
             birth       => {
                 date  => 'January 28, 1912',
-                #place => 'Cody, Wyoming, United States',
+                place => 'Cody, Wyoming, United States',
             },
             death       => {
                 date   => 'August 11, 1956',
-                #place  => 'Springs, New York, United States',,
+                # place  => 'Springs, New York, United States',,
             },
         }
     ],
     birth => {
         date  => 'April 24, 1904',
-        #place => 'Rotterdam, Netherlands',
+        place => 'Rotterdam, Netherlands',
     },
     death => {
         date  => 'March 19, 1997',
-        #place => 'East Hampton, New York, U.S.',
+        # place => 'East Hampton, New York, U.S.',
     },
 };
 
 $result->{friends}->[0]->{friends}->[0] = $result;
 
-#use Data::Dumper;
-#warn Dumper $result;
-#warn Dumper $transform;
+# use Data::Dumper;
+# warn Dumper $result;
+# warn Dumper $transform;
 
 is_deeply(
     $transform,

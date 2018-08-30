@@ -16,20 +16,20 @@ use decorators 'Graph::QL::Decorators';
 my $schema = Graph::QL::Schema->new_from_typed_resolvers(
     {
         BirthEvent => {
-            date  => sub ($parent) : Type(String!) { $parent->{datebegin}  },
-            place => sub ($parent) : Type(String!) { $parent->{birthplace} },
+            date  => sub ($data) : Type(String!) { $data->{datebegin}  },
+            place => sub ($data) : Type(String!) { $data->{birthplace} },
         },
         DeathEvent => {
-            date  => sub ($parent) : Type(String!) { $parent->{dateend}    },
-            place => sub ($parent) : Type(String!) { $parent->{deathplace} },
+            date  => sub ($data) : Type(String!) { $data->{dateend}    },
+            place => sub ($data) : Type(String!) { $data->{deathplace} },
         },
         Person => {
-            name        => sub ($parent) : Type(String!)     { $parent->{displayname} },
-            gender      => sub ($parent) : Type(String!)     { $parent->{gender}      },
-            nationality => sub ($parent) : Type(String!)     { $parent->{culture}     },
-            birth       => sub ($parent) : Type(BirthEvent!) { $parent },
-            death       => sub ($parent) : Type(DeathEvent!) { $parent },
-            friends     => sub ($parent) : Type([Person]!)   { $parent->{friends} },
+            name        => sub ($data) : Type(String!)     { $data->{displayname} },
+            gender      => sub ($data) : Type(String!)     { $data->{gender}      },
+            nationality => sub ($data) : Type(String!)     { $data->{culture}     },
+            birth       => sub ($data) : Type(BirthEvent!) { $data },
+            death       => sub ($data) : Type(DeathEvent!) { $data },
+            friends     => sub ($data) : Type([Person]!)   { $data->{friends} },
         }
     }
 );
@@ -70,12 +70,6 @@ $pollock->{friends}->[0] = $de_kooning;
 
 my $transform = $schema->resolve( 'Person', $de_kooning, $query );
 
-is(
-    $transform,
-    $schema->resolve( 'Person', $de_kooning, $query ),
-    '... the cache is working'
-);
-
 # diag 'START:';
 # diag Dumper $de_kooning;
 # diag 'END:';
@@ -93,29 +87,29 @@ my $result = {
             friends     => [],
             birth       => {
                 date  => 'January 28, 1912',
-                #place => 'Cody, Wyoming, United States',
+                # place => 'Cody, Wyoming, United States',
             },
             death       => {
                 date   => 'August 11, 1956',
-                #place  => 'Springs, New York, United States',,
+                # place  => 'Springs, New York, United States',,
             },
         }
     ],
     birth => {
         date  => 'April 24, 1904',
-        #place => 'Rotterdam, Netherlands',
+        # place => 'Rotterdam, Netherlands',
     },
     death => {
         date  => 'March 19, 1997',
-        #place => 'East Hampton, New York, U.S.',
+        # place => 'East Hampton, New York, U.S.',
     },
 };
 
 $result->{friends}->[0]->{friends}->[0] = $result;
 
-#use Data::Dumper;
-#warn Dumper $result;
-#warn Dumper $transform;
+# use Data::Dumper;
+# warn Dumper $result;
+# warn Dumper $transform;
 
 is_deeply(
     $transform,

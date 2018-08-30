@@ -45,6 +45,9 @@ sub get_type ($self, $name) {        $self->{types}->{$name} }
 # ...
 
 my %cache;
+
+sub flush_cache { %cache = () }
+
 sub resolve ( $self, $root_type, $input, $query ) {
 
     #warn "Resolving $root_type with input: $input\n";
