@@ -5,6 +5,7 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors';
 
+use Graph::QL::Query;
 use Graph::QL::Field;
 use Graph::QL::Resolver;
 
@@ -44,30 +45,12 @@ sub get_type ($self, $name) {        $self->{types}->{$name} }
 
 # ...
 
-my %cache;
-
-sub flush_cache { %cache = () }
-
 sub resolve ( $self, $root_type, $input, $query ) {
-
-    #warn "Resolving $root_type with input: $input\n";
-    #warn "Looking for $cache_key in cache [" . (join ', ' => keys %cache)  . "]\n";
-
-    my $cache_key = $root_type.':'.$input.':'.$query;
-
-    return do {
-        #warn 'found something in the cache!!!!!!!!!!!!';
-        #use Data::Dumper;
-        #warn Dumper $cache{ $cache_key };
-        $cache{ $cache_key };
-    } if exists $cache{ $cache_key };
 
     my %errors;
     my %output;
 
-    $cache{ $cache_key } = \%output;
-
-    foreach my $field_name ( sort keys $query->%* ) {
+    foreach my $field_name ( sort keys $query->fields->%* ) {
         my $field = $self->{types}->{ $root_type }->{ $field_name };
 
         # TODO:
@@ -81,17 +64,17 @@ sub resolve ( $self, $root_type, $input, $query ) {
         #warn Dumper [ $field_name, $query, $field, $result ];
 
         # if we have a subquery and we have a definition for this subtype, ...
-        if ( ref $query->{ $field_name } eq 'HASH' && exists $self->{types}->{ $field->type } ) {
+        if ( ref $query->fields->{ $field_name } eq 'HASH' && exists $self->{types}->{ $field->type } ) {
 
             if ( $field->is_array ) {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = [ map $self->resolve( $field->type, $_, $query->{ $field_name } ), $result->@* ];
+                $output{ $field_name } = [ map $self->resolve( $field->type, $_, $query->new_from_field( $field_name ) ), $result->@* ];
             }
             else {
                 # then we call our resolver and then
                 # pass it only the subtype resolver
-                $output{ $field_name } = $self->resolve( $field->type, $result, $query->{ $field_name } );
+                $output{ $field_name } = $self->resolve( $field->type, $result, $query->new_from_field( $field_name ) );
             }
         }
         else {

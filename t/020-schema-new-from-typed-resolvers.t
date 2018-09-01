@@ -9,6 +9,9 @@ use Data::Dumper;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
+    use_ok('Graph::QL::Field');
+    use_ok('Graph::QL::Resolver');
+    use_ok('Graph::QL::Query');
 }
 
 use decorators 'Graph::QL::Decorators';
@@ -34,14 +37,19 @@ my $schema = Graph::QL::Schema->new_from_typed_resolvers(
     }
 );
 
-my $query = {
-    name    => 1,
-    friends => { name => 1, birth => { date => 1 }, death => { date => 1 } },
-    birth   => { date => 1 },
-    death   => { date => 1 },
-};
-
-$query->{friends}->{friends} = $query;
+my $query = Graph::QL::Query->new(
+    name   => 'lookup_artist',
+    fields => {
+        name    => 1,
+        friends => {
+            name  => 1,
+            birth => { date => 1, place => 1 },
+            death => { date => 1 }
+        },
+        birth => { date => 1, place => 1 },
+        death => { date => 1 },
+    }
+);
 
 my $de_kooning = {
     displayname => 'Willem De Kooning',
@@ -84,10 +92,10 @@ my $result = {
             name        => 'Jackson Pollock',
             # gender      => 'Male',
             # nationality => 'United States',
-            friends     => [],
+            # friends     => [],
             birth       => {
                 date  => 'January 28, 1912',
-                # place => 'Cody, Wyoming, United States',
+                place => 'Cody, Wyoming, United States',
             },
             death       => {
                 date   => 'August 11, 1956',
@@ -97,15 +105,13 @@ my $result = {
     ],
     birth => {
         date  => 'April 24, 1904',
-        # place => 'Rotterdam, Netherlands',
+        place => 'Rotterdam, Netherlands',
     },
     death => {
         date  => 'March 19, 1997',
         # place => 'East Hampton, New York, U.S.',
     },
 };
-
-$result->{friends}->[0]->{friends}->[0] = $result;
 
 # use Data::Dumper;
 # warn Dumper $result;

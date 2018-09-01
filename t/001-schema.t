@@ -11,6 +11,7 @@ BEGIN {
     use_ok('Graph::QL::Schema');
     use_ok('Graph::QL::Field');
     use_ok('Graph::QL::Resolver');
+    use_ok('Graph::QL::Query');
 }
 
 my $schema = Graph::QL::Schema->new(
@@ -34,14 +35,19 @@ my $schema = Graph::QL::Schema->new(
     }
 );
 
-my $query = {
-    name    => 1,
-    friends => { name => 1, birth => { date => 1, place => 1 }, death => { date => 1 } },
-    birth   => { date => 1, place => 1 },
-    death   => { date => 1 },
-};
-
-$query->{friends}->{friends} = $query;
+my $query = Graph::QL::Query->new(
+    name   => 'lookup_artist',
+    fields => {
+        name    => 1,
+        friends => {
+            name  => 1,
+            birth => { date => 1, place => 1 },
+            death => { date => 1 }
+        },
+        birth => { date => 1, place => 1 },
+        death => { date => 1 },
+    }
+);
 
 my $de_kooning = {
     displayname => 'Willem De Kooning',
@@ -70,20 +76,6 @@ $pollock->{friends}->[0] = $de_kooning;
 
 my $transform = $schema->resolve( 'Person', $de_kooning, $query );
 
-is(
-    $transform,
-    $schema->resolve( 'Person', $de_kooning, $query ),
-    '... the cache is working'
-);
-
-$schema->flush_cache;
-
-isnt(
-    $transform,
-    $schema->resolve( 'Person', $de_kooning, $query ),
-    '... the cache is working'
-);
-
 # diag 'START:';
 # diag Dumper $de_kooning;
 # diag 'END:';
@@ -98,7 +90,7 @@ my $result = {
             name        => 'Jackson Pollock',
             # gender      => 'Male',
             # nationality => 'United States',
-            friends     => [],
+            # friends     => [],
             birth       => {
                 date  => 'January 28, 1912',
                 place => 'Cody, Wyoming, United States',
@@ -118,8 +110,6 @@ my $result = {
         # place => 'East Hampton, New York, U.S.',
     },
 };
-
-$result->{friends}->[0]->{friends}->[0] = $result;
 
 # use Data::Dumper;
 # warn Dumper $result;
