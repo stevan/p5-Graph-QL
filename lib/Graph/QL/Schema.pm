@@ -16,26 +16,6 @@ use slots (
     types => sub { die 'You must supply a set of `types`' },
 );
 
-sub new_from_typed_resolvers ($self, $typed_resolvers) {
-
-    # inflate decorated code references to be resolver objects
-    my %types;
-    foreach my $type ( keys $typed_resolvers->%* ) {
-        my $resolver_fields = $typed_resolvers->{ $type };
-        $types{ $type }    = {};
-        foreach my $field_name ( keys $resolver_fields->%* ) {
-            my $meta = MOP::Method->new( body => $resolver_fields->{ $field_name } );
-            # TODO: die if there is no Type attribute ...
-            $types{ $type }->{ $field_name } = Graph::QL::Field->new(
-                type     => ($meta->get_code_attributes('Type'))[0]->args->[0],
-                resolver => Graph::QL::Resolver->new( body => $resolver_fields->{ $field_name } ),
-            );
-        }
-    }
-
-    return $self->new( types => \%types );
-}
-
 # accessors
 
 sub types : ro;
