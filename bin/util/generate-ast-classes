@@ -9,6 +9,8 @@ use Data::Dumper;
 use List::Util ();
 use Path::Tiny ();
 
+use Graph::QL::AST::Util;
+
 ## ...
 
 my $class_dir = Path::Tiny::path('lib/Graph/QL/AST/Node/');
@@ -60,15 +62,16 @@ while ( @ast_lines ) {
     # type (aka - class)
     elsif ( $kind eq 'T' ) {
         my ($name) = @rest;
-        $current = $classes{ $name } = { kind => 'TYPE', fields => [] };
+        $current = $classes{ $name } = { kind => 'TYPE' };
     }
     else {
         my $is_plural   = index($kind, 'P') != -1 ? 1 : 0;
         my $is_nullable = index($kind, '?') != -1 ? 1 : 0;
 
         my ($type, $name) = @rest;
+        $current->{fields} ||= [];
         push $current->{fields}->@* => {
-            name        => camel_to_snake( $name ),
+            name        => Graph::QL::AST::Util::camel_to_snake( $name ),
             type        => $type,
             is_plural   => $is_plural,
             is_nullable => $is_nullable
@@ -95,26 +98,15 @@ exit;
 
 ## ...
 
-sub camel_to_snake ($s) {
-    $s =~ s{([^a-zA-Z]?)([A-Z]*)([A-Z])([a-z]?)}{
-            my $fc = pos($s)==0;
-            my ($p0,$p1,$p2,$p3) = ($1,lc$2,lc$3,$4);
-            my $t = $p0 || $fc ? $p0 : '_';
-            $t .= $p3 ? $p1 ? "${p1}_$p2$p3" : "$p2$p3" : "$p1$p2";
-            $t;
-    }ge;
-    $s;
-}
-
 sub is_role  ($type) { exists $roles{ $type }   }
 sub is_class ($type) { exists $classes{ $type } }
 
 sub expand_type ($name) {
     if ( is_role( $name ) ) {
-        return 'Graph::QL::Node::Role::'.$name;
+        return 'Graph::QL::AST::Node::Role::'.$name;
     }
     elsif ( is_class( $name ) ) {
-        return 'Graph::QL::Node::'.$name;
+        return 'Graph::QL::AST::Node::'.$name;
     }
     return;
 }
@@ -155,97 +147,117 @@ sub generate_class ($name, $definition) {
     my @slots;
     my @accessors;
     my @type_checks;
+    my @constructor;
 
-    my $name_width = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
+    if ( $definition->{fields} ) {
+        my @inherited_fields = qw[ location ];
 
-    foreach my $field ( $definition->{fields}->@* ) {
-        # if we have a plural field that is not nullable ...
-        if ( $field->{is_plural} && not $field->{is_nullable} ) {
-            push @slots => sprintf "%-${name_width}s => sub { +[] }," => $field->{name};
+        my $has_nullable = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
 
-            push @type_checks => (
-                (sprintf 'Carp::confess(\'The `%s` value must be an ARRAY ref\')' => $field->{name}),
-                (sprintf '    unless ref $self->{%s} eq \'ARRAY\';' => $field->{name}),
-                ('')
-            );
+        my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
+        my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
 
-            if ( my $type = expand_type($field->{type}) ) {
+        foreach my $field ( $definition->{fields}->@* ) {
+            # if we have a plural field that is not nullable ...
+            if ( $field->{is_plural} ) {
+                push @slots => sprintf "%-${name_width}s => sub { +[] }," => $field->{name};
+
                 push @type_checks => (
-                    (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
-                    (sprintf '    Carp::confess(\'The values in `%s` value must be an instance of %s\')' => $field->{name}, $type),
-                    (sprintf '        unless scalar grep (Scalar::Util::blessed($_) && $_->%s(%s)), $self->{%s}->@*;' => (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type, $field->{name}),
-                    (        '}'),
+                    (sprintf 'Carp::confess(\'The `%s` value must be an ARRAY ref\')' => $field->{name}),
+                    (sprintf '    unless ref $self->{%s} eq \'ARRAY\';' => $field->{name}),
                     ('')
                 );
-            } else {
-                push @type_checks => (
-                    (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
-                    (sprintf '    Carp::confess(\'The values in `%s` value must be an %s\')' => $field->{name}, $field->{type}),
-                    (sprintf '        unless scalar grep defined($_), $self->{%s}->@*;' => $field->{name}),
-                    (        '}'),
-                    ('')
-                );
+
+                if ( my $type = expand_type($field->{type}) ) {
+                    push @type_checks => (
+                        (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
+                        (sprintf '    foreach ( $self->{%s}->@* ) {' => $field->{name}),
+                        (sprintf '        Carp::confess(\'The values in `%s` value must be an instance of `%s`, not \'.$_)' => $field->{name}, $type),
+                        (        '            unless Scalar::Util::blessed( $_ )'),
+                        (sprintf '                && $_->%s(\'%s\');' => (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
+                        (        '    }'),
+                        (        '}'),
+                        (''),
+                    );
+                } else {
+                    push @type_checks => (
+                        (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
+                        (sprintf '    Carp::confess(\'The values in `%s` value must be an `%s`\')' => $field->{name}, $field->{type}),
+                        (sprintf '        unless scalar grep defined($_), $self->{%s}->@*;' => $field->{name}),
+                        (        '}'),
+                        ('')
+                    );
+                }
+
             }
+            elsif ( $field->{is_nullable} ) {
+                push @slots => sprintf "%-${name_width}s => sub {}," => $field->{name};
 
-        }
-        elsif ( $field->{is_nullable} ) {
-            push @slots => sprintf "%-${name_width}s => sub {}," => $field->{name};
-
-            if ( my $type = expand_type($field->{type}) ) {
-                push @type_checks => (
-                    (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
-                    (sprintf '    Carp::confess(\'The `%s` value must be an instance of %s\')' => $field->{name}, $type),
-                    (sprintf '        unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
-                    (sprintf '            && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
-                    (        '}'),
-                    ('')
-                );
-            } else {
-                push @type_checks => (
-                    (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
-                    (sprintf '    Carp::confess(\'The `%s` value must be an %s\')' => $field->{name}, $field->{type}),
-                    (sprintf '        unless defined $self->{%s};' => $field->{name}),
-                    (        '}'),
-                    ('')
-                );
-            }
-        }
-        else {
-            push @slots => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
-
-            if ( my $type = expand_type($field->{type}) ) {
-                push @type_checks => (
-                    (sprintf 'Carp::confess(\'The `%s` value must be an instance of %s\')' => $field->{name}, $type),
-                    (sprintf '    unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
-                    (sprintf '        && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
-                    ('')
-                );
+                if ( my $type = expand_type($field->{type}) ) {
+                    push @type_checks => (
+                        (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
+                        (sprintf '    Carp::confess(\'The `%s` value must be an instance of `%s`, not \'.$self->{%s})' => $field->{name}, $type, $field->{name}),
+                        (sprintf '        unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
+                        (sprintf '            && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
+                        (        '}'),
+                        ('')
+                    );
+                } else {
+                    push @type_checks => (
+                        (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
+                        (sprintf '    Carp::confess(\'The `%s` value must be an `%s`\')' => $field->{name}, $field->{type}),
+                        (sprintf '        unless defined $self->{%s};' => $field->{name}),
+                        (        '}'),
+                        ('')
+                    );
+                }
             }
             else {
-                push @type_checks => (
-                    (sprintf 'Carp::confess(\'The `%s` value must be an %s\')' => $field->{name}, $field->{type}),
-                    (sprintf '    unless defined $self->{%s};' => $field->{name}),
-                    ('')
-                );
+                push @slots => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
+
+                if ( my $type = expand_type($field->{type}) ) {
+                    push @type_checks => (
+                        (sprintf 'Carp::confess(\'The `%s` value must be an instance of `%s`, not \'.$self->{%s})' => $field->{name}, $type, $field->{name}),
+                        (sprintf '    unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
+                        (sprintf '        && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
+                        ('')
+                    );
+                }
+                else {
+                    push @type_checks => (
+                        (sprintf 'Carp::confess(\'The `%s` value must be an `%s`\')' => $field->{name}, $field->{type}),
+                        (sprintf '    unless defined $self->{%s};' => $field->{name}),
+                        ('')
+                    );
+                }
             }
+
+            my $constructor_field_name = $field->{name}.($field->{is_nullable} || $field->{is_plural} ? '?' : '');
+
+            push @constructor => sprintf "%-${ctor_name_width}s => %s," => $constructor_field_name, $field->{name};
+            push @accessors   => sprintf "sub %-${name_width}s : ro;" => $field->{name};
         }
 
-        push @accessors => sprintf "sub %-${name_width}s : ro;" => $field->{name};
+        # add the location one as well
+        foreach my $inherited ( @inherited_fields ) {
+            push @constructor => sprintf "%-${ctor_name_width}s => super(%s)," => $inherited, $inherited;
+        }
     }
 
     my $add_role_if_needed = "\n";
     foreach my $role ( keys %roles ) {
         if ( exists $roles{ $role }->{ $name } ) {
-            $add_role_if_needed = "\n".q[use roles  'Graph::QL::AST::Role::].$role.q[';]."\n";
+            $add_role_if_needed = "\n".q[use roles  '].expand_type($role).q[';]."\n";
             last;
         }
     }
 
-    my $source = q[package Graph::QL::AST::].$name.q[;
+    my $source = q[package ].expand_type($name).q[;
 
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
+use decorators ':accessors', ':constructor';
 
 use Carp         ();
 use Scalar::Util ();
@@ -257,6 +269,11 @@ use parent 'Graph::QL::AST::Node';]
 (@slots ?
 q[use slots (
     ].(join "\n    " => @slots).q[
+);
+] : '').
+(@type_checks ? q[
+sub BUILDARGS : strict(
+    ].(join "\n    " => @constructor).q[
 );
 ] : '').
 (@type_checks ? q[

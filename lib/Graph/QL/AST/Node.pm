@@ -8,6 +8,8 @@ use decorators ':accessors';
 use Carp         ();
 use Scalar::Util ();
 
+use Graph::QL::AST::Util;
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
@@ -26,7 +28,7 @@ sub BUILD ($self, $) {
         unless exists $loc->{start}
             && exists $loc->{end};
 
-    my ($start, $end) = $loc->%{'start', 'end'};
+    my ($start, $end) = $loc->@{'start', 'end'};
 
     Carp::confess('The `start` entry in the `location` HASH ref must have both a `line` and `column` entry')
         unless ref $start eq 'HASH'
@@ -41,6 +43,36 @@ sub BUILD ($self, $) {
 }
 
 sub location : ro;
+
+sub TO_JSON ($self, @) {
+    my %json = $self->%*;
+    my $loc  = delete $json{location};
+    foreach my $key ( keys %json ) {
+
+        if ( $key =~ /_/ ) {
+            my $new_key = Graph::QL::AST::Util::snake_to_camel( $key );
+            $json{ $new_key } = delete $json{ $key };
+            $key = $new_key;
+        }
+
+        if ( ref $json{ $key } eq 'ARRAY' ) {
+            if ( scalar $json{ $key }->@* == 0 ) {
+                $json{ $key } = undef;
+            }
+            else {
+                $json{ $key } = [ map $_->TO_JSON, $json{ $key }->@* ];
+            }
+        }
+
+        if ( Scalar::Util::blessed( $json{ $key } ) ) {
+            $json{ $key } = $json{ $key }->TO_JSON;
+        }
+
+    }
+    $json{loc} = $loc;
+    ($json{kind}) = (Scalar::Util::blessed($self) =~ m/^Graph\:\:QL\:\:AST\:\:Node\:\:(.*)/);
+    return \%json;
+}
 
 1;
 
