@@ -9,6 +9,7 @@ use Data::Dumper;
 use List::Util ();
 use Path::Tiny ();
 
+use Graph::QL::AST::Node;
 use Graph::QL::AST::Util;
 
 ## ...
@@ -122,7 +123,7 @@ sub generate_role ($name, $consumers) {
 use v5.24;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '].$Graph::QL::AST::Node::VERSION.q[';
 
 1;
 
@@ -262,7 +263,7 @@ use decorators ':accessors', ':constructor';
 use Carp         ();
 use Scalar::Util ();
 
-our $VERSION = '0.01';
+our $VERSION = '].$Graph::QL::AST::Node::VERSION.q[';
 
 use parent 'Graph::QL::AST::Node';]
 .$add_role_if_needed.
