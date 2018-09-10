@@ -1,0 +1,280 @@
+#!/usr/bin/env perl
+
+use v5.24;
+use warnings;
+use experimental 'signatures', 'postderef';
+
+use Data::Dumper;
+
+use List::Util ();
+use Path::Tiny ();
+
+## ...
+
+my $class_dir = Path::Tiny::path('lib/Graph/QL/AST/Node/');
+my $role_dir  = $class_dir->child('Role');
+
+## ...
+
+# if the role dir exists, we need to clean it out ...
+if ( -e $role_dir ) {
+    $_->remove foreach $role_dir->children;
+}
+
+# now delete all files in the class dir ...
+-f && $_->remove foreach $class_dir->children;
+
+# and  make sure we have the role dir we need ...
+$role_dir->mkpath unless -e $role_dir && -d $role_dir;
+
+## ...
+
+my @ast_lines = Path::Tiny::path('share/ast/ast.ast')->lines({ chomp => 1 });
+
+my (%roles, %classes);
+
+my $current;
+while ( @ast_lines ) {
+    my $line = shift @ast_lines;
+
+    #warn $line;
+
+    next if $line =~ /^#/;
+
+    if ( $line =~ /^\s*$/ ) {
+        $current = undef if $current;
+        next;
+    }
+
+    my ($kind, @rest) = split /\s/ => $line;
+
+    # union (aka - role)
+    if ( $kind eq 'U' ) {
+        my ($name) = @rest;
+        $current = $roles{ $name } = {};
+    }
+    elsif ( $kind eq 'O' ) {
+        my ($name) = @rest;
+        $current->{$name} = 1;
+    }
+    # type (aka - class)
+    elsif ( $kind eq 'T' ) {
+        my ($name) = @rest;
+        $current = $classes{ $name } = { kind => 'TYPE', fields => [] };
+    }
+    else {
+        my $is_plural   = index($kind, 'P') != -1 ? 1 : 0;
+        my $is_nullable = index($kind, '?') != -1 ? 1 : 0;
+
+        my ($type, $name) = @rest;
+        push $current->{fields}->@* => {
+            name        => camel_to_snake( $name ),
+            type        => $type,
+            is_plural   => $is_plural,
+            is_nullable => $is_nullable
+        };
+    }
+}
+
+## ...
+
+warn Dumper \%roles;
+warn Dumper \%classes;
+
+foreach my $role ( keys %roles ) {
+    $role_dir->child( $role.'.pm' )
+             ->spew( generate_role( $role, $roles{ $role } ) );
+}
+
+foreach my $class ( keys %classes ) {
+    $class_dir->child( $class.'.pm' )
+              ->spew( generate_class( $class, $classes{ $class } ) );
+}
+
+exit;
+
+## ...
+
+sub camel_to_snake ($s) {
+    $s =~ s{([^a-zA-Z]?)([A-Z]*)([A-Z])([a-z]?)}{
+            my $fc = pos($s)==0;
+            my ($p0,$p1,$p2,$p3) = ($1,lc$2,lc$3,$4);
+            my $t = $p0 || $fc ? $p0 : '_';
+            $t .= $p3 ? $p1 ? "${p1}_$p2$p3" : "$p2$p3" : "$p1$p2";
+            $t;
+    }ge;
+    $s;
+}
+
+sub is_role  ($type) { exists $roles{ $type }   }
+sub is_class ($type) { exists $classes{ $type } }
+
+sub expand_type ($name) {
+    if ( is_role( $name ) ) {
+        return 'Graph::QL::Node::Role::'.$name;
+    }
+    elsif ( is_class( $name ) ) {
+        return 'Graph::QL::Node::'.$name;
+    }
+    return;
+}
+
+## ....
+
+sub generate_role ($name, $consumers) {
+
+    my @consumers = map expand_type($_), sort keys $consumers->%*;
+
+    my $source = q[package ].expand_type($name).q[;
+
+use v5.24;
+use warnings;
+
+our $VERSION = '0.01';
+
+1;
+
+__END__
+
+=pod
+
+This role is consumed by the following classes:
+
+=over 4
+
+].(join "\n\n" => map '=item C<'.$_.'>', @consumers).q[
+
+=back
+
+=cut
+];
+}
+
+sub generate_class ($name, $definition) {
+
+    my @slots;
+    my @accessors;
+    my @type_checks;
+
+    my $name_width = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
+
+    foreach my $field ( $definition->{fields}->@* ) {
+        # if we have a plural field that is not nullable ...
+        if ( $field->{is_plural} && not $field->{is_nullable} ) {
+            push @slots => sprintf "%-${name_width}s => sub { +[] }," => $field->{name};
+
+            push @type_checks => (
+                (sprintf 'Carp::confess(\'The `%s` value must be an ARRAY ref\')' => $field->{name}),
+                (sprintf '    unless ref $self->{%s} eq \'ARRAY\';' => $field->{name}),
+                ('')
+            );
+
+            if ( my $type = expand_type($field->{type}) ) {
+                push @type_checks => (
+                    (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
+                    (sprintf '    Carp::confess(\'The values in `%s` value must be an instance of %s\')' => $field->{name}, $type),
+                    (sprintf '        unless scalar grep (Scalar::Util::blessed($_) && $_->%s(%s)), $self->{%s}->@*;' => (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type, $field->{name}),
+                    (        '}'),
+                    ('')
+                );
+            } else {
+                push @type_checks => (
+                    (sprintf 'if ( $self->{%s}->@* ) {' => $field->{name}),
+                    (sprintf '    Carp::confess(\'The values in `%s` value must be an %s\')' => $field->{name}, $field->{type}),
+                    (sprintf '        unless scalar grep defined($_), $self->{%s}->@*;' => $field->{name}),
+                    (        '}'),
+                    ('')
+                );
+            }
+
+        }
+        elsif ( $field->{is_nullable} ) {
+            push @slots => sprintf "%-${name_width}s => sub {}," => $field->{name};
+
+            if ( my $type = expand_type($field->{type}) ) {
+                push @type_checks => (
+                    (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
+                    (sprintf '    Carp::confess(\'The `%s` value must be an instance of %s\')' => $field->{name}, $type),
+                    (sprintf '        unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
+                    (sprintf '            && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
+                    (        '}'),
+                    ('')
+                );
+            } else {
+                push @type_checks => (
+                    (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
+                    (sprintf '    Carp::confess(\'The `%s` value must be an %s\')' => $field->{name}, $field->{type}),
+                    (sprintf '        unless defined $self->{%s};' => $field->{name}),
+                    (        '}'),
+                    ('')
+                );
+            }
+        }
+        else {
+            push @slots => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
+
+            if ( my $type = expand_type($field->{type}) ) {
+                push @type_checks => (
+                    (sprintf 'Carp::confess(\'The `%s` value must be an instance of %s\')' => $field->{name}, $type),
+                    (sprintf '    unless Scalar::Util::blessed( $self->{%s} )' => $field->{name}),
+                    (sprintf '        && $self->{%s}->%s(\'%s\');' => $field->{name}, (is_role($field->{type}) ? 'roles::DOES' : 'isa'), $type),
+                    ('')
+                );
+            }
+            else {
+                push @type_checks => (
+                    (sprintf 'Carp::confess(\'The `%s` value must be an %s\')' => $field->{name}, $field->{type}),
+                    (sprintf '    unless defined $self->{%s};' => $field->{name}),
+                    ('')
+                );
+            }
+        }
+
+        push @accessors => sprintf "sub %-${name_width}s : ro;" => $field->{name};
+    }
+
+    my $add_role_if_needed = "\n";
+    foreach my $role ( keys %roles ) {
+        if ( exists $roles{ $role }->{ $name } ) {
+            $add_role_if_needed = "\n".q[use roles  'Graph::QL::AST::Role::].$role.q[';]."\n";
+            last;
+        }
+    }
+
+    my $source = q[package Graph::QL::AST::].$name.q[;
+
+use v5.24;
+use warnings;
+use experimental 'signatures', 'postderef';
+
+use Carp         ();
+use Scalar::Util ();
+
+our $VERSION = '0.01';
+
+use parent 'Graph::QL::AST::Node';]
+.$add_role_if_needed.
+(@slots ?
+q[use slots (
+    ].(join "\n    " => @slots).q[
+);
+] : '').
+(@type_checks ? q[
+sub BUILD ($self, $params) {
+
+    ].(join "\n    " => @type_checks).q[
+}
+] : '').
+(@accessors ? q[
+].(join "\n" => @accessors) : '').q[
+
+1;
+
+__END__
+
+=pod
+
+=cut
+];
+}
+
