@@ -44,6 +44,12 @@ sub BUILD ($self, $) {
 
 sub location : ro;
 
+
+# TODO:
+# Fix this to not violate encapsulation
+# so horribly, which means adding this
+# into the AST class generator script.
+# - SL
 sub TO_JSON ($self, @) {
     my %json = $self->%*;
     my $loc  = delete $json{location};
