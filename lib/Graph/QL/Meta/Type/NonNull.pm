@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Carp         ();
+use Scalar::Util ();
+
 our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type';
