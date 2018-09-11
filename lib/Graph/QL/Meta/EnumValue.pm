@@ -53,6 +53,13 @@ sub is_deprecated          : ro;
 sub deprecation_reason     : ro;
 sub has_deprecation_reason : predicate;
 
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return $self->{name};
+}
 
 1;
 

@@ -31,7 +31,7 @@ sub BUILD ($self, $params) {
         unless defined $self->{name};
 
     Carp::confess('The `name` must not start with `__`')
-        unless $self->{name} =~ /^__/;
+        if $self->{name} =~ /^__/;
 
     if ( exists $params->{description} ) {
         Carp::confess('The `description` must be a defined value')
@@ -47,7 +47,6 @@ sub BUILD ($self, $params) {
         Carp::confess('The `default_value` must be a defined value')
             unless defined $self->{default_value};
     }
-
 }
 
 sub name : ro;
@@ -58,6 +57,15 @@ sub has_description : predicate;
 
 sub default_value     : ro;
 sub has_default_value : predicate;
+
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    # handle the `default_value`
+    return $self->{name}.' : '.$self->{type}->name;
+}
 
 1;
 

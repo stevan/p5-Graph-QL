@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type::Scalar';
 use slots (
-    kind           => sub { Graph::QL::Type->Kind->UNION },
+    kind           => sub { Graph::QL::Meta::Type->Kind->UNION },
     possible_types => sub { die 'You must specify the `possible_types`' },
 );
 
@@ -26,7 +26,7 @@ sub BUILD ($self, $params) {
             && ref $self->{possible_types} eq 'ARRAY';
 
     Carp::confess('The `possible_types` value must be one or more types')
-        unless scalar $self->{possible_types}->@* <= 1;
+        unless scalar $self->{possible_types}->@* >= 1;
 
     foreach ( $self->{possible_types}->@* ) {
         Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$_)
@@ -40,6 +40,14 @@ sub possible_types : ro;
 # input/output type methods
 sub is_input_type  { 0 }
 sub is_output_type { 1 }
+
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return sprintf 'union %s = %s' => $self->{name}, (join ' | ' => map $_->name, $self->{possible_types}->@*);
+}
 
 1;
 

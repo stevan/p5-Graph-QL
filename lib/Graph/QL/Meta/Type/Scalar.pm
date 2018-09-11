@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type';
 use slots (
-    kind        => sub { Graph::QL::Type->Kind->SCALAR },
+    kind        => sub { Graph::QL::Meta::Type->Kind->SCALAR },
     name        => sub { die 'You must supply a `name`' },
     description => sub {},
 );
@@ -36,6 +36,14 @@ sub has_description : predicate;
 # input/output type methods
 sub is_input_type  { 1 }
 sub is_output_type { 1 }
+
+# ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return sprintf 'scalar %s' => $self->{name};
+}
 
 1;
 

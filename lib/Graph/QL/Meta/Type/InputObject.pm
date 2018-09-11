@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type::Scalar';
 use slots (
-    kind         => sub { Graph::QL::Type->Kind->INPUT_OBJECT },
+    kind         => sub { Graph::QL::Meta::Type->Kind->INPUT_OBJECT },
     input_fields => sub { +[] },
     # internal ...
     _field_map   => sub { +{} },
@@ -28,7 +28,7 @@ sub BUILD ($self, $params) {
             && ref $self->{input_fields} eq 'ARRAY';
 
     Carp::confess('The `input_fields` value must be one or more types')
-        unless scalar $self->{input_fields}->@* <= 1;
+        unless scalar $self->{input_fields}->@* >= 1;
 
     my %map;
     foreach ( $self->{input_fields}->@* ) {

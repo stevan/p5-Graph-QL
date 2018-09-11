@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type::Scalar';
 use slots (
-    kind           => sub { Graph::QL::Type->Kind->INTERFACE },
+    kind           => sub { Graph::QL::Meta::Type->Kind->INTERFACE },
     fields         => sub { die 'You must supply a set of `fields`' },
     possible_types => sub { +[] },
     # internal ...
@@ -30,7 +30,7 @@ sub BUILD ($self, $params) {
             && ref $self->{fields} eq 'ARRAY';
 
     Carp::confess('The `fields` value must be one or more types')
-        unless scalar $self->{fields}->@* <= 1;
+        unless scalar $self->{fields}->@* >= 1;
 
     my %field_map;
     foreach ( $self->{fields}->@* ) {
@@ -70,6 +70,17 @@ sub fields ($self, $include_deprecated=0) {
 # input/output type methods
 sub is_input_type  { 0 }
 sub is_output_type { 1 }
+
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return 'interface '.$self->{name}.' {'."\n    ".
+        (join "\n    " => map $_->to_type_language, $self->{field}->@*)."\n".
+    '}';
+}
+
 
 1;
 

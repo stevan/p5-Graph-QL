@@ -29,20 +29,20 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `query_type` value must be an instance of `Graph::QL::Meta::Type`, not '.$self->{query_type})
+    Carp::confess('The `query_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{query_type})
         unless Scalar::Util::blessed( $self->{query_type} )
-            && $self->{query_type}->isa('Graph::QL::Meta::Type');
+            && $self->{query_type}->isa('Graph::QL::Meta::Type::Object');
 
     if ( exists $params->{mutation_type} ) {
-        Carp::confess('The `mutation_type` value must be an instance of `Graph::QL::Meta::Type`, not '.$self->{mutation_type})
+        Carp::confess('The `mutation_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{mutation_type})
             unless Scalar::Util::blessed( $self->{mutation_type} )
-                && $self->{mutation_type}->isa('Graph::QL::Meta::Type');
+                && $self->{mutation_type}->isa('Graph::QL::Meta::Type::Object');
     }
 
     if ( exists $params->{subscription_type} ) {
-        Carp::confess('The `subscription_type` value must be an instance of `Graph::QL::Meta::Type`, not '.$self->{subscription_type})
+        Carp::confess('The `subscription_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{subscription_type})
             unless Scalar::Util::blessed( $self->{subscription_type} )
-                && $self->{subscription_type}->isa('Graph::QL::Meta::Type');
+                && $self->{subscription_type}->isa('Graph::QL::Meta::Type::Object');
     }
 
     if ( $self->{types}->@* ) {
@@ -74,6 +74,21 @@ sub subscription_type     : ro;
 sub has_subscription_type : predicate;
 
 sub directives : ro;
+
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `directives`
+    return "\n".# print the types first ...
+        (join "\n\n" => map $_->to_type_language, $self->{types}->@*)
+        ."\n\n". # followed by the base `schema` object
+        'schema {'."\n    ".
+            'query : '.$self->query_type->name."\n".
+            ($self->has_mutation_type     ? (    '    mutation : '.$self->mutation_type->name."\n")     : '').
+            ($self->has_subscription_type ? ('    subscription : '.$self->subscription_type->name."\n") : '').
+        '}'."\n";
+}
 
 1;
 

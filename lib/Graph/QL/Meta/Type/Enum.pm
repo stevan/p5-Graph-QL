@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type::Scalar';
 use slots (
-    kind        => sub { Graph::QL::Type->Kind->ENUM },
+    kind        => sub { Graph::QL::Meta::Type->Kind->ENUM },
     enum_values => sub { die 'You must supply `enum_values`' },
     # internal ...
     _enum_map   => sub { +{} }
@@ -28,7 +28,7 @@ sub BUILD ($self, $params) {
             && ref $self->{enum_values} eq 'ARRAY';
 
     Carp::confess('The `enum_values` value must be one or more types')
-        unless scalar $self->{enum_values}->@* <= 1;
+        unless scalar $self->{enum_values}->@* >= 1;
 
     my %map;
     foreach ( $self->{enum_values}->@* ) {
@@ -58,6 +58,16 @@ sub enum_values ($self, $include_deprecated=0) {
 # input/output type methods
 sub is_input_type  { 1 }
 sub is_output_type { 1 }
+
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return 'enum '.$self->{name}.' {'."\n    ".
+        (join "\n    " => map $_->to_type_language, $self->{enum_values}->@*)."\n".
+    '}';
+}
 
 1;
 

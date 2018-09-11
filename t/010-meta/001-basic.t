@@ -1,0 +1,150 @@
+#!/usr/bin/env perl
+
+use v5.24;
+use warnings;
+use experimental 'signatures';
+
+use Test::More;
+use Test::Differences;
+use Data::Dumper;
+
+BEGIN {
+    use_ok('Graph::QL::Meta::Schema');
+
+    use_ok('Graph::QL::Meta::Directive');
+    use_ok('Graph::QL::Meta::Type');
+
+    use_ok('Graph::QL::Meta::Type::Enum');
+    use_ok('Graph::QL::Meta::Type::InputObject');
+    use_ok('Graph::QL::Meta::Type::Interface');
+    use_ok('Graph::QL::Meta::Type::List');
+    use_ok('Graph::QL::Meta::Type::NonNull');
+    use_ok('Graph::QL::Meta::Type::Object');
+    use_ok('Graph::QL::Meta::Type::Scalar');
+    use_ok('Graph::QL::Meta::Type::Union');
+
+    use_ok('Graph::QL::Meta::Field');
+    use_ok('Graph::QL::Meta::EnumValue');
+    use_ok('Graph::QL::Meta::InputValue');
+}
+
+=pod
+
+    type Query {
+        findPerson(name: String) : [Person]
+    }
+
+    type BirthEvent {
+        year  : Int
+        place : String
+    }
+
+    type DeathEvent {
+        year  : Int
+        place : String
+    }
+
+    type Person {
+        name        : String
+        nationality : String
+        gender      : String
+        birth       : BirthEvent
+        death       : DeathEvent
+    }
+
+But converted into a depenency ordering that the
+Schema type-language-transformation will output.
+
+=cut
+
+my $expected_type_language = q[
+scalar Int
+
+scalar String
+
+type BirthEvent {
+    year : Int
+    place : String
+}
+
+type DeathEvent {
+    year : Int
+    place : String
+}
+
+type Person {
+    name : String
+    nationality : String
+    gender : String
+    birth : BirthEvent
+    death : DeathEvent
+}
+
+type Query {
+    findPerson(name : String) : [Person]
+}
+
+schema {
+    query : Query
+}
+];
+
+my $Int    = Graph::QL::Meta::Type::Scalar->new( name => 'Int' );
+my $String = Graph::QL::Meta::Type::Scalar->new( name => 'String' );
+
+my $BirthEvent = Graph::QL::Meta::Type::Object->new(
+    name   => 'BirthEvent',
+    fields => [
+        Graph::QL::Meta::Field->new( name => 'year',  type => $Int    ),
+        Graph::QL::Meta::Field->new( name => 'place', type => $String ),
+    ]
+);
+
+my $DeathEvent = Graph::QL::Meta::Type::Object->new(
+    name   => 'DeathEvent',
+    fields => [
+        Graph::QL::Meta::Field->new( name => 'year',  type => $Int    ),
+        Graph::QL::Meta::Field->new( name => 'place', type => $String ),
+    ]
+);
+
+my $Person = Graph::QL::Meta::Type::Object->new(
+    name   => 'Person',
+    fields => [
+        Graph::QL::Meta::Field->new( name => 'name',        type => $String ),
+        Graph::QL::Meta::Field->new( name => 'nationality', type => $String ),
+        Graph::QL::Meta::Field->new( name => 'gender',      type => $String ),
+        Graph::QL::Meta::Field->new( name => 'birth',       type => $BirthEvent ),
+        Graph::QL::Meta::Field->new( name => 'death',       type => $DeathEvent ),
+    ]
+);
+
+my $Query = Graph::QL::Meta::Type::Object->new(
+    name   => 'Query',
+    fields => [
+        Graph::QL::Meta::Field->new(
+            name => 'findPerson',
+            args => [ Graph::QL::Meta::InputValue->new( name => 'name', type => $String ) ],
+            type => Graph::QL::Meta::Type::List->new( of_type => $Person ),
+        )
+    ]
+);
+
+my $schema = Graph::QL::Meta::Schema->new(
+    query_type => $Query,
+    types => [
+        $Int,
+        $String,
+        $BirthEvent,
+        $DeathEvent,
+        $Person,
+        $Query
+    ]
+);
+
+#warn $schema->to_type_language;
+
+eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+
+
+done_testing;

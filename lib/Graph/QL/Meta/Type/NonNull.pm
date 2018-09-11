@@ -9,7 +9,7 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::Meta::Type';
 use slots (
-    kind    => sub { Graph::QL::Type->Kind->NON_NULL },
+    kind    => sub { Graph::QL::Meta::Type->Kind->NON_NULL },
     of_type => sub { die 'You must supply an `on_type`' },
 );
 
@@ -24,6 +24,10 @@ sub BUILD ($self, $params) {
 }
 
 sub of_type : ro;
+
+sub name ($self) {
+    return $self->{of_type}->name.'!';
+}
 
 # input/output type methods
 sub is_input_type  ($self) { $self->of_type->is_input_type  }
