@@ -56,6 +56,17 @@ sub input_fields : ro;
 sub is_input_type  { 1 }
 sub is_output_type { 0 }
 
+## ...
+
+sub to_type_language ($self) {
+    # TODO:
+    # handle the `description`
+    return 'input '.$self->{name}.' {'."\n    ".
+        (join "\n    " => map $_->to_type_language, $self->{input_fields}->@*)."\n".
+    '}';
+}
+
+
 1;
 
 __END__

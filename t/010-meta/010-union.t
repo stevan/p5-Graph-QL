@@ -30,6 +30,7 @@ BEGIN {
 
 subtest '... testing my schema' => sub {
 
+    # http://facebook.github.io/graphql/June2018/#example-255de
     my $expected_type_language = q[
 scalar Int
 

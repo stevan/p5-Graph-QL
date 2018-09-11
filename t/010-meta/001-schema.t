@@ -122,6 +122,7 @@ schema {
 
 subtest '... testing another schema' => sub {
 
+    # http://facebook.github.io/graphql/June2018/#example-e2969
     my $expected_type_language = q[
 scalar String
 

@@ -91,8 +91,11 @@ sub is_output_type { 1 }
 sub to_type_language ($self) {
     # TODO:
     # handle the `description`
-    # handle any `interfaces`
-    return 'type '.$self->{name}.' {'."\n    ".
+    my $interfaces = '';
+    if ( $self->{interfaces}->@* ) {
+        $interfaces = ' implements '.(join ' & ' => map $_->name, $self->{interfaces}->@*);
+    }
+    return 'type '.$self->{name}.$interfaces.' {'."\n    ".
         (join "\n    " => map $_->to_type_language, $self->{fields}->@*)."\n".
     '}';
 }
