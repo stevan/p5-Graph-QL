@@ -46,7 +46,7 @@ my $ast    = JSON::MaybeXS->new->decode( $json );
 
 my $node = Graph::QL::AST::Builder->build_from_ast( $ast );
 
-#warn Dumper $node;
+#warn Dumper $node->TO_JSON;
 
 eq_or_diff($node->TO_JSON, $ast, '... round-tripped the ast');
 

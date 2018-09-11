@@ -15,7 +15,6 @@ sub camel_to_snake ($string) {
 sub snake_to_camel ($string) {
     my ($first, @rest) = String::CamelCase::wordsplit( $string );
     join '' => $first, map ucfirst, @rest;
-
 }
 
 1;
