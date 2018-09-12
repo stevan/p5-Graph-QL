@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Directive;
+package Graph::QL::Schema::Directive;
 
 use v5.24;
 use warnings;
@@ -58,16 +58,16 @@ sub BUILD ($self, $params) {
 
     if ( $self->{locations}->@* ) {
         foreach ( $self->{locations}->@* ) {
-            Carp::confess('The values in `locations` must be a value from the Graph::QL::Meta::Directive->Location enumeration, not '.$_)
+            Carp::confess('The values in `locations` must be a value from the Graph::QL::Schema::Directive->Location enumeration, not '.$_)
                 unless $self->Location->has_value_for( $_ );
         }
     }
 
     if ( $self->{args}->@* ) {
         foreach ( $self->{args}->@* ) {
-            Carp::confess('The values in `args` value must be an instance of `Graph::QL::Meta::InputValue`, not '.$_)
+            Carp::confess('The values in `args` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
                 unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::Meta::InputValue');
+                    && $_->isa('Graph::QL::Schema::InputValue');
         }
     }
 }

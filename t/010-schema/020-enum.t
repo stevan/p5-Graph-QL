@@ -9,8 +9,8 @@ use Test::Differences;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL::Meta::Type::Enum');
-    use_ok('Graph::QL::Meta::EnumValue');
+    use_ok('Graph::QL::Schema::Type::Enum');
+    use_ok('Graph::QL::Schema::EnumValue');
 }
 
 subtest '... testing my schema' => sub {
@@ -24,13 +24,13 @@ subtest '... testing my schema' => sub {
     WEST
 }';
 
-    my $Direction = Graph::QL::Meta::Type::Enum->new(
+    my $Direction = Graph::QL::Schema::Type::Enum->new(
         name        => 'Direction',
         enum_values => [
-            Graph::QL::Meta::EnumValue->new( name => 'NORTH' ),
-            Graph::QL::Meta::EnumValue->new( name => 'EAST'  ),
-            Graph::QL::Meta::EnumValue->new( name => 'SOUTH' ),
-            Graph::QL::Meta::EnumValue->new( name => 'WEST'  ),
+            Graph::QL::Schema::EnumValue->new( name => 'NORTH' ),
+            Graph::QL::Schema::EnumValue->new( name => 'EAST'  ),
+            Graph::QL::Schema::EnumValue->new( name => 'SOUTH' ),
+            Graph::QL::Schema::EnumValue->new( name => 'WEST'  ),
         ]
     );
 

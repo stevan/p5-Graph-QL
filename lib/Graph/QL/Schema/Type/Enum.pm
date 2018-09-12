@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::Enum;
+package Graph::QL::Schema::Type::Enum;
 
 use v5.24;
 use warnings;
@@ -10,9 +10,9 @@ use Scalar::Util ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type::Scalar';
+use parent 'Graph::QL::Schema::Type::Scalar';
 use slots (
-    kind        => sub { Graph::QL::Meta::Type->Kind->ENUM },
+    kind        => sub { Graph::QL::Schema::Type->Kind->ENUM },
     enum_values => sub { die 'You must supply `enum_values`' },
     # internal ...
     _enum_map   => sub { +{} }
@@ -36,9 +36,9 @@ sub BUILD ($self, $params) {
     my %map;
     foreach ( $self->{enum_values}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `enum_values` value must be an instance of `Graph::QL::Meta::EnumValue`, not '.$_)
+        Carp::confess('The values in `enum_values` value must be an instance of `Graph::QL::Schema::EnumValue`, not '.$_)
             unless Scalar::Util::blessed( $_ )
-                && $_->isa('Graph::QL::Meta::EnumValue');
+                && $_->isa('Graph::QL::Schema::EnumValue');
 
         # make sure our names are unique ...
         Carp::confess('The values in `enum_values` value must have unique names, found duplicate '.$_->name)

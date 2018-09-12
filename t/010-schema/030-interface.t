@@ -9,14 +9,14 @@ use Test::Differences;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL::Meta::Schema');
+    use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Meta::Type::Interface');
-    use_ok('Graph::QL::Meta::Type::Object');
-    use_ok('Graph::QL::Meta::Type::Scalar');
+    use_ok('Graph::QL::Schema::Type::Interface');
+    use_ok('Graph::QL::Schema::Type::Object');
+    use_ok('Graph::QL::Schema::Type::Scalar');
 
-    use_ok('Graph::QL::Meta::Field');
-    use_ok('Graph::QL::Meta::InputValue');
+    use_ok('Graph::QL::Schema::Field');
+    use_ok('Graph::QL::Schema::InputValue');
 }
 
 subtest '... testing my schema' => sub {
@@ -56,59 +56,59 @@ schema {
 }
 ];
 
-    my $Int    = Graph::QL::Meta::Type::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Meta::Type::Scalar->new( name => 'String' );
+    my $Int    = Graph::QL::Schema::Type::Scalar->new( name => 'Int' );
+    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
 
-    my $NamedEntity = Graph::QL::Meta::Type::Interface->new(
+    my $NamedEntity = Graph::QL::Schema::Type::Interface->new(
         name   => 'NamedEntity',
         fields => [
-            Graph::QL::Meta::Field->new( name => 'name', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'name', type => $String ),
         ]
     );
 
-    my $ValuedEntity = Graph::QL::Meta::Type::Interface->new(
+    my $ValuedEntity = Graph::QL::Schema::Type::Interface->new(
         name   => 'ValuedEntity',
         fields => [
-            Graph::QL::Meta::Field->new( name => 'value', type => $Int ),
+            Graph::QL::Schema::Field->new( name => 'value', type => $Int ),
         ]
     );
 
-    my $Person = Graph::QL::Meta::Type::Object->new(
+    my $Person = Graph::QL::Schema::Type::Object->new(
         name       => 'Person',
         interfaces => [ $NamedEntity ],
         fields     => [
-            Graph::QL::Meta::Field->new( name => 'name', type => $String ),
-            Graph::QL::Meta::Field->new( name => 'age',  type => $Int    ),
+            Graph::QL::Schema::Field->new( name => 'name', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
         ]
     );
 
-    my $Business = Graph::QL::Meta::Type::Object->new(
+    my $Business = Graph::QL::Schema::Type::Object->new(
         name       => 'Business',
         interfaces => [ $NamedEntity, $ValuedEntity ],
         fields     => [
-            Graph::QL::Meta::Field->new( name => 'name',          type => $String ),
-            Graph::QL::Meta::Field->new( name => 'value',         type => $Int    ),
-            Graph::QL::Meta::Field->new( name => 'employeeCount', type => $Int    ),
+            Graph::QL::Schema::Field->new( name => 'name',          type => $String ),
+            Graph::QL::Schema::Field->new( name => 'value',         type => $Int    ),
+            Graph::QL::Schema::Field->new( name => 'employeeCount', type => $Int    ),
         ]
     );
 
-    my $Query = Graph::QL::Meta::Type::Object->new(
+    my $Query = Graph::QL::Schema::Type::Object->new(
         name   => 'Query',
         fields => [
-            Graph::QL::Meta::Field->new(
+            Graph::QL::Schema::Field->new(
                 name => 'findByName',
-                args => [ Graph::QL::Meta::InputValue->new( name => 'name', type => $String ) ],
+                args => [ Graph::QL::Schema::InputValue->new( name => 'name', type => $String ) ],
                 type => $NamedEntity,
             ),
-            Graph::QL::Meta::Field->new(
+            Graph::QL::Schema::Field->new(
                 name => 'findByValue',
-                args => [ Graph::QL::Meta::InputValue->new( name => 'value', type => $Int ) ],
+                args => [ Graph::QL::Schema::InputValue->new( name => 'value', type => $Int ) ],
                 type => $ValuedEntity,
             ),
         ]
     );
 
-    my $schema = Graph::QL::Meta::Schema->new(
+    my $schema = Graph::QL::Schema->new(
         query_type => $Query,
         types => [
             $Int,

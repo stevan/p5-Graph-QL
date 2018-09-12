@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::Union;
+package Graph::QL::Schema::Type::Union;
 
 use v5.24;
 use warnings;
@@ -10,9 +10,9 @@ use Scalar::Util ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type::Scalar';
+use parent 'Graph::QL::Schema::Type::Scalar';
 use slots (
-    kind           => sub { Graph::QL::Meta::Type->Kind->UNION },
+    kind           => sub { Graph::QL::Schema::Type->Kind->UNION },
     possible_types => sub { die 'You must specify the `possible_types`' },
 );
 
@@ -32,9 +32,9 @@ sub BUILD ($self, $params) {
         unless scalar $self->{possible_types}->@* >= 1;
 
     foreach ( $self->{possible_types}->@* ) {
-        Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$_)
+        Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
             unless Scalar::Util::blessed( $_ )
-                && $_->isa('Graph::QL::Meta::Type::Object');
+                && $_->isa('Graph::QL::Schema::Type::Object');
     }
 }
 

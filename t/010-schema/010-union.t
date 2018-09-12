@@ -9,13 +9,13 @@ use Test::Differences;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL::Meta::Schema');
+    use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Meta::Type::Object');
-    use_ok('Graph::QL::Meta::Type::Scalar');
-    use_ok('Graph::QL::Meta::Type::Union');
+    use_ok('Graph::QL::Schema::Type::Object');
+    use_ok('Graph::QL::Schema::Type::Scalar');
+    use_ok('Graph::QL::Schema::Type::Union');
 
-    use_ok('Graph::QL::Meta::Field');
+    use_ok('Graph::QL::Schema::Field');
 }
 
 subtest '... testing my schema' => sub {
@@ -47,41 +47,41 @@ schema {
 }
 ];
 
-    my $Int    = Graph::QL::Meta::Type::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Meta::Type::Scalar->new( name => 'String' );
+    my $Int    = Graph::QL::Schema::Type::Scalar->new( name => 'Int' );
+    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
 
-    my $Person = Graph::QL::Meta::Type::Object->new(
+    my $Person = Graph::QL::Schema::Type::Object->new(
         name   => 'Person',
         fields => [
-            Graph::QL::Meta::Field->new( name => 'name', type => $String ),
-            Graph::QL::Meta::Field->new( name => 'age',  type => $Int    ),
+            Graph::QL::Schema::Field->new( name => 'name', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
         ]
     );
 
-    my $Photo = Graph::QL::Meta::Type::Object->new(
+    my $Photo = Graph::QL::Schema::Type::Object->new(
         name   => 'Photo',
         fields => [
-            Graph::QL::Meta::Field->new( name => 'height', type => $Int ),
-            Graph::QL::Meta::Field->new( name => 'width',  type => $Int ),
+            Graph::QL::Schema::Field->new( name => 'height', type => $Int ),
+            Graph::QL::Schema::Field->new( name => 'width',  type => $Int ),
         ]
     );
 
-    my $SearchResult = Graph::QL::Meta::Type::Union->new(
+    my $SearchResult = Graph::QL::Schema::Type::Union->new(
         name           => 'SearchResult',
         possible_types => [ $Photo, $Person ]
     );
 
-    my $SearchQuery = Graph::QL::Meta::Type::Object->new(
+    my $SearchQuery = Graph::QL::Schema::Type::Object->new(
         name   => 'SearchQuery',
         fields => [
-            Graph::QL::Meta::Field->new(
+            Graph::QL::Schema::Field->new(
                 name => 'firstSearchResult',
                 type => $SearchResult,
             )
         ]
     );
 
-    my $schema = Graph::QL::Meta::Schema->new(
+    my $schema = Graph::QL::Schema->new(
         query_type => $SearchQuery,
         types => [
             $Int,

@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Schema;
+package Graph::QL::Schema;
 
 use v5.24;
 use warnings;
@@ -29,35 +29,35 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `query_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{query_type})
+    Carp::confess('The `query_type` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$self->{query_type})
         unless Scalar::Util::blessed( $self->{query_type} )
-            && $self->{query_type}->isa('Graph::QL::Meta::Type::Object');
+            && $self->{query_type}->isa('Graph::QL::Schema::Type::Object');
 
     if ( exists $params->{mutation_type} ) {
-        Carp::confess('The `mutation_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{mutation_type})
+        Carp::confess('The `mutation_type` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$self->{mutation_type})
             unless Scalar::Util::blessed( $self->{mutation_type} )
-                && $self->{mutation_type}->isa('Graph::QL::Meta::Type::Object');
+                && $self->{mutation_type}->isa('Graph::QL::Schema::Type::Object');
     }
 
     if ( exists $params->{subscription_type} ) {
-        Carp::confess('The `subscription_type` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$self->{subscription_type})
+        Carp::confess('The `subscription_type` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$self->{subscription_type})
             unless Scalar::Util::blessed( $self->{subscription_type} )
-                && $self->{subscription_type}->isa('Graph::QL::Meta::Type::Object');
+                && $self->{subscription_type}->isa('Graph::QL::Schema::Type::Object');
     }
 
     if ( $self->{types}->@* ) {
         foreach ( $self->{types}->@* ) {
-            Carp::confess('The values in `types` value must be an instance of `Graph::QL::Meta::Type`, not '.$_)
+            Carp::confess('The values in `types` value must be an instance of `Graph::QL::Schema::Type`, not '.$_)
                 unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::Meta::Type');
+                    && $_->isa('Graph::QL::Schema::Type');
         }
     }
 
     if ( $self->{directives}->@* ) {
         foreach ( $self->{directives}->@* ) {
-            Carp::confess('The values in `directives` value must be an instance of `Graph::QL::Meta::Directive`, not '.$_)
+            Carp::confess('The values in `directives` value must be an instance of `Graph::QL::Schema::Directive`, not '.$_)
                 unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::Meta::Directive');
+                    && $_->isa('Graph::QL::Schema::Directive');
         }
     }
 

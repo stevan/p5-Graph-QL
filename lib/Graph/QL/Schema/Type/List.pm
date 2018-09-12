@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::NonNull;
+package Graph::QL::Schema::Type::List;
 
 use v5.24;
 use warnings;
@@ -10,9 +10,9 @@ use Scalar::Util ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type';
+use parent 'Graph::QL::Schema::Type';
 use slots (
-    kind    => sub { Graph::QL::Meta::Type->Kind->NON_NULL },
+    kind    => sub { Graph::QL::Schema::Type->Kind->LIST },
     of_type => sub { die 'You must supply an `on_type`' },
 );
 
@@ -21,15 +21,15 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    Carp::confess('The `of_type` value must be an instance of `Graph::QL::Meta::Type`, not '.$self->{of_type})
+    Carp::confess('The `of_type` value must be an instance of `Graph::QL::Schema::Type`, not '.$self->{of_type})
         unless Scalar::Util::blessed( $self->{of_type} )
-            && $self->{of_type}->isa('Graph::QL::Meta::Type');
+            && $self->{of_type}->isa('Graph::QL::Schema::Type');
 }
 
 sub of_type : ro;
 
 sub name ($self) {
-    return $self->{of_type}->name.'!';
+    return '['.$self->{of_type}->name.']';
 }
 
 # input/output type methods

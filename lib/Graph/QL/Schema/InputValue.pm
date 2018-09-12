@@ -1,4 +1,4 @@
-package Graph::QL::Meta::InputValue;
+package Graph::QL::Schema::InputValue;
 
 use v5.24;
 use warnings;
@@ -38,9 +38,9 @@ sub BUILD ($self, $params) {
             unless defined $self->{description};
     }
 
-    Carp::confess('The `type` must be an instance of `Graph::QL::Meta::Type` and an input-type, not '.$self->{type})
+    Carp::confess('The `type` must be an instance of `Graph::QL::Schema::Type` and an input-type, not '.$self->{type})
         unless Scalar::Util::blessed( $self->{type} )
-            && $self->{type}->isa('Graph::QL::Meta::Type')
+            && $self->{type}->isa('Graph::QL::Schema::Type')
             && $self->{type}->is_input_type;
 
     if ( exists $params->{default_value} ) {

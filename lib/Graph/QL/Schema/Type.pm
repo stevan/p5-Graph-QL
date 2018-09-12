@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type;
+package Graph::QL::Schema::Type;
 
 use v5.24;
 use warnings;
@@ -26,7 +26,7 @@ use slots (
 );
 
 sub BUILD ($self, $params) {
-    Carp::confess('The `kind` must be a value from the Graph::QL::Meta::Type->Kind enumeration, not '.$self->{kind})
+    Carp::confess('The `kind` must be a value from the Graph::QL::Schema::Type->Kind enumeration, not '.$self->{kind})
         unless $self->Kind->has_value_for( $self->{kind} );
 }
 

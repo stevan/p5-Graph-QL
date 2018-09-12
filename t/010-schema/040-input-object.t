@@ -9,9 +9,9 @@ use Test::Differences;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL::Meta::Type::InputObject');
-    use_ok('Graph::QL::Meta::Type::Scalar');
-    use_ok('Graph::QL::Meta::InputValue');
+    use_ok('Graph::QL::Schema::Type::InputObject');
+    use_ok('Graph::QL::Schema::Type::Scalar');
+    use_ok('Graph::QL::Schema::InputValue');
 }
 
 subtest '... testing my schema' => sub {
@@ -23,13 +23,13 @@ subtest '... testing my schema' => sub {
     y : Float
 }';
 
-    my $Float = Graph::QL::Meta::Type::Scalar->new( name => 'Float' );
+    my $Float = Graph::QL::Schema::Type::Scalar->new( name => 'Float' );
 
-    my $Point2D = Graph::QL::Meta::Type::InputObject->new(
+    my $Point2D = Graph::QL::Schema::Type::InputObject->new(
         name         => 'Point2D',
         input_fields => [
-            Graph::QL::Meta::InputValue->new( name => 'x', type => $Float ),
-            Graph::QL::Meta::InputValue->new( name => 'y', type => $Float ),
+            Graph::QL::Schema::InputValue->new( name => 'x', type => $Float ),
+            Graph::QL::Schema::InputValue->new( name => 'y', type => $Float ),
         ]
     );
 

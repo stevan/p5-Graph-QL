@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::Interface;
+package Graph::QL::Schema::Type::Interface;
 
 use v5.24;
 use warnings;
@@ -10,9 +10,9 @@ use Scalar::Util ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type::Scalar';
+use parent 'Graph::QL::Schema::Type::Scalar';
 use slots (
-    kind           => sub { Graph::QL::Meta::Type->Kind->INTERFACE },
+    kind           => sub { Graph::QL::Schema::Type->Kind->INTERFACE },
     fields         => sub { die 'You must supply a set of `fields`' },
     possible_types => sub { +[] },
     # internal ...
@@ -38,9 +38,9 @@ sub BUILD ($self, $params) {
     my %field_map;
     foreach ( $self->{fields}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `fields` value must be an instance of `Graph::QL::Meta::Field`, not '.$_)
+        Carp::confess('The values in `fields` value must be an instance of `Graph::QL::Schema::Field`, not '.$_)
             unless Scalar::Util::blessed( $_ )
-                && $_->isa('Graph::QL::Meta::Field');
+                && $_->isa('Graph::QL::Schema::Field');
 
         # make sure our names are unique ...
         Carp::confess('The values in `fields` value must have unique names, found duplicate '.$_->name)
@@ -56,9 +56,9 @@ sub BUILD ($self, $params) {
     # check the possible types that implement this interface ...
     if ( $self->{possible_types}->@* ) {
         foreach ( $self->{possible_types}->@* ) {
-            Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Meta::Type::Object`, not '.$_)
+            Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
                 unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::Meta::Type::Object');
+                    && $_->isa('Graph::QL::Schema::Type::Object');
         }
     }
 }

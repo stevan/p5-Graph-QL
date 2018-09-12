@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::InputObject;
+package Graph::QL::Schema::Type::InputObject;
 
 use v5.24;
 use warnings;
@@ -10,9 +10,9 @@ use Scalar::Util ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type::Scalar';
+use parent 'Graph::QL::Schema::Type::Scalar';
 use slots (
-    kind         => sub { Graph::QL::Meta::Type->Kind->INPUT_OBJECT },
+    kind         => sub { Graph::QL::Schema::Type->Kind->INPUT_OBJECT },
     input_fields => sub { +[] },
     # internal ...
     _field_map   => sub { +{} },
@@ -36,9 +36,9 @@ sub BUILD ($self, $params) {
     my %map;
     foreach ( $self->{input_fields}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `input_fields` value must be an instance of `Graph::QL::Meta::InputValue`, not '.$_)
+        Carp::confess('The values in `input_fields` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
             unless Scalar::Util::blessed( $_ )
-                && $_->isa('Graph::QL::Meta::InputValue');
+                && $_->isa('Graph::QL::Schema::InputValue');
 
         # make sure our names are unique ...
         Carp::confess('The values in `input_fields` value must have unique names, found duplicate '.$_->name)

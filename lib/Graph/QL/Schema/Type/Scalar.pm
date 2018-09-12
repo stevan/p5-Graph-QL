@@ -1,4 +1,4 @@
-package Graph::QL::Meta::Type::Scalar;
+package Graph::QL::Schema::Type::Scalar;
 
 use v5.24;
 use warnings;
@@ -9,9 +9,9 @@ use Carp ();
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Meta::Type';
+use parent 'Graph::QL::Schema::Type';
 use slots (
-    kind        => sub { Graph::QL::Meta::Type->Kind->SCALAR },
+    kind        => sub { Graph::QL::Schema::Type->Kind->SCALAR },
     name        => sub { die 'You must supply a `name`' },
     description => sub {},
 );
