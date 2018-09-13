@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -24,11 +25,11 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `operation` value must be an `OperationKind`')
+    throw('The `operation` must be of type(OperationKind), not `%s`', $self->{operation})
         unless defined $self->{operation};
     
-    Carp::confess('The `type` value must be an instance of `Graph::QL::AST::Node::NamedType`, not '.$self->{type})
-        unless Scalar::Util::blessed( $self->{type} )
+    throw('The `type` must be of type(Graph::QL::AST::Node::NamedType), not `%s`', $self->{type})
+        unless Ref::Util::is_blessed_ref( $self->{type} )
             && $self->{type}->isa('Graph::QL::AST::Node::NamedType');
     
 }

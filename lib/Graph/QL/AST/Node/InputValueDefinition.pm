@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -28,29 +29,27 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` value must be an instance of `Graph::QL::AST::Node::Name`, not '.$self->{name})
-        unless Scalar::Util::blessed( $self->{name} )
+    throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
+        unless Ref::Util::is_blessed_ref( $self->{name} )
             && $self->{name}->isa('Graph::QL::AST::Node::Name');
     
-    Carp::confess('The `type` value must be an instance of `Graph::QL::AST::Node::Role::Type`, not '.$self->{type})
-        unless Scalar::Util::blessed( $self->{type} )
+    throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
+        unless Ref::Util::is_blessed_ref( $self->{type} )
             && $self->{type}->roles::DOES('Graph::QL::AST::Node::Role::Type');
     
     if ( exists $params->{default_value} ) {
-        Carp::confess('The `default_value` value must be an instance of `Graph::QL::AST::Node::Role::Value`, not '.$self->{default_value})
-            unless Scalar::Util::blessed( $self->{default_value} )
+        throw('The `default_value` must be of type(Graph::QL::AST::Node::Role::Value), not `%s`', $self->{default_value})
+            unless Ref::Util::is_blessed_ref( $self->{default_value} )
                 && $self->{default_value}->roles::DOES('Graph::QL::AST::Node::Role::Value');
     }
     
-    Carp::confess('The `directives` value must be an ARRAY ref')
-        unless ref $self->{directives} eq 'ARRAY';
+    throw('The `directives` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{directives} );
     
-    if ( $self->{directives}->@* ) {
-        foreach ( $self->{directives}->@* ) {
-            Carp::confess('The values in `directives` value must be an instance of `Graph::QL::AST::Node::Directive`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::AST::Node::Directive');
-        }
+    foreach ( $self->{directives}->@* ) {
+         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
+            unless Ref::Util::is_blessed_ref( $_ )
+                && $_->isa('Graph::QL::AST::Node::Directive');
     }
     
 }

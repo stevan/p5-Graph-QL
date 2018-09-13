@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -29,27 +30,25 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` value must be an instance of `Graph::QL::AST::Node::Name`, not '.$self->{name})
-        unless Scalar::Util::blessed( $self->{name} )
+    throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
+        unless Ref::Util::is_blessed_ref( $self->{name} )
             && $self->{name}->isa('Graph::QL::AST::Node::Name');
     
-    Carp::confess('The `type_condition` value must be an instance of `Graph::QL::AST::Node::NamedType`, not '.$self->{type_condition})
-        unless Scalar::Util::blessed( $self->{type_condition} )
+    throw('The `type_condition` must be of type(Graph::QL::AST::Node::NamedType), not `%s`', $self->{type_condition})
+        unless Ref::Util::is_blessed_ref( $self->{type_condition} )
             && $self->{type_condition}->isa('Graph::QL::AST::Node::NamedType');
     
-    Carp::confess('The `directives` value must be an ARRAY ref')
-        unless ref $self->{directives} eq 'ARRAY';
+    throw('The `directives` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{directives} );
     
-    if ( $self->{directives}->@* ) {
-        foreach ( $self->{directives}->@* ) {
-            Carp::confess('The values in `directives` value must be an instance of `Graph::QL::AST::Node::Directive`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::AST::Node::Directive');
-        }
+    foreach ( $self->{directives}->@* ) {
+         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
+            unless Ref::Util::is_blessed_ref( $_ )
+                && $_->isa('Graph::QL::AST::Node::Directive');
     }
     
-    Carp::confess('The `selection_set` value must be an instance of `Graph::QL::AST::Node::SelectionSet`, not '.$self->{selection_set})
-        unless Scalar::Util::blessed( $self->{selection_set} )
+    throw('The `selection_set` must be of type(Graph::QL::AST::Node::SelectionSet), not `%s`', $self->{selection_set})
+        unless Ref::Util::is_blessed_ref( $self->{selection_set} )
             && $self->{selection_set}->isa('Graph::QL::AST::Node::SelectionSet');
     
 }

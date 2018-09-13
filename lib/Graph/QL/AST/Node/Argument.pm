@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -24,12 +25,12 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` value must be an instance of `Graph::QL::AST::Node::Name`, not '.$self->{name})
-        unless Scalar::Util::blessed( $self->{name} )
+    throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
+        unless Ref::Util::is_blessed_ref( $self->{name} )
             && $self->{name}->isa('Graph::QL::AST::Node::Name');
     
-    Carp::confess('The `value` value must be an instance of `Graph::QL::AST::Node::Role::Value`, not '.$self->{value})
-        unless Scalar::Util::blessed( $self->{value} )
+    throw('The `value` must be of type(Graph::QL::AST::Node::Role::Value), not `%s`', $self->{value})
+        unless Ref::Util::is_blessed_ref( $self->{value} )
             && $self->{value}->roles::DOES('Graph::QL::AST::Node::Role::Value');
     
 }

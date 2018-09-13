@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -23,8 +24,8 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `definition` value must be an instance of `Graph::QL::AST::Node::ObjectTypeDefinition`, not '.$self->{definition})
-        unless Scalar::Util::blessed( $self->{definition} )
+    throw('The `definition` must be of type(Graph::QL::AST::Node::ObjectTypeDefinition), not `%s`', $self->{definition})
+        unless Ref::Util::is_blessed_ref( $self->{definition} )
             && $self->{definition}->isa('Graph::QL::AST::Node::ObjectTypeDefinition');
     
 }

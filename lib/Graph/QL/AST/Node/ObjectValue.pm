@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -23,15 +24,13 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `fields` value must be an ARRAY ref')
-        unless ref $self->{fields} eq 'ARRAY';
+    throw('The `fields` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{fields} );
     
-    if ( $self->{fields}->@* ) {
-        foreach ( $self->{fields}->@* ) {
-            Carp::confess('The values in `fields` value must be an instance of `Graph::QL::AST::Node::ObjectField`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::AST::Node::ObjectField');
-        }
+    foreach ( $self->{fields}->@* ) {
+         throw('The values in `fields` must all be of type(Graph::QL::AST::Node::ObjectField), not `%s`', $_ )
+            unless Ref::Util::is_blessed_ref( $_ )
+                && $_->isa('Graph::QL::AST::Node::ObjectField');
     }
     
 }

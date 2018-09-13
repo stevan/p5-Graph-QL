@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -27,30 +28,26 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` value must be an instance of `Graph::QL::AST::Node::Name`, not '.$self->{name})
-        unless Scalar::Util::blessed( $self->{name} )
+    throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
+        unless Ref::Util::is_blessed_ref( $self->{name} )
             && $self->{name}->isa('Graph::QL::AST::Node::Name');
     
-    Carp::confess('The `arguments` value must be an ARRAY ref')
-        unless ref $self->{arguments} eq 'ARRAY';
+    throw('The `arguments` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{arguments} );
     
-    if ( $self->{arguments}->@* ) {
-        foreach ( $self->{arguments}->@* ) {
-            Carp::confess('The values in `arguments` value must be an instance of `Graph::QL::AST::Node::InputValueDefinition`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::AST::Node::InputValueDefinition');
-        }
+    foreach ( $self->{arguments}->@* ) {
+         throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::InputValueDefinition), not `%s`', $_ )
+            unless Ref::Util::is_blessed_ref( $_ )
+                && $_->isa('Graph::QL::AST::Node::InputValueDefinition');
     }
     
-    Carp::confess('The `locations` value must be an ARRAY ref')
-        unless ref $self->{locations} eq 'ARRAY';
+    throw('The `locations` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{locations} );
     
-    if ( $self->{locations}->@* ) {
-        foreach ( $self->{locations}->@* ) {
-            Carp::confess('The values in `locations` value must be an instance of `Graph::QL::AST::Node::Name`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
-                    && $_->isa('Graph::QL::AST::Node::Name');
-        }
+    foreach ( $self->{locations}->@* ) {
+         throw('The values in `locations` must all be of type(Graph::QL::AST::Node::Name), not `%s`', $_ )
+            unless Ref::Util::is_blessed_ref( $_ )
+                && $_->isa('Graph::QL::AST::Node::Name');
     }
     
 }
