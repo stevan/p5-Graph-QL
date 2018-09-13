@@ -14,14 +14,14 @@ our $VERSION = '0.01';
 use parent 'Graph::QL::Schema::Type::Scalar';
 use slots (
     kind           => sub { Graph::QL::Schema::Type->Kind->INTERFACE },
-    fields         => sub { die 'You must supply a set of `fields`' },
+    fields         => sub { +[] },
     possible_types => sub { +[] },
     # internal ...
     _field_map     => sub { +{} },
 );
 
 sub BUILDARGS : strict(
-    fields          => fields,
+    fields?         => fields,
     possible_types? => possible_types,
     name            => super(name),
     description?    => super(description),
@@ -32,8 +32,8 @@ sub BUILD ($self, $params) {
     throw('The `fields` value must be an ARRAY ref')
         unless Ref::Util::is_arrayref( $self->{fields} );
 
-    throw('The `fields` value must be one or more types')
-        unless scalar $self->{fields}->@* >= 1;
+    #throw('The `fields` value must be one or more types')
+    #    unless scalar $self->{fields}->@* >= 1;
 
     my %field_map;
     foreach ( $self->{fields}->@* ) {

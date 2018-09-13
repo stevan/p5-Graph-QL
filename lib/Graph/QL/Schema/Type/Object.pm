@@ -21,7 +21,7 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    fields       => fields,
+    fields?      => fields,
     interfaces?  => interfaces,
     name         => super(name),
     description? => super(description),
@@ -33,8 +33,8 @@ sub BUILD ($self, $params) {
         unless defined $self->{fields}
             && Ref::Util::is_arrayref( $self->{fields} );
 
-    throw('The `fields` value must be one or more fields')
-        unless scalar $self->{fields}->@* >= 1;
+    #throw('The `fields` value must be one or more fields')
+    #    unless scalar $self->{fields}->@* >= 1;
 
     my %field_map;
     foreach ( $self->{fields}->@* ) {
