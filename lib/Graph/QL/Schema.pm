@@ -81,14 +81,14 @@ sub directives : ro;
 sub to_type_language ($self) {
     # TODO:
     # handle the `directives`
-    return "\n".# print the types first ...
-        (join "\n\n" => map $_->to_type_language, $self->{types}->@*)
-        ."\n\n". # followed by the base `schema` object
+    return ($self->{types}->@* # print the types first ...
+        ? ("\n".(join "\n\n" => map $_->to_type_language, $self->{types}->@*)."\n\n")
+        : ''). # followed by the base `schema` object
         'schema {'."\n    ".
             'query : '.$self->query_type->name."\n".
             ($self->has_mutation_type     ? (    '    mutation : '.$self->mutation_type->name."\n")     : '').
             ($self->has_subscription_type ? ('    subscription : '.$self->subscription_type->name."\n") : '').
-        '}'."\n";
+        '}'.($self->{types}->@* ? "\n" : '');
 }
 
 1;
