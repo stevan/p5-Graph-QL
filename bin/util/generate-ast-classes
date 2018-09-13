@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 
+# PODNAME: bin/util/generate-ast-classes
+# ABSTRACT: Generate a set of AST classes from the share/ast/ast.ast file
+
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
@@ -129,19 +132,11 @@ our $VERSION = '].$Graph::QL::AST::Node::VERSION.q[';
 1;
 
 __END__
-
-=pod
-
-This role is consumed by the following classes:
-
-=over 4
-
-].(join "\n\n" => map '=item C<'.$_.'>', @consumers).q[
-
-=back
-
-=cut
-];
+].
+"\n=pod\n\nThis role is consumed by the following classes:".
+"\n\n=over 4\n\n".
+(join "\n\n" => map '=item C<'.$_.'>', @consumers).
+"\n=back\n\n=cut\n";
 }
 
 sub generate_class ($name, $definition) {
@@ -260,10 +255,6 @@ sub BUILD ($self, $params) {
 1;
 
 __END__
-
-=pod
-
-=cut
-];
+]."\n=pod\n\n=cut\n";
 }
 

@@ -1,5 +1,5 @@
 package Graph::QL::AST::Builder;
-
+# ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
