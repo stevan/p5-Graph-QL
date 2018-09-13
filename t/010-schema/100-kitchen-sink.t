@@ -182,7 +182,7 @@ q[enum Site {
     eq_or_diff($enum->to_type_language, $string, '... the type language roundtripped');
 };
 
-subtest '... enum' => sub {
+subtest '... input-object' => sub {
     my $string =
 q[input InputType {
     key : String!
