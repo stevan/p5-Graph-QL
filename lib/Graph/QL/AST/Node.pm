@@ -5,10 +5,10 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors';
 
-use Carp         ();
 use Scalar::Util ();
 
-use Graph::QL::AST::Util;
+use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Strings;
 
 our $VERSION = '0.01';
 
@@ -21,21 +21,21 @@ sub BUILD ($self, $) {
 
     my $loc = $self->{location};
 
-    Carp::confess('The `location` field must be a HASH ref')
+    throw('The `location` field must be a HASH ref')
         unless ref $loc eq 'HASH';
 
-    Carp::confess('The `location` HASH ref must have both a `start` and `end` entry')
+    throw('The `location` HASH ref must have both a `start` and `end` entry')
         unless exists $loc->{start}
             && exists $loc->{end};
 
     my ($start, $end) = $loc->@{'start', 'end'};
 
-    Carp::confess('The `start` entry in the `location` HASH ref must have both a `line` and `column` entry')
+    throw('The `start` entry in the `location` HASH ref must have both a `line` and `column` entry')
         unless ref $start eq 'HASH'
             && exists $start->{line}
             && exists $start->{column};
 
-    Carp::confess('The `end` entry in the `location` HASH ref must have both a `line` and `column` entry')
+    throw('The `end` entry in the `location` HASH ref must have both a `line` and `column` entry')
         unless ref $end eq 'HASH'
             && exists $end->{line}
             && exists $end->{column};
@@ -56,7 +56,7 @@ sub TO_JSON ($self, @) {
     foreach my $key ( keys %json ) {
 
         if ( $key =~ /_/ ) {
-            my $new_key = Graph::QL::AST::Util::snake_to_camel( $key );
+            my $new_key = Graph::QL::Util::Strings::snake_to_camel( $key );
             $json{ $new_key } = delete $json{ $key };
             $key = $new_key;
         }

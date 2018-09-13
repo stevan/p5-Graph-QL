@@ -5,7 +5,7 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors';
 
-use Carp ();
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -26,7 +26,7 @@ use slots (
 );
 
 sub BUILD ($self, $params) {
-    Carp::confess('The `kind` must be a value from the Graph::QL::Schema::Type->Kind enumeration, not '.$self->{kind})
+    throw('The `kind` must be a value from the Graph::QL::Schema::Type->Kind enumeration, not %s', $self->{kind})
         unless $self->Kind->has_value_for( $self->{kind} );
 }
 
