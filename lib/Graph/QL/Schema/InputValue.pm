@@ -64,7 +64,6 @@ sub has_default_value : predicate;
 sub to_type_language ($self) {
     # TODO:
     # handle the `description`
-    # handle the `default_value`
     return $self->{name}.' : '.$self->{type}->name.($self->{default_value} ? ' = '.$self->{default_value} : '');
 }
 
