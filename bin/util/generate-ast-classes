@@ -120,7 +120,7 @@ sub generate_role ($name, $consumers) {
     my @consumers = map expand_type($_), sort keys $consumers->%*;
 
     my $source = q[package ].expand_type($name).q[;
-
+# ABSTRACT: Abstract AST Node for GraphQL in Perl
 use v5.24;
 use warnings;
 
@@ -224,7 +224,7 @@ sub generate_class ($name, $definition) {
     }
 
     my $source = q[package ].expand_type($name).q[;
-
+# ABSTRACT: AST Node for GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';

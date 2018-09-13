@@ -1,5 +1,5 @@
 package Graph::QL::Schema::Type::InputObject;
-
+# ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';

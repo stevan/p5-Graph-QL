@@ -1,5 +1,5 @@
 package Graph::QL;
-
+# ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 

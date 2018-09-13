@@ -1,5 +1,5 @@
 package Graph::QL::AST::Node::Role::Value;
-
+# ABSTRACT: Abstract AST Node for GraphQL in Perl
 use v5.24;
 use warnings;
 

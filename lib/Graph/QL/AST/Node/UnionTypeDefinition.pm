@@ -1,5 +1,5 @@
 package Graph::QL::AST::Node::UnionTypeDefinition;
-
+# ABSTRACT: AST Node for GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
