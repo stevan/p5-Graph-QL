@@ -18,9 +18,9 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    name       => name,
-    arguments? => arguments,
-    location   => super(location),
+    name        => name,
+    arguments?  => arguments,
+    location?   => super(location),
 );
 
 sub BUILD ($self, $params) {

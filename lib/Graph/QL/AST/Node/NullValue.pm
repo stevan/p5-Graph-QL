@@ -16,7 +16,7 @@ use roles  'Graph::QL::AST::Node::Role::Value';
 use slots;
 
 sub BUILDARGS : strict(
-    location => super(location),
+    location? => super(location),
 );
 
 

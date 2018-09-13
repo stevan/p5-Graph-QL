@@ -18,8 +18,8 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    fields?   => fields,
-    location  => super(location),
+    fields?    => fields,
+    location?  => super(location),
 );
 
 sub BUILD ($self, $params) {

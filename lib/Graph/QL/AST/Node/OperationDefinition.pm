@@ -22,12 +22,12 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    operation             => operation,
-    name?                 => name,
-    variable_definitions? => variable_definitions,
-    directives?           => directives,
-    selection_set         => selection_set,
-    location              => super(location),
+    operation              => operation,
+    name?                  => name,
+    variable_definitions?  => variable_definitions,
+    directives?            => directives,
+    selection_set          => selection_set,
+    location?              => super(location),
 );
 
 sub BUILD ($self, $params) {

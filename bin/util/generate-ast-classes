@@ -136,7 +136,7 @@ __END__
 "\n=pod\n\nThis role is consumed by the following classes:".
 "\n\n=over 4\n\n".
 (join "\n\n" => map '=item C<'.$_.'>', @consumers).
-"\n=back\n\n=cut\n";
+"\n\n=back\n\n=cut\n";
 }
 
 sub generate_class ($name, $definition) {
@@ -154,6 +154,7 @@ sub generate_class ($name, $definition) {
 
     my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
     my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
+       $ctor_name_width += 1; # add the ? to indicate optional inherited fields
 
     foreach my $field ( $definition->{fields}->@* ) {
 
@@ -207,7 +208,7 @@ sub generate_class ($name, $definition) {
 
     # add the location one as well
     foreach my $inherited ( @inherited_fields ) {
-        push @constructor => sprintf "%-${ctor_name_width}s => super(%s)," => $inherited, $inherited;
+        push @constructor => sprintf "%-${ctor_name_width}s => super(%s)," => $inherited.'?', $inherited;
     }
 
     my $add_role_if_needed = "\n";

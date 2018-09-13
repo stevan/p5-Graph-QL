@@ -20,10 +20,10 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    name        => name,
-    directives? => directives,
-    fields?     => fields,
-    location    => super(location),
+    name         => name,
+    directives?  => directives,
+    fields?      => fields,
+    location?    => super(location),
 );
 
 sub BUILD ($self, $params) {

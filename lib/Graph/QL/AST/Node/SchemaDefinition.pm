@@ -19,9 +19,9 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    directives?      => directives,
-    operation_types? => operation_types,
-    location         => super(location),
+    directives?       => directives,
+    operation_types?  => operation_types,
+    location?         => super(location),
 );
 
 sub BUILD ($self, $params) {

@@ -17,8 +17,8 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    definitions? => definitions,
-    location     => super(location),
+    definitions?  => definitions,
+    location?     => super(location),
 );
 
 sub BUILD ($self, $params) {

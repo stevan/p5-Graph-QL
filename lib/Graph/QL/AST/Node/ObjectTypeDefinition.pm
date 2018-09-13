@@ -21,11 +21,11 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    name        => name,
-    interfaces? => interfaces,
-    directives? => directives,
-    fields?     => fields,
-    location    => super(location),
+    name         => name,
+    interfaces?  => interfaces,
+    directives?  => directives,
+    fields?      => fields,
+    location?    => super(location),
 );
 
 sub BUILD ($self, $params) {

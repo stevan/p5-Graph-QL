@@ -14,7 +14,16 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    location => sub { die 'You must supply a `location` for the Node' },
+    location => sub {
+        # this is not really sensible, but
+        # without a parse, nothing would
+        # actually make sense anyway, ...
+        #  ¯\_(ツ)_/¯
+        return +{
+            start => { line => 0, column => 0 },
+            end   => { line => 0, column => 0 },
+        }
+    },
 );
 
 sub BUILD ($self, $) {

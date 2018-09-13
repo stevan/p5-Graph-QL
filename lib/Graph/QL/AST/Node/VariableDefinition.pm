@@ -19,10 +19,10 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    variable       => variable,
-    type           => type,
-    default_value? => default_value,
-    location       => super(location),
+    variable        => variable,
+    type            => type,
+    default_value?  => default_value,
+    location?       => super(location),
 );
 
 sub BUILD ($self, $params) {

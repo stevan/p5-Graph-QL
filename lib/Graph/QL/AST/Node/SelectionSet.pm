@@ -17,8 +17,8 @@ use slots (
 );
 
 sub BUILDARGS : strict(
-    selections? => selections,
-    location    => super(location),
+    selections?  => selections,
+    location?    => super(location),
 );
 
 sub BUILD ($self, $params) {
