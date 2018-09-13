@@ -60,6 +60,13 @@ subscription StoryLikeSubscription($input: StoryLikeSubscribeInput) {
   }
 }
 
+# NOTE:
+# I had to remove this, the string parsing was not working
+# and I was unable to figure out why (honestly, didnt look
+# that deep (yet)), so this should be uncommented sometime
+# and figure out what it going wrong with it.
+# - SL
+# vv---------------------vv
 # fragment frag on Friend {
 #   foo(size: $size, bar: $b, obj: {key: "value", block: """
 #
