@@ -1,4 +1,4 @@
-package Graph::QL::AST::Util;
+package Graph::QL::Util::Strings;
 
 use v5.24;
 use warnings;

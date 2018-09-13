@@ -4,11 +4,9 @@ use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
-use Carp            ();
-use Scalar::Util    ();
 use Module::Runtime ();
 
-use Graph::QL::AST::Util;
+use Graph::QL::Util::Strings;
 
 our $VERSION = '0.01';
 
@@ -27,7 +25,7 @@ sub build_from_ast ($class, $ast) {
 
         next unless defined $ast->{ $key };
 
-        my $slot = Graph::QL::AST::Util::camel_to_snake( $key );
+        my $slot = Graph::QL::Util::Strings::camel_to_snake( $key );
 
         if ( ref $ast->{ $key } eq 'ARRAY' ) {
             $args{ $slot } = [ map $class->build_from_ast( $_ ), $ast->{ $key }->@* ];

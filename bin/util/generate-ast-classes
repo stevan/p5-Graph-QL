@@ -10,7 +10,7 @@ use List::Util ();
 use Path::Tiny ();
 
 use Graph::QL::AST::Node;
-use Graph::QL::AST::Util;
+use Graph::QL::Util::Strings;
 
 ## ...
 
@@ -72,7 +72,7 @@ while ( @ast_lines ) {
         my ($type, $name) = @rest;
         $current->{fields} ||= [];
         push $current->{fields}->@* => {
-            name        => Graph::QL::AST::Util::camel_to_snake( $name ),
+            name        => Graph::QL::Util::Strings::camel_to_snake( $name ),
             type        => $type,
             is_plural   => $is_plural,
             is_nullable => $is_nullable
