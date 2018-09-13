@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -27,16 +28,16 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` must be a defined value')
+    throw('The `name` must be a defined value')
         unless defined $self->{name};
 
     if ( exists $params->{description} ) {
-        Carp::confess('The `description` must be a defined value')
+        throw('The `description` must be a defined value')
             unless defined $self->{description};
     }
 
     if ( exists $params->{deprecation_reason} ) {
-        Carp::confess('The `deprecation_reason` must be a defined value')
+        throw('The `deprecation_reason` must be a defined value')
             unless defined $self->{deprecation_reason};
     }
 

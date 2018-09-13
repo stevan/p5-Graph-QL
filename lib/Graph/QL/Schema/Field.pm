@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -31,39 +32,38 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` must be a defined value')
+    throw('The `name` must be a defined value')
         unless defined $self->{name};
 
-    Carp::confess('The `name` must not start with `__`')
+    throw('The `name` must not start with `__`')
         if $self->{name} =~ /^__/;
 
     if ( exists $params->{description} ) {
-        Carp::confess('The `description` must be a defined value')
+        throw('The `description` must be a defined value')
             unless defined $self->{description};
     }
 
-    Carp::confess('The `type` must be an instance of `Graph::QL::Schema::Type` and must be an output-type, not '.$self->{type})
-        unless Scalar::Util::blessed( $self->{type} )
+    throw('The `type` must be an instance of `Graph::QL::Schema::Type` and must be an output-type, not '.$self->{type})
+        unless Ref::Util::is_blessed_ref( $self->{type} )
             && $self->{type}->isa('Graph::QL::Schema::Type')
             && $self->{type}->is_output_type;
 
     if ( exists $params->{args} ) {
-        Carp::confess('The `args` value must be an ARRAY ref')
-            unless defined $self->{args}
-                && ref $self->{args} eq 'ARRAY';
+        throw('The `args` value must be an ARRAY ref')
+            unless Ref::Util::is_arrayref( $self->{args} );
 
-        Carp::confess('The `args` value must be one or more args')
+        throw('The `args` value must be one or more args')
             unless scalar $self->{args}->@* >= 1;
 
         foreach ( $self->{args}->@* ) {
-            Carp::confess('The values in `args` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
+            throw('The values in `args` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
+                unless Ref::Util::is_blessed_ref( $_ )
                     && $_->isa('Graph::QL::Schema::InputValue');
         }
     }
 
     if ( exists $params->{deprecation_reason} ) {
-        Carp::confess('The `deprecation_reason` must be a defined value')
+        throw('The `deprecation_reason` must be a defined value')
             unless defined $self->{deprecation_reason};
     }
 

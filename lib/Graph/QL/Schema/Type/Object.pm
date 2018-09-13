@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -28,22 +29,22 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `fields` value must be an ARRAY ref')
+    throw('The `fields` value must be an ARRAY ref')
         unless defined $self->{fields}
-            && ref $self->{fields} eq 'ARRAY';
+            && Ref::Util::is_arrayref( $self->{fields} );
 
-    Carp::confess('The `fields` value must be one or more fields')
+    throw('The `fields` value must be one or more fields')
         unless scalar $self->{fields}->@* >= 1;
 
     my %field_map;
     foreach ( $self->{fields}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `fields` value must be an instance of `Graph::QL::Schema::Field`, not '.$_)
-            unless Scalar::Util::blessed( $_ )
+        throw('The values in `fields` value must be an instance of `Graph::QL::Schema::Field`, not '.$_)
+            unless Ref::Util::is_blessed_ref( $_ )
                 && $_->isa('Graph::QL::Schema::Field');
 
         # make sure our names are unique ...
-        Carp::confess('The values in `fields` value must have unique names, found duplicate '.$_->name)
+        throw('The values in `fields` value must have unique names, found duplicate '.$_->name)
             if exists $field_map{ $_->name };
 
         # note that we've seen it ...
@@ -59,8 +60,8 @@ sub BUILD ($self, $params) {
         # look through each one ...
         foreach ( $self->{interfaces}->@* ) {
 
-            Carp::confess('The values in `interfaces` value must be an instance of `Graph::QL::Schema::Type::Interface`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
+            throw('The values in `interfaces` value must be an instance of `Graph::QL::Schema::Type::Interface`, not '.$_)
+                unless Ref::Util::is_blessed_ref( $_ )
                     && $_->isa('Graph::QL::Schema::Type::Interface');
 
             # TODO:

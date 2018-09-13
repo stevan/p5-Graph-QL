@@ -5,7 +5,7 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp ();
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -22,11 +22,11 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    Carp::confess('The `name` must be a defined value')
+    throw('The `name` must be a defined value')
         unless defined $self->{name};
 
     if ( exists $params->{description} ) {
-        Carp::confess('The `description` must be a defined value')
+        throw('The `description` must be a defined value')
             unless defined $self->{description};
     }
 }

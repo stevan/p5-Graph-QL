@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -27,24 +28,24 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `name` must be a defined value')
+    throw('The `name` must be a defined value')
         unless defined $self->{name};
 
-    Carp::confess('The `name` must not start with `__`')
+    throw('The `name` must not start with `__`')
         if $self->{name} =~ /^__/;
 
     if ( exists $params->{description} ) {
-        Carp::confess('The `description` must be a defined value')
+        throw('The `description` must be a defined value')
             unless defined $self->{description};
     }
 
-    Carp::confess('The `type` must be an instance of `Graph::QL::Schema::Type` and an input-type, not '.$self->{type})
-        unless Scalar::Util::blessed( $self->{type} )
+    throw('The `type` must be an instance of `Graph::QL::Schema::Type` and an input-type, not '.$self->{type})
+        unless Ref::Util::is_blessed_ref( $self->{type} )
             && $self->{type}->isa('Graph::QL::Schema::Type')
             && $self->{type}->is_input_type;
 
     if ( exists $params->{default_value} ) {
-        Carp::confess('The `default_value` must be a defined value')
+        throw('The `default_value` must be a defined value')
             unless defined $self->{default_value};
     }
 }

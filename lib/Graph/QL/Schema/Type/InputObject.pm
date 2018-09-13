@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -26,22 +27,21 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `input_fields` value must be an ARRAY ref')
-        unless defined $self->{input_fields}
-            && ref $self->{input_fields} eq 'ARRAY';
+    throw('The `input_fields` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{input_fields} );
 
-    Carp::confess('The `input_fields` value must be one or more types')
+    throw('The `input_fields` value must be one or more types')
         unless scalar $self->{input_fields}->@* >= 1;
 
     my %map;
     foreach ( $self->{input_fields}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `input_fields` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
-            unless Scalar::Util::blessed( $_ )
+        throw('The values in `input_fields` value must be an instance of `Graph::QL::Schema::InputValue`, not '.$_)
+            unless Ref::Util::is_blessed_ref( $_ )
                 && $_->isa('Graph::QL::Schema::InputValue');
 
         # make sure our names are unique ...
-        Carp::confess('The values in `input_fields` value must have unique names, found duplicate '.$_->name)
+        throw('The values in `input_fields` value must have unique names, found duplicate '.$_->name)
             if exists $map{ $_->name };
 
         # note that we've seen it ...

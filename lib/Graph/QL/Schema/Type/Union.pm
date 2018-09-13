@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -24,16 +25,15 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `possible_types` value must be an ARRAY ref')
-        unless defined $self->{possible_types}
-            && ref $self->{possible_types} eq 'ARRAY';
+    throw('The `possible_types` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{possible_types} );
 
-    Carp::confess('The `possible_types` value must be one or more types')
+    throw('The `possible_types` value must be one or more types')
         unless scalar $self->{possible_types}->@* >= 1;
 
     foreach ( $self->{possible_types}->@* ) {
-        Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
-            unless Scalar::Util::blessed( $_ )
+        throw('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
+            unless Ref::Util::is_blessed_ref( $_ )
                 && $_->isa('Graph::QL::Schema::Type::Object');
     }
 }

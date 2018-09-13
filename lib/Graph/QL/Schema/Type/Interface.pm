@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -28,22 +29,21 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    Carp::confess('The `fields` value must be an ARRAY ref')
-        unless defined $self->{fields}
-            && ref $self->{fields} eq 'ARRAY';
+    throw('The `fields` value must be an ARRAY ref')
+        unless Ref::Util::is_arrayref( $self->{fields} );
 
-    Carp::confess('The `fields` value must be one or more types')
+    throw('The `fields` value must be one or more types')
         unless scalar $self->{fields}->@* >= 1;
 
     my %field_map;
     foreach ( $self->{fields}->@* ) {
         # make sure it is the right kind of object ...
-        Carp::confess('The values in `fields` value must be an instance of `Graph::QL::Schema::Field`, not '.$_)
-            unless Scalar::Util::blessed( $_ )
+        throw('The values in `fields` value must be an instance of `Graph::QL::Schema::Field`, not '.$_)
+            unless Ref::Util::is_blessed_ref( $_ )
                 && $_->isa('Graph::QL::Schema::Field');
 
         # make sure our names are unique ...
-        Carp::confess('The values in `fields` value must have unique names, found duplicate '.$_->name)
+        throw('The values in `fields` value must have unique names, found duplicate '.$_->name)
             if exists $field_map{ $_->name };
 
         # note that we've seen it ...
@@ -56,8 +56,8 @@ sub BUILD ($self, $params) {
     # check the possible types that implement this interface ...
     if ( $self->{possible_types}->@* ) {
         foreach ( $self->{possible_types}->@* ) {
-            Carp::confess('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
-                unless Scalar::Util::blessed( $_ )
+            throw('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
+                unless Ref::Util::is_blessed_ref( $_ )
                     && $_->isa('Graph::QL::Schema::Type::Object');
         }
     }

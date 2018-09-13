@@ -5,8 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Carp         ();
-use Scalar::Util ();
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
@@ -21,8 +22,8 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    Carp::confess('The `of_type` value must be an instance of `Graph::QL::Schema::Type`, not '.$self->{of_type})
-        unless Scalar::Util::blessed( $self->{of_type} )
+    throw('The `of_type` value must be an instance of `Graph::QL::Schema::Type`, not '.$self->{of_type})
+        unless Ref::Util::is_blessed_ref( $self->{of_type} )
             && $self->{of_type}->isa('Graph::QL::Schema::Type');
 }
 
