@@ -151,68 +151,68 @@ sub generate_class ($name, $definition) {
     my @type_checks;
     my @constructor;
 
-    if ( $definition->{fields} ) {
-        my @inherited_fields = qw[ location ];
+    ## ...
 
-        my $has_nullable = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
+    my @inherited_fields = qw[ location ];
 
-        my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
-        my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
+    my $has_nullable = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
 
-        foreach my $field ( $definition->{fields}->@* ) {
+    my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
+    my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
 
-            my $type      = expand_type( $field->{type} );
-            my $validator = (is_role($field->{type}) ? 'roles::DOES' : 'isa');
+    foreach my $field ( $definition->{fields}->@* ) {
 
-            # if we have a plural field that is not nullable ...
-            if ( $field->{is_plural} ) {
-                push @slots       => sprintf "%-${name_width}s => sub { +[] }," => $field->{name};
-                push @type_checks => (
-                    (sprintf 'throw(\'The `%s` value must be an ARRAY ref\')' => $field->{name}),
-                    (sprintf '    unless Ref::Util::is_arrayref( $self->{%s} );' => $field->{name}),
-                    (''),
-                    (sprintf 'foreach ( $self->{%s}->@* ) {', $field->{name}),
-                    (sprintf '     throw(\'The values in `%s` must all be of type(%s), not `%%s`\', $_ )' => $field->{name}, $type ),
-                    (is_blessed( $field->{type} )
-                        ? (sprintf '        unless Ref::Util::is_blessed_ref( $_ )'."\n".'                && $_->%s(\'%s\');' => $validator, $type)
-                        : (        '        unless defined $_;')),
-                    ('}'),
-                    (''),
-                );
-            }
-            elsif ( $field->{is_nullable} ) {
-                push @slots       => sprintf "%-${name_width}s => sub {}," => $field->{name};
-                push @type_checks => (
-                    (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
-                    (sprintf '    throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
-                    (is_blessed( $field->{type} )
-                        ? (sprintf '        unless Ref::Util::is_blessed_ref( $self->{%s} )'."\n".'                && $self->{%s}->%s(\'%s\');' => $field->{name}, $field->{name}, $validator, $type)
-                        : (sprintf '        unless defined $self->{%s};', $field->{name})),
-                    ('}'),
-                    (''),
-                );
-            }
-            else {
-                push @slots       => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
-                push @type_checks => (
-                    (sprintf 'throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
-                    (is_blessed( $field->{type} )
-                        ? (sprintf '    unless Ref::Util::is_blessed_ref( $self->{%s} )'."\n".'            && $self->{%s}->%s(\'%s\');' => $field->{name}, $field->{name}, $validator, $type)
-                        : (sprintf '    unless defined $self->{%s};', $field->{name})),
-                    (''),
-                );
-            }
+        my $type      = expand_type( $field->{type} );
+        my $validator = (is_role($field->{type}) ? 'roles::DOES' : 'isa');
 
-            my $constructor_field_name = $field->{name}.($field->{is_nullable} || $field->{is_plural} ? '?' : '');
-
-            push @constructor => sprintf "%-${ctor_name_width}s => %s," => $constructor_field_name, $field->{name};
-            push @accessors   => sprintf "sub %-${name_width}s : ro;" => $field->{name};
+        # if we have a plural field that is not nullable ...
+        if ( $field->{is_plural} ) {
+            push @slots       => sprintf "%-${name_width}s => sub { +[] }," => $field->{name};
+            push @type_checks => (
+                (sprintf 'throw(\'The `%s` value must be an ARRAY ref\')' => $field->{name}),
+                (sprintf '    unless Ref::Util::is_arrayref( $self->{%s} );' => $field->{name}),
+                (''),
+                (sprintf 'foreach ( $self->{%s}->@* ) {', $field->{name}),
+                (sprintf '     throw(\'The values in `%s` must all be of type(%s), not `%%s`\', $_ )' => $field->{name}, $type ),
+                (is_blessed( $field->{type} )
+                    ? (sprintf '        unless Ref::Util::is_blessed_ref( $_ )'."\n".'                && $_->%s(\'%s\');' => $validator, $type)
+                    : (        '        unless defined $_;')),
+                ('}'),
+                (''),
+            );
+        }
+        elsif ( $field->{is_nullable} ) {
+            push @slots       => sprintf "%-${name_width}s => sub {}," => $field->{name};
+            push @type_checks => (
+                (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
+                (sprintf '    throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
+                (is_blessed( $field->{type} )
+                    ? (sprintf '        unless Ref::Util::is_blessed_ref( $self->{%s} )'."\n".'                && $self->{%s}->%s(\'%s\');' => $field->{name}, $field->{name}, $validator, $type)
+                    : (sprintf '        unless defined $self->{%s};', $field->{name})),
+                ('}'),
+                (''),
+            );
+        }
+        else {
+            push @slots       => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
+            push @type_checks => (
+                (sprintf 'throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
+                (is_blessed( $field->{type} )
+                    ? (sprintf '    unless Ref::Util::is_blessed_ref( $self->{%s} )'."\n".'            && $self->{%s}->%s(\'%s\');' => $field->{name}, $field->{name}, $validator, $type)
+                    : (sprintf '    unless defined $self->{%s};', $field->{name})),
+                (''),
+            );
         }
 
-        # add the location one as well
-        foreach my $inherited ( @inherited_fields ) {
-            push @constructor => sprintf "%-${ctor_name_width}s => super(%s)," => $inherited, $inherited;
-        }
+        my $constructor_field_name = $field->{name}.($field->{is_nullable} || $field->{is_plural} ? '?' : '');
+
+        push @constructor => sprintf "%-${ctor_name_width}s => %s," => $constructor_field_name, $field->{name};
+        push @accessors   => sprintf "sub %-${name_width}s : ro;" => $field->{name};
+    }
+
+    # add the location one as well
+    foreach my $inherited ( @inherited_fields ) {
+        push @constructor => sprintf "%-${ctor_name_width}s => super(%s)," => $inherited, $inherited;
     }
 
     my $add_role_if_needed = "\n";
@@ -242,8 +242,8 @@ use parent 'Graph::QL::AST::Node';]
 q[use slots (
     ].(join "\n    " => @slots).q[
 );
-] : '').
-(@type_checks ? q[
+] : "use slots;\n").
+(@constructor ? q[
 sub BUILDARGS : strict(
     ].(join "\n    " => @constructor).q[
 );

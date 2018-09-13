@@ -13,6 +13,11 @@ our $VERSION = '0.01';
 
 use parent 'Graph::QL::AST::Node';
 use roles  'Graph::QL::AST::Node::Role::Value';
+use slots;
+
+sub BUILDARGS : strict(
+    location => super(location),
+);
 
 
 1;
