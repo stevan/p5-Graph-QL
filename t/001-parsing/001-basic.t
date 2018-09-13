@@ -17,9 +17,8 @@ use Parser::GraphQL::XS;
 use JSON::MaybeXS;
 
 my $schema = q[
-    type Query {
-        findPerson(name: String) : [Person]
-    }
+    scalar Int
+    scalar String
 
     type BirthEvent {
         year  : Int
@@ -37,6 +36,10 @@ my $schema = q[
         gender      : String
         birth       : BirthEvent
         death       : DeathEvent
+    }
+
+    type Query {
+        findPerson(name: String) : [Person]
     }
 ];
 

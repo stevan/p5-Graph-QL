@@ -71,7 +71,9 @@ sub TO_JSON ($self, @) {
         }
 
         if ( Scalar::Util::blessed( $json{ $key } ) ) {
-            $json{ $key } = $json{ $key }->TO_JSON;
+            $json{ $key } = $json{ $key }->isa('JSON::PP::Boolean')
+                ? $json{ $key }
+                : $json{ $key }->TO_JSON;
         }
 
     }
