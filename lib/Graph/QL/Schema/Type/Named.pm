@@ -11,6 +11,7 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
+use roles  'Graph::QL::Schema::Type';
 use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
@@ -20,11 +21,13 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    $self->{_ast} //= Graph::QL::AST::Node::NamedType->new(
-        name => Graph::QL::AST::Node::Name->new(
-            value => $params->{name}
-        )
-    );
+    if ( not exists $params->{_ast} ) {
+        $self->{_ast} = Graph::QL::AST::Node::NamedType->new(
+            name => Graph::QL::AST::Node::Name->new(
+                value => $params->{name}
+            )
+        );
+    }
 }
 
 sub ast : ro(_);

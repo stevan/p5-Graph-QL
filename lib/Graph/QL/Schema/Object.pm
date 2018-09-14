@@ -25,11 +25,17 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    $self->{_ast} //= Graph::QL::AST::Node::ObjectTypeDefinition->new(
-        name       => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-        fields     => [ map $_->ast, $params->{fields}->@*     ],
-        interfaces => [ map $_->ast, $params->{interfaces}->@* ],
-    );
+    if ( not exists $params->{_ast} ) {
+        # TODO:
+        # - check `fields`
+        # - check `interfaces`
+
+        $self->{_ast} = Graph::QL::AST::Node::ObjectTypeDefinition->new(
+            name       => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
+            fields     => [ map $_->ast, $params->{fields}->@*     ],
+            interfaces => [ map $_->ast, $params->{interfaces}->@* ],
+        );
+    }
 
     # TODO:
     # An object type must be a super‐set of all interfaces it implements:

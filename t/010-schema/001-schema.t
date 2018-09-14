@@ -46,7 +46,7 @@ type Person {
 }
 
 type Query {
-    findPerson(name : String) : Person
+    findPerson(name : String) : [Person]
 }
 
 schema {
@@ -95,8 +95,10 @@ schema {
                         type => Graph::QL::Schema::Type::Named->new( name => 'String' )
                     )
                 ],
-                type => Graph::QL::Schema::Type::Named->new(
-                    name => 'Person'
+                type => Graph::QL::Schema::Type::List->new(
+                    of_type => Graph::QL::Schema::Type::Named->new(
+                        name => 'Person'
+                    )
                 ),
             )
         ]

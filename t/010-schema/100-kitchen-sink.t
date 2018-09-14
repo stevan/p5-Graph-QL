@@ -200,12 +200,9 @@ q[enum Site {
 subtest '... input-object' => sub {
     my $string =
 q[input InputType {
-    key : String
+    key : String!
     answer : Int
 }];
-
-# TODO: fix types for nullable and list
-# key : String!
 
 # TODO: fix `default_value` in InputValue
 # answer : Int = 42
@@ -213,7 +210,7 @@ q[input InputType {
     my $input_object = Graph::QL::Schema::InputObject->new(
         name   => 'InputType',
         fields => [
-            Graph::QL::Schema::InputObject::InputValue->new( name => 'key', type => $String ),
+            Graph::QL::Schema::InputObject::InputValue->new( name => 'key', type => $nn_String ),
             Graph::QL::Schema::InputObject::InputValue->new(
                 name => 'answer',
                 type => $Int,

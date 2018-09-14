@@ -23,10 +23,16 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    $self->{_ast} //= Graph::QL::AST::Node::UnionTypeDefinition->new(
-        name  => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-        types => [ map $_->ast, $params->{types}->@* ]
-    );
+
+    if ( not exists $params->{_ast} ) {
+        # TODO:
+        # - check `types`
+
+        $self->{_ast} = Graph::QL::AST::Node::UnionTypeDefinition->new(
+            name  => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
+            types => [ map $_->ast, $params->{types}->@* ]
+        );
+    }
 }
 
 sub ast : ro(_);

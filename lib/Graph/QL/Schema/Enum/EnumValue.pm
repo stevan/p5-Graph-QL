@@ -19,11 +19,14 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    $self->{_ast} //= Graph::QL::AST::Node::EnumValueDefinition->new(
-        name => Graph::QL::AST::Node::Name->new(
-            value => $params->{name}
-        )
-    );
+
+    if ( not exists $params->{_ast} ) {
+        $self->{_ast} = Graph::QL::AST::Node::EnumValueDefinition->new(
+            name => Graph::QL::AST::Node::Name->new(
+                value => $params->{name}
+            )
+        );
+    }
 }
 
 sub ast : ro(_);

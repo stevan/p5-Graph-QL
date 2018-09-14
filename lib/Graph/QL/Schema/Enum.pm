@@ -22,10 +22,16 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    $self->{_ast} //= Graph::QL::AST::Node::EnumTypeDefinition->new(
-        name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-        values => [ map $_->ast, $params->{values}->@* ]
-    )
+
+    if ( not exists $params->{_ast} ) {
+        # TODO:
+        # - check `values`
+
+        $self->{_ast} = Graph::QL::AST::Node::EnumTypeDefinition->new(
+            name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
+            values => [ map $_->ast, $params->{values}->@* ]
+        );
+    }
 }
 
 sub ast : ro(_);
