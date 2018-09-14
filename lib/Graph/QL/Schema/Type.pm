@@ -32,6 +32,10 @@ sub BUILD ($self, $params) {
 
 sub kind : ro;
 
+# everything has a name ...
+
+sub name;
+
 # input/output abstract methods ...
 
 sub is_input_type;
