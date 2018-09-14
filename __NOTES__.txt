@@ -1,0 +1,213 @@
+
+--------------------------------------
+Missing features in the Schema system:
+--------------------------------------
+
+- No directives at all
+    - they are (I assume) supported in the AST
+
+- No complex types for default_values
+    - no [List] types
+    - no Object types
+    - they are (I am pretty sure) supported in the AST
+
+- A way to connect this to the (fictional) Parser system
+    - see below
+
+--------------------------------------
+Missing features in the Parser system:
+--------------------------------------
+
+- No system to speak of
+    - need to glue together ...
+        - Parser::GraphQL::XS
+        - JSON::MaybeXS
+        - Graph::QL::AST::Builder
+
+- A way to connect the AST to the Schema system
+    - how do they fit together?
+
+
+---------------------------------------
+
+            +--------+    +-----+    +--------+
+<Source> -> | Parser | -> | AST | -> | Schema |
+            +--------+    +-----+    +--------+
+
+
+---------------------------------------
++--------++-----++--------+
+| Schema || AST || Parser |<Source>
++--------++-----++--------+
+---------------------------------------
+---------------------------------------
+---------------------------------------
+Perl API Idea:
+---------------------------------------
+#!/usr/bin/env perl
+
+use v5.24;
+use warnings;
+
+use Graph::QL;
+use Graph::QL::Schema;
+use Graph::QL::Query;
+
+use JSON::MaybeXS ();
+
+package MyApp::Schema::Query {
+    use v5.24;
+    use warnings;
+    use experimental 'signatures';
+
+    use decorators 'Graph::QL::Decorators';
+
+    use Mojo::UserAgent;
+
+    use constant HOSTNAME => 'https://api.harvardartmuseums.org/';
+    use constant API_KEY  => '061b1110-a78b-11e8-9005-fb4bbac2aaba';
+
+    use roles 'Graph::QL::Type';
+
+    sub find_person ($parent, $args) : Arguments(name => String!) Field(List[Person]!)  {
+        state $UA = Mojo::UserAgent->new;
+
+        return $UA->get(
+            HOSTNAME.'person?apikey='.API_KEY.'&size=1000&q=name:'.$args->{name}
+        )->result;
+    }
+}
+
+package MyApp::Schema::BirthEvent {
+    use v5.24;
+    use warnings;
+    use experimental 'signatures';
+
+    use decorators 'Graph::QL::Decorators';
+
+    use roles 'Graph::QL::Type';
+
+    sub year  ($parent, @) : Field(Int!)    { $parent->{birthplace} }
+    sub place ($parent, @) : Field(String!) { $parent->{datestart} }
+}
+
+package MyApp::Schema::DeathEvent {
+    use v5.24;
+    use warnings;
+    use experimental 'signatures';
+
+    use decorators 'Graph::QL::Decorators';
+
+    use roles 'Graph::QL::Type';
+
+    sub year  ($parent, @) : Field(Int)    { $parent->{deathplace} }
+    sub place ($parent, @) : Field(String) { $parent->{dateend} }
+}
+
+package MyApp::Schema::Person {
+    use v5.24;
+    use warnings;
+    use experimental 'signatures';
+
+    use decorators 'Graph::QL::Decorators';
+
+    use roles 'Graph::QL::Type';
+
+    sub name        ($parent, @) : Field(String!)     { $parent->{displayname} }
+    sub nationality ($parent, @) : Field(String)      { $parent->{culture}     }
+    sub gender      ($parent, @) : Field(String)      { $parent->{gender}      }
+    sub birth       ($parent, @) : Field(BirthEvent!) { $parent }
+    sub death       ($parent, @) : Field(DeathEvent)  { $parent }
+}
+
+my $schema = Graph::QL::Schema->new_from_namespace( 'MyApp::Schema' );
+my $query  = Graph::QL::Query->new(
+    schema   => $schema,
+    root_env => {},
+    context  => { api => \&harvardartmuseum }
+);
+
+my ($name) = $ARGV[0] || 'Jackson Pollock';
+
+my $result = $query->execute(qq|
+    {
+        findPerson(name:"$name") {
+            name
+            nationality
+            gender
+            birth {
+                year
+                place
+            }
+            death {
+                year
+                place
+            }
+        }
+    }
+|);
+
+=pod
+
+First we desugar the GraphQL syntax, it might look something like this:
+
+    my $person = $schema->get_type('Query')->get_field('find_person')->resolve( undef, { name => $name } );
+    my $result = +{
+        name        => $schema->get_type('Person')->get_field('name')->resolve( $person ),
+        nationality => $schema->get_type('Person')->get_field('nationality')->resolve( $person ),
+        gender      => $schema->get_type('Person')->get_field('gender')->resolve( $person ),
+        birth       => {
+            year  => $schema->get_type('Birth')->get_field('year')->resolve( $schema->get_type('Person')->get_field('birth')->resolve( $person ) ),
+            place => $schema->get_type('Birth')->get_field('place')->resolve( $schema->get_type('Person')->get_field('birth')->resolve( $person ) ),
+        },
+        death       => {
+            year  => $schema->get_type('Death')->get_field('year')->resolve( $schema->get_type('Person')->get_field('death')->resolve( $person ) ),
+            place => $schema->get_type('Death')->get_field('place')->resolve( $schema->get_type('Person')->get_field('death')->resolve( $person ) ),
+        },
+    };
+
+If we strip off one layer and think about the metadata we have attached
+to the subroutines, we can see that that C<get_type> and C<get_field>
+chain would sensibly lead to the method body, which would then like
+be executed by something like a C<resolve> method on the schema.
+
+    my $person = $schema->resolve( \&Query::find_person, undef, { name => $name } );
+    my $result = +{
+        name        => $schema->resolve( \&Person::name,        $person ),
+        nationality => $schema->resolve( \&Person::nationality, $person ),
+        gender      => $schema->resolve( \&Person::gender,      $person ),
+        birth       => {
+            year  => $schema->resolve( \&Birth::year,  $schema->resolve( \&Person::birth, $person ) ),
+            place => $schema->resolve( \&Birth::place, $schema->resolve( \&Person::birth, $person ) ),
+        },
+        death       => {
+            year  => $schema->resolve( \&Death::year,  $schema->resolve( \&Person::death, $person ) ),
+            place => $schema->resolve( \&Death::place, $schema->resolve( \&Person::death, $person ) ),
+        },
+    };
+
+If we break this down even further we can see that this could be compiled
+into straight Perl code that would simply call the functions described by
+the query and not have to do any dynamic resolution.
+
+    my $person = Query::find_person( undef, { name => $name } );
+    my $result = +{
+        name        => Person::name( $person ),
+        nationality => Person::nationality( $person ),
+        gender      => Person::gender( $person ),
+        birth       => {
+            year  => Birth::year( Person::birth( $person ) ),
+            place => Birth::place( Person::birth( $person ) ),
+        },
+        death       => {
+            year  => Death::year( Person::death( $person ) ),
+            place => Death::place( Person::death( $person ) ),
+        },
+    };
+
+=cut
+
+say JSON::MaybeXS->new->utf8->pretty->encode( $result || {} );
+
+exit;
+
