@@ -6,7 +6,13 @@ use experimental 'signatures';
 
 use Test::More;
 use Test::Differences;
+
 use Data::Dumper;
+
+use Parser::GraphQL::XS;
+use JSON::MaybeXS;
+
+use Graph::QL::Util::AST;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
@@ -21,81 +27,36 @@ BEGIN {
 subtest '... testing my schema' => sub {
 
     # http://facebook.github.io/graphql/June2018/#example-255de
-    my $expected_type_language = q[
-scalar Int
+    my $expected_type_language = q[union SearchResult = Photo | Person];
 
-scalar String
-
-type Person {
-    name : String
-    age : Int
-}
-
-type Photo {
-    height : Int
-    width : Int
-}
-
-union SearchResult = Photo | Person
-
-type SearchQuery {
-    firstSearchResult : SearchResult
-}
-
-schema {
-    query : SearchQuery
-}
-];
-
-    my $Int    = Graph::QL::Schema::Type::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
-
-    my $Person = Graph::QL::Schema::Type::Object->new(
-        name   => 'Person',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'name', type => $String ),
-            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
-        ]
-    );
-
-    my $Photo = Graph::QL::Schema::Type::Object->new(
-        name   => 'Photo',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'height', type => $Int ),
-            Graph::QL::Schema::Field->new( name => 'width',  type => $Int ),
-        ]
-    );
+    my $Person = Graph::QL::Schema::Type::Object->new( name => 'Person' );
+    my $Photo  = Graph::QL::Schema::Type::Object->new( name => 'Photo' );
 
     my $SearchResult = Graph::QL::Schema::Type::Union->new(
-        name           => 'SearchResult',
-        possible_types => [ $Photo, $Person ]
+        name  => 'SearchResult',
+        types => [ $Photo, $Person ]
     );
 
-    my $SearchQuery = Graph::QL::Schema::Type::Object->new(
-        name   => 'SearchQuery',
-        fields => [
-            Graph::QL::Schema::Field->new(
-                name => 'firstSearchResult',
-                type => $SearchResult,
-            )
-        ]
-    );
+    is_deeply($SearchResult->name, 'SearchResult', '... got the expected name');
+    is_deeply($SearchResult->type_names, [ 'Photo', 'Person' ], '... got the expected type names');
 
-    my $schema = Graph::QL::Schema->new(
-        query_type => $SearchQuery,
-        types => [
-            $Int,
-            $String,
-            $Person,
-            $Photo,
-            $SearchResult,
-            $SearchQuery
-        ]
-    );
+    #warn $SearchResult->to_type_language;
 
-    #warn $schema->to_type_language;
+    eq_or_diff($SearchResult->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
-    eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+
+    subtest '... now parse the expected string and strip the location from the AST' => sub {
+        my $expected_ast = JSON::MaybeXS->new->decode(
+            Parser::GraphQL::XS->new->parse_string( $expected_type_language )
+        )->{definitions}->[0];
+
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'types' );
+
+        #warn Dumper $expected_ast;
+
+        eq_or_diff($SearchResult->ast->TO_JSON, $expected_ast, '... got the expected AST');
+    };
+
 };
 
 done_testing;

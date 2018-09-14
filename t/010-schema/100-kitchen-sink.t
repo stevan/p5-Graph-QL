@@ -146,8 +146,8 @@ subtest '... union' => sub {
     my $string = q[union Feed = Story | Article | Advert];
 
     my $union = Graph::QL::Schema::Type::Union->new(
-        name => 'Feed',
-        possible_types => [
+        name  => 'Feed',
+        types => [
             Graph::QL::Schema::Type::Object->new( name => 'Story' ),
             Graph::QL::Schema::Type::Object->new( name => 'Article' ),
             Graph::QL::Schema::Type::Object->new( name => 'Advert' ),

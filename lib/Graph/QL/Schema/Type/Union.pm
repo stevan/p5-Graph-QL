@@ -9,36 +9,44 @@ use Ref::Util ();
 
 use Graph::QL::Util::Errors 'throw';
 
+use Graph::QL::Schema::Type;
+
+use Graph::QL::AST::Node::UnionTypeDefinition;
+use Graph::QL::AST::Node::NamedType;
+use Graph::QL::AST::Node::Name;
+
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Schema::Type::Scalar';
+#use parent 'Graph::QL::Schema::Type::Scalar';
+use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    kind           => sub { Graph::QL::Schema::Type->Kind->UNION },
-    possible_types => sub { die 'You must specify the `possible_types`' },
+    kind => sub { Graph::QL::Schema::Type->Kind->UNION },
+    _ast => sub {},
 );
 
 sub BUILDARGS : strict(
-    possible_types => possible_types,
-    name           => super(name),
-    description?   => super(description),
+    ast?   => _ast,
+    name?  => name,
+    types? => types,
 );
 
 sub BUILD ($self, $params) {
-
-    throw('The `possible_types` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{possible_types} );
-
-    throw('The `possible_types` value must be one or more types')
-        unless scalar $self->{possible_types}->@* >= 1;
-
-    foreach ( $self->{possible_types}->@* ) {
-        throw('The values in `possible_types` value must be an instance of `Graph::QL::Schema::Type::Object`, not '.$_)
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->isa('Graph::QL::Schema::Type::Object');
-    }
+    $self->{_ast} //= Graph::QL::AST::Node::UnionTypeDefinition->new(
+        name  => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
+        types => [
+            map Graph::QL::AST::Node::NamedType->new(
+                name => Graph::QL::AST::Node::Name->new(
+                    value => $_->name
+                )
+            ), $params->{types}->@*
+        ]
+    );
 }
 
-sub possible_types : ro;
+sub ast : ro(_);
+
+sub name       ($self) { $self->ast->name->value }
+sub type_names ($self) { [ map $_->name->value, $self->ast->types->@* ] }
 
 # input/output type methods
 sub is_input_type  { 0 }
@@ -47,9 +55,7 @@ sub is_output_type { 1 }
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `description`
-    return sprintf 'union %s = %s' => $self->{name}, (join ' | ' => map $_->name, $self->{possible_types}->@*);
+    return sprintf 'union %s = %s' => $self->name, (join ' | ' => $self->type_names->@*);
 }
 
 1;
