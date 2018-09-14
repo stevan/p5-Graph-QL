@@ -9,14 +9,12 @@ use Test::Differences;
 
 use Data::Dumper;
 
-use Parser::GraphQL::XS;
-use JSON::MaybeXS;
-
-use Graph::QL::Util::AST;
-
 BEGIN {
     use_ok('Graph::QL::Schema::Enum');
     use_ok('Graph::QL::Schema::Enum::EnumValue');
+
+    use_ok('Graph::QL::Util::AST');
+    use_ok('Graph::QL::Parser');
 }
 
 subtest '... testing my schema' => sub {
@@ -46,9 +44,7 @@ subtest '... testing my schema' => sub {
     eq_or_diff($Direction->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
-        my $expected_ast = JSON::MaybeXS->new->decode(
-            Parser::GraphQL::XS->new->parse_string( $expected_type_language )
-        )->{definitions}->[0];
+        my $expected_ast = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->[0];
 
         Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'values' );
 

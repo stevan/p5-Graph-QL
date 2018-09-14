@@ -26,6 +26,9 @@ BEGIN {
 
     use_ok('Graph::QL::Schema::Enum::EnumValue');
     use_ok('Graph::QL::Schema::InputObject::InputValue');
+
+    use_ok('Graph::QL::Util::AST');
+    use_ok('Graph::QL::Parser');
 }
 
 
