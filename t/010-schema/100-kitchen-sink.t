@@ -55,7 +55,6 @@ q[schema {
     eq_or_diff($schema->to_type_language, $string, '... the type language roundtripped');
 };
 
-=pod
 
 subtest '... type' => sub {
     my $string =
@@ -64,14 +63,15 @@ q[type Foo implements Bar {
     two(argument : InputType!) : Type
     three(argument : InputType, other : String) : Int
     four(argument : String = "string") : String
-    five(argument : [String] = ["string", "string"]) : String
-    six(argument : InputType = {key: "value"}) : Type
     seven(argument : Int = null) : Type
 }];
 
+# five(argument : [String] = ["string", "string"]) : String
+# six(argument : InputType = {key: "value"}) : Type
+
     my $type = Graph::QL::Schema::Object->new(
         name       => 'Foo',
-        interfaces => [ Graph::QL::Schema::Interface->new( name => 'Bar' ) ],
+        interfaces => [ Graph::QL::Schema::Type::Named->new( name => 'Bar' ) ],
         fields     => [
             Graph::QL::Schema::Field->new( name => 'one', type => $Type ),
             Graph::QL::Schema::Field->new(
@@ -90,28 +90,36 @@ q[type Foo implements Bar {
             Graph::QL::Schema::Field->new(
                 name => 'four',
                 args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $String, default_value => '"string"' ),
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name          => 'argument',
+                        type          => $String,
+                        default_value => 'string'
+                    ),
                 ],
                 type => $String
             ),
-            Graph::QL::Schema::Field->new(
-                name => 'five',
-                args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $list_String, default_value => '["string", "string"]' ),
-                ],
-                type => $String
-            ),
-            Graph::QL::Schema::Field->new(
-                name => 'six',
-                args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $InputType, default_value => '{key: "value"}' ),
-                ],
-                type => $Type
-            ),
+            # Graph::QL::Schema::Field->new(
+            #     name => 'five',
+            #     args => [
+            #         Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $list_String, default_value => '["string", "string"]' ),
+            #     ],
+            #     type => $String
+            # ),
+            # Graph::QL::Schema::Field->new(
+            #     name => 'six',
+            #     args => [
+            #         Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $InputType, default_value => '{key: "value"}' ),
+            #     ],
+            #     type => $Type
+            # ),
             Graph::QL::Schema::Field->new(
                 name => 'seven',
                 args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $Int, default_value => 'null' ),
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name          => 'argument',
+                        type          => $Int,
+                        default_value => undef
+                    ),
                 ],
                 type => $Type
             ),
@@ -121,17 +129,12 @@ q[type Foo implements Bar {
     eq_or_diff($type->to_type_language, $string, '... the type language roundtripped');
 };
 
-=cut
-
 subtest '... interface' => sub {
     my $string =
 q[interface Bar {
     one : Type
-    four(argument : String) : String
+    four(argument : String = "string") : String
 }];
-
-# TODO: `default_value` in Field
-# four(argument : String = "string") : String
 
     my $interface = Graph::QL::Schema::Interface->new(
         name => 'Bar',
@@ -143,8 +146,7 @@ q[interface Bar {
                     Graph::QL::Schema::InputObject::InputValue->new(
                         name => 'argument',
                         type => $String,
-                        # TODO: `default_value` in Field
-                        # default_value => '"string"'
+                        default_value => 'string'
                     ),
                 ],
                 type => $String
@@ -201,21 +203,17 @@ subtest '... input-object' => sub {
     my $string =
 q[input InputType {
     key : String!
-    answer : Int
+    answer : Int = 42
 }];
-
-# TODO: fix `default_value` in InputValue
-# answer : Int = 42
 
     my $input_object = Graph::QL::Schema::InputObject->new(
         name   => 'InputType',
         fields => [
             Graph::QL::Schema::InputObject::InputValue->new( name => 'key', type => $nn_String ),
             Graph::QL::Schema::InputObject::InputValue->new(
-                name => 'answer',
-                type => $Int,
-                # TODO: fix `default_value` in InputValue
-                # default_value => '42'
+                name          => 'answer',
+                type          => $Int,
+                default_value => '42'
             ),
         ]
     );

@@ -21,6 +21,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Type::Named');
 
     use_ok('Graph::QL::Schema::Field');
+    use_ok('Graph::QL::Schema::InputObject::InputValue');
 }
 
 subtest '... testing my schema' => sub {
@@ -29,7 +30,7 @@ subtest '... testing my schema' => sub {
     my $expected_type_language =
 q[type Person {
     name : String
-    age : Int
+    age(in_months : Int = 0) : Int
 }];
 
     my $Int    = Graph::QL::Schema::Type::Named->new( name => 'Int' );
@@ -39,7 +40,17 @@ q[type Person {
         name   => 'Person',
         fields => [
             Graph::QL::Schema::Field->new( name => 'name', type => $String ),
-            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
+            Graph::QL::Schema::Field->new(
+                name => 'age',
+                type => $Int,
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name          => 'in_months',
+                        type          => $Int,
+                        default_value => 0
+                    )
+                ]
+            ),
         ]
     );
 
@@ -57,6 +68,8 @@ q[type Person {
         Graph::QL::Util::AST::null_out_source_locations(
             $expected_ast,
             'fields.type',
+            'fields.arguments.type',
+            'fields.arguments.defaultValue',
         );
 
         #warn Dumper $expected_ast;
