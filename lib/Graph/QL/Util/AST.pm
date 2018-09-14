@@ -21,7 +21,7 @@ sub null_out_source_locations ( $ast, @paths ) {
 
         if ( Ref::Util::is_arrayref( $ast->{ $start } ) ) {
             foreach my $sub_ast ( $ast->{ $start }->@* ) {
-                null_out_source_locations( $sub_ast, @rest );
+                null_out_source_locations( $sub_ast, join '.' => @rest );
             }
         }
         else {
