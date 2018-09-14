@@ -31,6 +31,9 @@ sub BUILD ($self, $params) {
             unless Ref::Util::is_blessed_ref( $params->{type} )
                 && $params->{type}->roles::DOES('Graph::QL::Schema::Type');
 
+        # TODO:
+        # - check `args`
+
         $self->{_ast} = Graph::QL::AST::Node::FieldDefinition->new(
             name      => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
             type      => $params->{type}->ast,
