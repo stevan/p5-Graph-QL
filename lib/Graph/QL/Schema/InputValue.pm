@@ -41,8 +41,10 @@ sub BUILD ($self, $params) {
 
     throw('The `type` must be an instance of `Graph::QL::Schema::Type` and an input-type, not '.$self->{type})
         unless Ref::Util::is_blessed_ref( $self->{type} )
-            && $self->{type}->isa('Graph::QL::Schema::Type')
-            && $self->{type}->is_input_type;
+            && $self->{type}->isa('Graph::QL::Schema::Type');
+            # && $self->{type}->is_input_type;
+            # TODO: ^^^
+            # Move this to a Util somewhere, it doesn't need to be methods ...
 
     if ( exists $params->{default_value} ) {
         throw('The `default_value` must be a defined value')

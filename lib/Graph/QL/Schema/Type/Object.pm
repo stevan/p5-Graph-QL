@@ -86,10 +86,6 @@ sub fields ($self, $include_deprecated=0) {
     return [ grep $_->is_deprecated, $self->{fields}->@* ];
 }
 
-# input/output type methods
-sub is_input_type  { 0 }
-sub is_output_type { 1 }
-
 ## ...
 
 sub to_type_language ($self) {

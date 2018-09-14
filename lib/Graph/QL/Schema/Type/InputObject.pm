@@ -55,10 +55,6 @@ sub BUILD ($self, $params) {
 
 sub input_fields : ro;
 
-# input/output type methods
-sub is_input_type  { 1 }
-sub is_output_type { 0 }
-
 ## ...
 
 sub to_type_language ($self) {

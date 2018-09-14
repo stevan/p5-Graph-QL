@@ -33,10 +33,6 @@ sub name ($self) {
     return $self->{of_type}->name.'!';
 }
 
-# input/output type methods
-sub is_input_type  ($self) { $self->of_type->is_input_type  }
-sub is_output_type ($self) { $self->of_type->is_output_type }
-
 1;
 
 __END__

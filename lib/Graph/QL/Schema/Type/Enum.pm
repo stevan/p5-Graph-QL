@@ -45,10 +45,6 @@ sub values ($self) {
     [ map Graph::QL::Schema::EnumValue->new( ast => $_ ), $self->ast->values->@* ]
 }
 
-# input/output type methods
-sub is_input_type  { 1 }
-sub is_output_type { 1 }
-
 ## ...
 
 sub to_type_language ($self) {

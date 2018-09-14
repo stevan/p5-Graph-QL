@@ -36,11 +36,6 @@ sub kind : ro;
 
 sub name;
 
-# input/output abstract methods ...
-
-sub is_input_type;
-sub is_output_type;
-
 1;
 
 __END__

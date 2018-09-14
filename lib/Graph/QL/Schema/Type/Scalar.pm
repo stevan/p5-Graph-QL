@@ -35,10 +35,6 @@ sub name            : ro;
 sub description     : ro;
 sub has_description : predicate;
 
-# input/output type methods
-sub is_input_type  { 1 }
-sub is_output_type { 1 }
-
 # ...
 
 sub to_type_language ($self) {

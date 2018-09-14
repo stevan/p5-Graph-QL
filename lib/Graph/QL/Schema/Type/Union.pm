@@ -48,9 +48,6 @@ sub ast : ro(_);
 sub name       ($self) { $self->ast->name->value }
 sub type_names ($self) { [ map $_->name->value, $self->ast->types->@* ] }
 
-# input/output type methods
-sub is_input_type  { 0 }
-sub is_output_type { 1 }
 
 ## ...
 
