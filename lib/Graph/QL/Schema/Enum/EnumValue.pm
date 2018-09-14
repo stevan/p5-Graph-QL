@@ -1,4 +1,4 @@
-package Graph::QL::Schema::EnumValue;
+package Graph::QL::Schema::Enum::EnumValue;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;

@@ -15,8 +15,8 @@ use JSON::MaybeXS;
 use Graph::QL::Util::AST;
 
 BEGIN {
-    use_ok('Graph::QL::Schema::Type::Enum');
-    use_ok('Graph::QL::Schema::EnumValue');
+    use_ok('Graph::QL::Schema::Enum');
+    use_ok('Graph::QL::Schema::Enum::EnumValue');
 }
 
 subtest '... testing my schema' => sub {
@@ -30,13 +30,13 @@ subtest '... testing my schema' => sub {
     WEST
 }';
 
-    my $Direction = Graph::QL::Schema::Type::Enum->new(
+    my $Direction = Graph::QL::Schema::Enum->new(
         name   => 'Direction',
         values => [
-            Graph::QL::Schema::EnumValue->new( name => 'NORTH' ),
-            Graph::QL::Schema::EnumValue->new( name => 'EAST'  ),
-            Graph::QL::Schema::EnumValue->new( name => 'SOUTH' ),
-            Graph::QL::Schema::EnumValue->new( name => 'WEST'  ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'NORTH' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'EAST'  ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'SOUTH' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'WEST'  ),
         ]
     );
 

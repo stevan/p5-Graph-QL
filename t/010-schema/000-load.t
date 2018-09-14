@@ -13,7 +13,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Directive');
     use_ok('Graph::QL::Schema::Type');
 
-    use_ok('Graph::QL::Schema::Type::Enum');
+    use_ok('Graph::QL::Schema::Enum');
     use_ok('Graph::QL::Schema::Type::InputObject');
     use_ok('Graph::QL::Schema::Type::Interface');
     use_ok('Graph::QL::Schema::Type::List');
@@ -23,7 +23,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Type::Union');
 
     use_ok('Graph::QL::Schema::Field');
-    use_ok('Graph::QL::Schema::EnumValue');
+    use_ok('Graph::QL::Schema::Enum::EnumValue');
     use_ok('Graph::QL::Schema::InputValue');
 }
 

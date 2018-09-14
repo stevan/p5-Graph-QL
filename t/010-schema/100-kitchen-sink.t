@@ -14,7 +14,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Directive');
     use_ok('Graph::QL::Schema::Type');
 
-    use_ok('Graph::QL::Schema::Type::Enum');
+    use_ok('Graph::QL::Schema::Enum');
     use_ok('Graph::QL::Schema::Type::InputObject');
     use_ok('Graph::QL::Schema::Type::Interface');
     use_ok('Graph::QL::Schema::Type::List');
@@ -24,7 +24,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Type::Union');
 
     use_ok('Graph::QL::Schema::Field');
-    use_ok('Graph::QL::Schema::EnumValue');
+    use_ok('Graph::QL::Schema::Enum::EnumValue');
     use_ok('Graph::QL::Schema::InputValue');
 }
 
@@ -171,14 +171,14 @@ q[enum Site {
     MOBILE
 }];
 
-    my $enum = Graph::QL::Schema::Type::Enum->new(
+    my $enum = Graph::QL::Schema::Enum->new(
         name => 'Site',
         values => [
-            Graph::QL::Schema::EnumValue->new( name => 'DESKTOP' ),
-            Graph::QL::Schema::EnumValue->new( name => 'MOBILE' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'DESKTOP' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'MOBILE' ),
         ]
     );
-    isa_ok($enum, 'Graph::QL::Schema::Type::Enum');
+    isa_ok($enum, 'Graph::QL::Schema::Enum');
     eq_or_diff($enum->to_type_language, $string, '... the type language roundtripped');
 };
 
