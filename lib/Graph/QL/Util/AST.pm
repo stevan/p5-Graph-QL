@@ -19,9 +19,13 @@ sub null_out_source_locations ( $ast, @paths ) {
     foreach my $path ( @paths ) {
         my ($start, @rest) = split /\./ => $path;
 
+        #use Data::Dumper;
+        #use Carp;
+        #Carp::confess(Dumper [ $ast, \@paths ]) unless defined $start;
+
         if ( Ref::Util::is_arrayref( $ast->{ $start } ) ) {
             foreach my $sub_ast ( $ast->{ $start }->@* ) {
-                null_out_source_locations( $sub_ast, join '.' => @rest );
+                null_out_source_locations( $sub_ast, @rest ? (join '.' => @rest) : () );
             }
         }
         else {

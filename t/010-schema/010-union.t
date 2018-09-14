@@ -49,9 +49,11 @@ subtest '... testing my schema' => sub {
             Parser::GraphQL::XS->new->parse_string( $expected_type_language )
         )->{definitions}->[0];
 
+        #warn Dumper $expected_ast;
+
         Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'types' );
 
-        #warn Dumper $expected_ast;
+
 
         eq_or_diff($SearchResult->ast->TO_JSON, $expected_ast, '... got the expected AST');
     };
