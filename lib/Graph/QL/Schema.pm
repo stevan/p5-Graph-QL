@@ -123,9 +123,9 @@ sub to_type_language ($self) {
         ? ("\n".(join "\n\n" => map $_->to_type_language, $self->types->@*)."\n\n")
         : ''). # followed by the base `schema` object
         'schema {'."\n".
-            '    query : '.$self->query_type->name."\n".
-            '    mutation : '.$self->mutation_type->name."\n".
-            '    subscription : '.$self->subscription_type->name."\n".
+        '    query : '.$self->query_type->name."\n".
+        '    mutation : '.$self->mutation_type->name."\n".
+        '    subscription : '.$self->subscription_type->name."\n".
         '}'.($self->has_types ? "\n" : '');
 }
 

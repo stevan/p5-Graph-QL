@@ -11,29 +11,27 @@ Missing features in the Schema system:
     - no Object types
     - they are (I am pretty sure) supported in the AST
 
-- A way to connect this to the (fictional) Parser system
-    - see below
+- A nice way to connect the Schema to the AST system
+    - currently is manual
 
 --------------------------------------
 Missing features in the Parser system:
 --------------------------------------
 
-- No system to speak of
-    - need to glue together ...
-        - Parser::GraphQL::XS
-        - JSON::MaybeXS
-        - Graph::QL::AST::*
-
-- A way to connect the AST to the Schema system
-    - how do they fit together?
-
+- A nice way to connect the AST to the Schema system
+    - currently is manual
 
 ---------------------------------------
 
-            +--------+    +-----+    +--------+
-<Source> -> | Parser | -> | AST | -> | Schema |
-            +--------+    +-----+    +--------+
-
+            +--------+    +-----+
+<Source> -> | Parser | -> | AST | --+
+            +--------+    +-----+   |
+                                    |
+       +------------+---------------+
+       |            |
+  +----v---+  +-----v-----+
+  | Schema |  | Operation |
+  +--------+  +-----------+
 
 ---------------------------------------
 +--------++-----++--------+

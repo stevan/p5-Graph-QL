@@ -23,6 +23,10 @@ sub null_out_source_locations ( $ast, @paths ) {
     foreach my $path ( @paths ) {
         my ($start, @rest) = split /\./ => $path;
 
+        #warn "PATH: $path";
+        #warn "START: $start";
+        #warn "REST: ". (join ', ' => @rest);
+
         #use Data::Dumper;
         #use Carp;
         #Carp::confess(Dumper [ $ast, \@paths ]) unless defined $start;
@@ -33,7 +37,7 @@ sub null_out_source_locations ( $ast, @paths ) {
             }
         }
         else {
-            null_out_source_locations( $ast->{ $start }, @rest );
+            null_out_source_locations( $ast->{ $start }, @rest ? (join '.' => @rest) : () );
         }
     }
 }

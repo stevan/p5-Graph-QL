@@ -131,14 +131,14 @@ schema {
 
         #warn Dumper $expected_ast;
         Graph::QL::Util::AST::null_out_source_locations(
-                $_,
-                # just clean it all out ... :P
-                'types',
-                'operationTypes.type',
-                'fields.type',
-                'fields.type.type',
-                'fields.arguments.type',
-                'fields.arguments.defaultValue'
+            $_,
+            # just clean it all out ... :P
+            'types',
+            'operationTypes.type',
+            'fields.type',
+            'fields.type.type',
+            'fields.arguments.type',
+            'fields.arguments.defaultValue'
         ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
