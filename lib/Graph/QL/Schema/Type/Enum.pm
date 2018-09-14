@@ -5,23 +5,15 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
-
-use Graph::QL::Schema::Type;
+use Graph::QL::Schema::EnumValue;
 
 use Graph::QL::AST::Node::EnumTypeDefinition;
 use Graph::QL::AST::Node::Name;
 
 our $VERSION = '0.01';
 
-#use parent 'Graph::QL::Schema::Type::Scalar';
 use parent 'UNIVERSAL::Object::Immutable';
-use slots (
-    kind => sub { Graph::QL::Schema::Type->Kind->ENUM },
-    _ast => sub {},
-);
+use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
     ast?    => _ast,
@@ -31,9 +23,7 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
     $self->{_ast} //= Graph::QL::AST::Node::EnumTypeDefinition->new(
-        name => Graph::QL::AST::Node::Name->new(
-            value => $params->{name}
-        ),
+        name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
         values => [ map $_->ast, $params->{values}->@* ]
     )
 }

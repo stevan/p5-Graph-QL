@@ -148,9 +148,9 @@ subtest '... union' => sub {
     my $union = Graph::QL::Schema::Type::Union->new(
         name  => 'Feed',
         types => [
-            Graph::QL::Schema::Type::Object->new( name => 'Story' ),
-            Graph::QL::Schema::Type::Object->new( name => 'Article' ),
-            Graph::QL::Schema::Type::Object->new( name => 'Advert' ),
+            Graph::QL::Schema::Type::Named->new( name => 'Story' ),
+            Graph::QL::Schema::Type::Named->new( name => 'Article' ),
+            Graph::QL::Schema::Type::Named->new( name => 'Advert' ),
         ]
     );
     isa_ok($union, 'Graph::QL::Schema::Type::Union');

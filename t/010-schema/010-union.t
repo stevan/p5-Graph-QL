@@ -17,9 +17,8 @@ use Graph::QL::Util::AST;
 BEGIN {
     use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Schema::Type::Object');
-    use_ok('Graph::QL::Schema::Type::Scalar');
     use_ok('Graph::QL::Schema::Type::Union');
+    use_ok('Graph::QL::Schema::Type::Named');
 
     use_ok('Graph::QL::Schema::Field');
 }
@@ -29,8 +28,8 @@ subtest '... testing my schema' => sub {
     # http://facebook.github.io/graphql/June2018/#example-255de
     my $expected_type_language = q[union SearchResult = Photo | Person];
 
-    my $Person = Graph::QL::Schema::Type::Object->new( name => 'Person' );
-    my $Photo  = Graph::QL::Schema::Type::Object->new( name => 'Photo' );
+    my $Person = Graph::QL::Schema::Type::Named->new( name => 'Person' );
+    my $Photo  = Graph::QL::Schema::Type::Named->new( name => 'Photo' );
 
     my $SearchResult = Graph::QL::Schema::Type::Union->new(
         name  => 'SearchResult',
@@ -38,7 +37,7 @@ subtest '... testing my schema' => sub {
     );
 
     is_deeply($SearchResult->name, 'SearchResult', '... got the expected name');
-    is_deeply($SearchResult->type_names, [ 'Photo', 'Person' ], '... got the expected type names');
+    is_deeply($SearchResult->types, [ $Photo, $Person ], '... got the expected types');
 
     #warn $SearchResult->to_type_language;
 

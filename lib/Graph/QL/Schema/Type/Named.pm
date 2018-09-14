@@ -1,11 +1,11 @@
-package Graph::QL::Schema::EnumValue;
+package Graph::QL::Schema::Type::Named;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Graph::QL::AST::Node::EnumValueDefinition;
+use Graph::QL::AST::Node::NamedType;
 use Graph::QL::AST::Node::Name;
 
 our $VERSION = '0.01';
@@ -19,7 +19,8 @@ sub BUILDARGS : strict(
 );
 
 sub BUILD ($self, $params) {
-    $self->{_ast} //= Graph::QL::AST::Node::EnumValueDefinition->new(
+
+    $self->{_ast} //= Graph::QL::AST::Node::NamedType->new(
         name => Graph::QL::AST::Node::Name->new(
             value => $params->{name}
         )
@@ -27,16 +28,7 @@ sub BUILD ($self, $params) {
 }
 
 sub ast : ro(_);
-
 sub name ($self) { $self->ast->name->value }
-
-## ...
-
-sub to_type_language ($self) {
-    # TODO:
-    # handle `directives`
-    return $self->name;
-}
 
 1;
 
