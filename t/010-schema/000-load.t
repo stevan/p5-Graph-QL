@@ -10,21 +10,21 @@ use Data::Dumper;
 BEGIN {
     use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Schema::Directive');
-    use_ok('Graph::QL::Schema::Type');
-
     use_ok('Graph::QL::Schema::Enum');
-    use_ok('Graph::QL::Schema::Type::InputObject');
-    use_ok('Graph::QL::Schema::Type::Interface');
-    use_ok('Graph::QL::Schema::Type::List');
-    use_ok('Graph::QL::Schema::Type::NonNull');
-    use_ok('Graph::QL::Schema::Type::Object');
-    use_ok('Graph::QL::Schema::Type::Scalar');
-    use_ok('Graph::QL::Schema::Type::Union');
+    use_ok('Graph::QL::Schema::InputObject');
+    use_ok('Graph::QL::Schema::Interface');
+    use_ok('Graph::QL::Schema::Object');
+    use_ok('Graph::QL::Schema::Scalar');
+    use_ok('Graph::QL::Schema::Union');
 
     use_ok('Graph::QL::Schema::Field');
+
+    use_ok('Graph::QL::Schema::Type::List');
+    use_ok('Graph::QL::Schema::Type::NonNull');
+    use_ok('Graph::QL::Schema::Type::Named');
+
     use_ok('Graph::QL::Schema::Enum::EnumValue');
-    use_ok('Graph::QL::Schema::InputValue');
+    use_ok('Graph::QL::Schema::InputObject::InputValue');
 }
 
 done_testing;

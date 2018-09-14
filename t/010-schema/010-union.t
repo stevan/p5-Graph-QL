@@ -17,7 +17,7 @@ use Graph::QL::Util::AST;
 BEGIN {
     use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Schema::Type::Union');
+    use_ok('Graph::QL::Schema::Union');
     use_ok('Graph::QL::Schema::Type::Named');
 
     use_ok('Graph::QL::Schema::Field');
@@ -31,7 +31,7 @@ subtest '... testing my schema' => sub {
     my $Person = Graph::QL::Schema::Type::Named->new( name => 'Person' );
     my $Photo  = Graph::QL::Schema::Type::Named->new( name => 'Photo' );
 
-    my $SearchResult = Graph::QL::Schema::Type::Union->new(
+    my $SearchResult = Graph::QL::Schema::Union->new(
         name  => 'SearchResult',
         types => [ $Photo, $Person ]
     );

@@ -14,7 +14,7 @@ use overload   '""' => 'to_string';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     _message     => sub { 'An error has occurred:' },
-    _stack_trace => sub { Devel::StackTrace->new( skip_frames => 4 ) },
+    _stack_trace => sub { Devel::StackTrace->new( skip_frames => 4, indent => 1 ) },
 );
 
 ## constructor

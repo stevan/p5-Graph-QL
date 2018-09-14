@@ -5,32 +5,43 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
+use Graph::QL::Schema::Type::Named;
 
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::AST::Node::NonNullType;
 
 our $VERSION = '0.01';
 
-use parent 'Graph::QL::Schema::Type';
-use slots (
-    kind    => sub { Graph::QL::Schema::Type->Kind->NON_NULL },
-    of_type => sub { die 'You must supply an `on_type`' },
-);
+use parent 'UNIVERSAL::Object::Immutable';
+use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
-    of_type => of_type,
+    ast?     => _ast,
+    of_type? => of_type,
 );
 
 sub BUILD ($self, $params) {
-    throw('The `of_type` value must be an instance of `Graph::QL::Schema::Type`, not '.$self->{of_type})
-        unless Ref::Util::is_blessed_ref( $self->{of_type} )
-            && $self->{of_type}->isa('Graph::QL::Schema::Type');
+    # TODO:
+    # verify that the type is an instance of:
+    # - Graph::QL::Schema::Type::Named
+    # - Graph::QL::Schema::Type::NonNull
+    # - Graph::QL::Schema::Type::List
+    $self->{_ast} //= Graph::QL::AST::Node::NonNullType->new(
+        type => $params->{of_type}->ast
+    );
 }
 
-sub of_type : ro;
+sub ast : ro(_);
 
-sub name ($self) {
-    return $self->{of_type}->name.'!';
+sub name    ($self) { $self->of_type->name . '!' }
+sub of_type ($self) {
+    # TODO:
+    # handle this being (does => Graph::QL::AST::Node::Role::Type), meaning
+    # - Graph::QL::AST::Node::NamedType
+    # - Graph::QL::AST::Node::NonNullType
+    # - Graph::QL::AST::Node::ListType
+    # and wrap it with my class accordingly
+    # but for now, we can punt ...
+    Graph::QL::Schema::Type::Named->new( ast => $self->ast->type )
 }
 
 1;

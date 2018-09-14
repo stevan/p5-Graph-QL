@@ -1,13 +1,11 @@
-package Graph::QL::Schema::Type::Interface;
+package Graph::QL::Schema::InputObject;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Graph::QL::Schema::Field;
-
-use Graph::QL::AST::Node::InterfaceTypeDefinition;
+use Graph::QL::AST::Node::InputObjectTypeDefinition;
 use Graph::QL::AST::Node::Name;
 
 our $VERSION = '0.01';
@@ -23,18 +21,18 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $params) {
 
-    $self->{_ast} //= Graph::QL::AST::Node::InterfaceTypeDefinition->new(
+    $self->{_ast} //= Graph::QL::AST::Node::InputObjectTypeDefinition->new(
         name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
         fields => [ map $_->ast, $params->{fields}->@* ]
-    );
-
+    )
 }
 
 sub ast : ro(_);
 
-sub name   ($self) { $self->ast->name->value }
+sub name ($self) { $self->ast->name->value }
+
 sub fields ($self) {
-    [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
+    [ map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
 ## ...
@@ -42,7 +40,7 @@ sub fields ($self) {
 sub to_type_language ($self) {
     # TODO:
     # handle the `description`
-    return 'interface '.$self->name.' {'."\n    ".
+    return 'input '.$self->name.' {'."\n    ".
         (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
     '}';
 }

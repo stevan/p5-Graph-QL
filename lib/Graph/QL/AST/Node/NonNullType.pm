@@ -27,7 +27,7 @@ sub BUILD ($self, $params) {
     throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
         unless Ref::Util::is_blessed_ref( $self->{type} )
             && $self->{type}->roles::DOES('Graph::QL::AST::Node::Role::Type');
-    
+
 }
 
 sub type : ro;

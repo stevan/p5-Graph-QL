@@ -17,7 +17,7 @@ use Graph::QL::Util::AST;
 BEGIN {
     use_ok('Graph::QL::Schema');
 
-    use_ok('Graph::QL::Schema::Interface');
+    use_ok('Graph::QL::Schema::Object');
     use_ok('Graph::QL::Schema::Type::Named');
 
     use_ok('Graph::QL::Schema::Field');
@@ -27,25 +27,25 @@ subtest '... testing my schema' => sub {
 
     # http://facebook.github.io/graphql/June2018/#example-ab5e5
     my $expected_type_language =
-q[interface NamedEntity {
+q[type Person {
     name : String
-    type : EntityType
+    age : Int
 }];
 
-    my $EntityType = Graph::QL::Schema::Type::Named->new( name => 'EntityType' );
-    my $String     = Graph::QL::Schema::Type::Named->new( name => 'String' );
+    my $Int    = Graph::QL::Schema::Type::Named->new( name => 'Int' );
+    my $String = Graph::QL::Schema::Type::Named->new( name => 'String' );
 
-    my $NamedEntity = Graph::QL::Schema::Interface->new(
-        name   => 'NamedEntity',
+    my $Person = Graph::QL::Schema::Object->new(
+        name   => 'Person',
         fields => [
             Graph::QL::Schema::Field->new( name => 'name', type => $String ),
-            Graph::QL::Schema::Field->new( name => 'type', type => $EntityType ),
+            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
         ]
     );
 
-    #warn $NamedEntity->to_type_language;
+    #warn $Person->to_type_language;
 
-    eq_or_diff($NamedEntity->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+    eq_or_diff($Person->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
         my $expected_ast = JSON::MaybeXS->new->decode(
@@ -61,7 +61,7 @@ q[interface NamedEntity {
 
         #warn Dumper $expected_ast;
 
-        eq_or_diff($NamedEntity->ast->TO_JSON, $expected_ast, '... got the expected AST');
+        eq_or_diff($Person->ast->TO_JSON, $expected_ast, '... got the expected AST');
     };
 
 };

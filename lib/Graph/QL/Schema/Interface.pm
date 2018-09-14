@@ -1,13 +1,13 @@
-package Graph::QL::Schema::Enum;
+package Graph::QL::Schema::Interface;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Graph::QL::Schema::Enum::EnumValue;
+use Graph::QL::Schema::Field;
 
-use Graph::QL::AST::Node::EnumTypeDefinition;
+use Graph::QL::AST::Node::InterfaceTypeDefinition;
 use Graph::QL::AST::Node::Name;
 
 our $VERSION = '0.01';
@@ -18,30 +18,35 @@ use slots ( _ast => sub {} );
 sub BUILDARGS : strict(
     ast?    => _ast,
     name?   => name,
-    values? => values,
+    fields? => fields,
 );
 
 sub BUILD ($self, $params) {
-    $self->{_ast} //= Graph::QL::AST::Node::EnumTypeDefinition->new(
+
+    $self->{_ast} //= Graph::QL::AST::Node::InterfaceTypeDefinition->new(
         name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-        values => [ map $_->ast, $params->{values}->@* ]
-    )
+        fields => [ map $_->ast, $params->{fields}->@* ]
+    );
+
 }
 
 sub ast : ro(_);
 
 sub name   ($self) { $self->ast->name->value }
-sub values ($self) {
-    [ map Graph::QL::Schema::Enum::EnumValue->new( ast => $_ ), $self->ast->values->@* ]
+sub fields ($self) {
+    [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
 ## ...
 
 sub to_type_language ($self) {
-    return 'enum '.$self->name.' {'."\n    ".
-        (join "\n    " => map $_->to_type_language, $self->values->@*)."\n".
+    # TODO:
+    # handle the `description`
+    return 'interface '.$self->name.' {'."\n    ".
+        (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
     '}';
 }
+
 
 1;
 

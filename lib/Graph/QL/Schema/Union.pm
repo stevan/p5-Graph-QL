@@ -1,4 +1,4 @@
-package Graph::QL::Schema::Type::Union;
+package Graph::QL::Schema::Union;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
