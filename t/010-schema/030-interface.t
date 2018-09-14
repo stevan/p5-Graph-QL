@@ -6,124 +6,64 @@ use experimental 'signatures';
 
 use Test::More;
 use Test::Differences;
+
 use Data::Dumper;
+
+use Parser::GraphQL::XS;
+use JSON::MaybeXS;
+
+use Graph::QL::Util::AST;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
 
     use_ok('Graph::QL::Schema::Type::Interface');
-    use_ok('Graph::QL::Schema::Type::Object');
-    use_ok('Graph::QL::Schema::Type::Scalar');
+    use_ok('Graph::QL::Schema::Type::Named');
 
     use_ok('Graph::QL::Schema::Field');
-    use_ok('Graph::QL::Schema::InputValue');
 }
 
 subtest '... testing my schema' => sub {
 
     # http://facebook.github.io/graphql/June2018/#example-ab5e5
-    my $expected_type_language = q[
-scalar Int
-
-scalar String
-
-interface NamedEntity {
+    my $expected_type_language =
+q[interface NamedEntity {
     name : String
-}
+    type : EntityType
+}];
 
-interface ValuedEntity {
-    value : Int
-}
-
-type Person implements NamedEntity {
-    name : String
-    age : Int
-}
-
-type Business implements NamedEntity & ValuedEntity {
-    name : String
-    value : Int
-    employeeCount : Int
-}
-
-type Query {
-    findByName(name : String) : NamedEntity
-    findByValue(value : Int) : ValuedEntity
-}
-
-schema {
-    query : Query
-}
-];
-
-    my $Int    = Graph::QL::Schema::Type::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
+    my $EntityType = Graph::QL::Schema::Type::Named->new( name => 'EntityType' );
+    my $String     = Graph::QL::Schema::Type::Named->new( name => 'String' );
 
     my $NamedEntity = Graph::QL::Schema::Type::Interface->new(
         name   => 'NamedEntity',
         fields => [
             Graph::QL::Schema::Field->new( name => 'name', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'type', type => $EntityType ),
         ]
     );
 
-    my $ValuedEntity = Graph::QL::Schema::Type::Interface->new(
-        name   => 'ValuedEntity',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'value', type => $Int ),
-        ]
-    );
+    #warn $NamedEntity->to_type_language;
 
-    my $Person = Graph::QL::Schema::Type::Object->new(
-        name       => 'Person',
-        interfaces => [ $NamedEntity ],
-        fields     => [
-            Graph::QL::Schema::Field->new( name => 'name', type => $String ),
-            Graph::QL::Schema::Field->new( name => 'age',  type => $Int    ),
-        ]
-    );
+    eq_or_diff($NamedEntity->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
-    my $Business = Graph::QL::Schema::Type::Object->new(
-        name       => 'Business',
-        interfaces => [ $NamedEntity, $ValuedEntity ],
-        fields     => [
-            Graph::QL::Schema::Field->new( name => 'name',          type => $String ),
-            Graph::QL::Schema::Field->new( name => 'value',         type => $Int    ),
-            Graph::QL::Schema::Field->new( name => 'employeeCount', type => $Int    ),
-        ]
-    );
+    subtest '... now parse the expected string and strip the location from the AST' => sub {
+        my $expected_ast = JSON::MaybeXS->new->decode(
+            Parser::GraphQL::XS->new->parse_string( $expected_type_language )
+        )->{definitions}->[0];
 
-    my $Query = Graph::QL::Schema::Type::Object->new(
-        name   => 'Query',
-        fields => [
-            Graph::QL::Schema::Field->new(
-                name => 'findByName',
-                args => [ Graph::QL::Schema::InputValue->new( name => 'name', type => $String ) ],
-                type => $NamedEntity,
-            ),
-            Graph::QL::Schema::Field->new(
-                name => 'findByValue',
-                args => [ Graph::QL::Schema::InputValue->new( name => 'value', type => $Int ) ],
-                type => $ValuedEntity,
-            ),
-        ]
-    );
+        #warn Dumper $expected_ast;
 
-    my $schema = Graph::QL::Schema->new(
-        query_type => $Query,
-        types => [
-            $Int,
-            $String,
-            $NamedEntity,
-            $ValuedEntity,
-            $Person,
-            $Business,
-            $Query,
-        ]
-    );
+        Graph::QL::Util::AST::null_out_source_locations(
+            $expected_ast,
+            'fields.type',
+        );
 
-    #warn $schema->to_type_language;
+        #warn Dumper $expected_ast;
 
-    eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+        eq_or_diff($NamedEntity->ast->TO_JSON, $expected_ast, '... got the expected AST');
+    };
+
 };
 
 done_testing;
