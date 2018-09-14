@@ -10,11 +10,8 @@ use Data::Dumper;
 
 BEGIN {
     use_ok('Graph::QL');
-    use_ok('Graph::QL::AST::Builder');
+    use_ok('Graph::QL::Parser');
 }
-
-use Parser::GraphQL::XS;
-use JSON::MaybeXS;
 
 my $schema = q[
 enum Directions {
@@ -25,11 +22,8 @@ enum Directions {
 }
 ];
 
-my $parser = Parser::GraphQL::XS->new;
-my $json   = $parser->parse_string( $schema );
-my $ast    = JSON::MaybeXS->new->decode( $json );
-
-my $node = Graph::QL::AST::Builder->build_from_ast( $ast );
+my $node = Graph::QL::Parser->parse( $schema );
+my $ast  = JSON::MaybeXS->new->decode( Parser::GraphQL::XS->new->parse_string( $schema ) );
 
 #warn Dumper $node->TO_JSON;
 

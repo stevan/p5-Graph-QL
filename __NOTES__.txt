@@ -22,7 +22,7 @@ Missing features in the Parser system:
     - need to glue together ...
         - Parser::GraphQL::XS
         - JSON::MaybeXS
-        - Graph::QL::AST::Builder
+        - Graph::QL::AST::*
 
 - A way to connect the AST to the Schema system
     - how do they fit together?
