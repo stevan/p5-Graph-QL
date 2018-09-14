@@ -173,7 +173,7 @@ q[enum Site {
 
     my $enum = Graph::QL::Schema::Type::Enum->new(
         name => 'Site',
-        enum_values => [
+        values => [
             Graph::QL::Schema::EnumValue->new( name => 'DESKTOP' ),
             Graph::QL::Schema::EnumValue->new( name => 'MOBILE' ),
         ]

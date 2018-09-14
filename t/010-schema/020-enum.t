@@ -6,7 +6,13 @@ use experimental 'signatures';
 
 use Test::More;
 use Test::Differences;
+
 use Data::Dumper;
+
+use Parser::GraphQL::XS;
+use JSON::MaybeXS;
+
+use Graph::QL::Util::AST;
 
 BEGIN {
     use_ok('Graph::QL::Schema::Type::Enum');
@@ -25,8 +31,8 @@ subtest '... testing my schema' => sub {
 }';
 
     my $Direction = Graph::QL::Schema::Type::Enum->new(
-        name        => 'Direction',
-        enum_values => [
+        name   => 'Direction',
+        values => [
             Graph::QL::Schema::EnumValue->new( name => 'NORTH' ),
             Graph::QL::Schema::EnumValue->new( name => 'EAST'  ),
             Graph::QL::Schema::EnumValue->new( name => 'SOUTH' ),
@@ -34,9 +40,20 @@ subtest '... testing my schema' => sub {
         ]
     );
 
-    #warn $schema->to_type_language;
+    #warn $Direction->to_type_language;
+    #warn Dumper $Direction->ast->TO_JSON;
 
     eq_or_diff($Direction->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+
+    subtest '... now parse the expected string and strip the location from the AST' => sub {
+        my $expected_ast = JSON::MaybeXS->new->decode(
+            Parser::GraphQL::XS->new->parse_string( $expected_type_language )
+        )->{definitions}->[0];
+
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'values' );
+
+        eq_or_diff($Direction->ast->TO_JSON, $expected_ast, '... got the expected AST');
+    };
 };
 
 done_testing;
