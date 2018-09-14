@@ -48,6 +48,7 @@ subtest '... schema' => sub {
 q[schema {
     query : QueryType
     mutation : MutationType
+    subscription : Subscription
 }];
 
     my $schema = Graph::QL::Schema->new(

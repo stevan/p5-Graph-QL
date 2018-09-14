@@ -5,94 +5,128 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
+use Graph::QL::AST::Node::Document;
+use Graph::QL::AST::Node::SchemaDefinition;
+use Graph::QL::AST::Node::OperationTypeDefinition;
+use Graph::QL::AST::Node::NamedType;
+use Graph::QL::AST::Node::Name;
 
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Schema::Type::Named;
+use Graph::QL::Schema::Enum;
+use Graph::QL::Schema::Union;
+use Graph::QL::Schema::InputObject;
+use Graph::QL::Schema::Interface;
+use Graph::QL::Schema::Object;
+use Graph::QL::Schema::Scalar;
 
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots (
-    types             => sub { +[] },
-    query_type        => sub { die 'You must supply a `query_type`' },
-    mutation_type     => sub {},
-    subscription_type => sub {},
-    directives        => sub { +[] },
-);
+use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
+    ast?               => _ast,
     types?             => types,
-    query_type         => query_type,
+    query_type?        => query_type,
     mutation_type?     => mutation_type,
     subscription_type? => subscription_type,
-    directives?        => directives,
 );
 
 sub BUILD ($self, $params) {
 
-    throw('The `query_type` value must be an instance of `Graph::QL::Schema::Type::Named`, not '.$self->{query_type})
-        unless Ref::Util::is_blessed_ref( $self->{query_type} )
-            && $self->{query_type}->isa('Graph::QL::Schema::Type::Named');
+    if ( not exists $params->{_ast} ) {
 
-    if ( exists $params->{mutation_type} ) {
-        throw('The `mutation_type` value must be an instance of `Graph::QL::Schema::Type::Named`, not '.$self->{mutation_type})
-            unless Ref::Util::is_blessed_ref( $self->{mutation_type} )
-                && $self->{mutation_type}->isa('Graph::QL::Schema::Type::Named');
-    }
+        # set up some defaults ...
+        $params->{query_type}        ||= Graph::QL::Schema::Type::Named->new( name => 'Query' );
+        $params->{mutation_type}     ||= Graph::QL::Schema::Type::Named->new( name => 'Mutation' );
+        $params->{subscription_type} ||= Graph::QL::Schema::Type::Named->new( name => 'Subscription' );
 
-    if ( exists $params->{subscription_type} ) {
-        throw('The `subscription_type` value must be an instance of `Graph::QL::Schema::Type::Named`, not '.$self->{subscription_type})
-            unless Ref::Util::is_blessed_ref( $self->{subscription_type} )
-                && $self->{subscription_type}->isa('Graph::QL::Schema::Type::Named');
-    }
+        my @definitions;
 
-    if ( $self->{types}->@* ) {
-        foreach ( $self->{types}->@* ) {
-            throw('The values in `types` value must be an instance of `Graph::QL::Schema::{Enum,Interface,Object,Scalar,Union}`, not '.$_)
-                unless Ref::Util::is_blessed_ref( $_ )
-                    && $_->isa('Graph::QL::Schema::Enum')
-                    || $_->isa('Graph::QL::Schema::Interface')
-                    || $_->isa('Graph::QL::Schema::Object')
-                    || $_->isa('Graph::QL::Schema::Scalar')
-                    || $_->isa('Graph::QL::Schema::Union');
+        # So converting these is simple, just
+        # as for the ast, ... getting them back
+        # happens in the `types` method below
+        foreach my $type ( $params->{types}->@* ) {
+            push @definitions => $type->ast;
         }
-    }
 
-    # if ( $self->{directives}->@* ) {
-    #     foreach ( $self->{directives}->@* ) {
-    #         throw('The values in `directives` value must be an instance of `Graph::QL::Schema::Directive`, not '.$_)
-    #             unless Ref::Util::is_blessed_ref( $_ )
-    #                 && $_->isa('Graph::QL::Schema::Directive');
-    #     }
-    # }
+        push @definitions => Graph::QL::AST::Node::SchemaDefinition->new(
+            operation_types => [
+                Graph::QL::AST::Node::OperationTypeDefinition->new(
+                    operation => 'query',
+                    type      => $params->{query_type}->ast
+                ),
+                Graph::QL::AST::Node::OperationTypeDefinition->new(
+                    operation => 'mutation',
+                    type      => $params->{mutation_type}->ast
+                ),
+                Graph::QL::AST::Node::OperationTypeDefinition->new(
+                    operation => 'subscription',
+                    type      => $params->{subscription_type}->ast
+                )
+            ]
+        );
+
+        $self->{_ast} = Graph::QL::AST::Node::Document->new(
+            definitions => \@definitions
+        );
+    }
 
 }
 
-sub types : ro;
+sub ast : ro(_);
 
-sub query_type : ro;
+sub has_types ($self) { $self->has_type_definitions }
+sub types ($self) {
 
-sub mutation_type     : ro;
-sub has_mutation_type : predicate;
+    my @types;
+    foreach my $definition ( $self->type_definitions->@* ) {
+        push @types => Graph::QL::Schema::Enum->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::EnumTypeDefinition');
+        push @types => Graph::QL::Schema::Union->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::UnionTypeDefinition');
+        push @types => Graph::QL::Schema::InputObject->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::InputObjectTypeDefinition');
+        push @types => Graph::QL::Schema::Interface->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::InterfaceTypeDefinition');
+        push @types => Graph::QL::Schema::Object->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::ObjectTypeDefinition');
+        push @types => Graph::QL::Schema::Scalar->new( ast => $definition )
+            if $definition->isa('Graph::QL::AST::Node::ScalarTypeDefinition');
 
-sub subscription_type     : ro;
-sub has_subscription_type : predicate;
+        # NOTE:
+        # Not going to support these yet
+        # (most cause I am not sure enough what they are)
+            # Graph::QL::AST::Node::OperationDefinition
+            # Graph::QL::AST::Node::TypeExtensionDefinition
+            # Graph::QL::AST::Node::FragmentDefinition
+    }
 
-# sub directives : ro;
+    return \@types;
+}
+
+sub schema_definition    ($self) { $self->ast->definitions->[-1] }
+
+sub type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } ] ] }
+sub has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
+
+sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[0]->type ) }
+sub mutation_type     ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[1]->type ) }
+sub subscription_type ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[2]->type ) }
 
 ## ...
 
 sub to_type_language ($self) {
     # TODO:
     # handle the `directives`
-    return ($self->types->@* # print the types first ...
+    return ($self->has_types # print the types first ...
         ? ("\n".(join "\n\n" => map $_->to_type_language, $self->types->@*)."\n\n")
         : ''). # followed by the base `schema` object
-        'schema {'."\n    ".
-            'query : '.$self->query_type->name."\n".
-            ($self->has_mutation_type     ? (    '    mutation : '.$self->mutation_type->name."\n")     : '').
-            ($self->has_subscription_type ? ('    subscription : '.$self->subscription_type->name."\n") : '').
-        '}'.($self->types->@* ? "\n" : '');
+        'schema {'."\n".
+            '    query : '.$self->query_type->name."\n".
+            '    mutation : '.$self->mutation_type->name."\n".
+            '    subscription : '.$self->subscription_type->name."\n".
+        '}'.($self->has_types ? "\n" : '');
 }
 
 1;

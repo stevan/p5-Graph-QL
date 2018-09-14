@@ -54,6 +54,8 @@ type Query {
 
 schema {
     query : Query
+    mutation : Mutation
+    subscription : Subscription
 }
 ];
 
@@ -122,6 +124,40 @@ schema {
     #warn $schema->to_type_language;
 
     eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+
+    subtest '... now parse the expected string and strip the location from the AST' => sub {
+        my @definitions = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->@*;
+
+        #warn Dumper $expected_ast;
+        Graph::QL::Util::AST::null_out_source_locations(
+                $_,
+                # just clean it all out ... :P
+                'types',
+                'operationTypes.type',
+                'fields.type',
+                'fields.type.type',
+                'fields.arguments.type',
+                'fields.arguments.defaultValue'
+        ) foreach @definitions;
+
+        my $schema_def = pop @definitions;
+        my ($int_def,
+            $string_def,
+            $birth_event_def,
+            $death_event_def,
+            $person_def,
+            $query_def,
+        ) = @definitions;
+
+        eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
+        eq_or_diff($Int->ast->TO_JSON, $int_def, '... got the expected AST');
+        eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
+        eq_or_diff($BirthEvent->ast->TO_JSON, $birth_event_def, '... got the expected AST');
+        eq_or_diff($DeathEvent->ast->TO_JSON, $death_event_def, '... got the expected AST');
+        eq_or_diff($Person->ast->TO_JSON, $person_def, '... got the expected AST');
+        eq_or_diff($Query->ast->TO_JSON, $query_def, '... got the expected AST');
+    };
+
 };
 
 subtest '... testing another schema' => sub {
@@ -141,6 +177,7 @@ type MyMutationRootType {
 schema {
     query : MyQueryRootType
     mutation : MyMutationRootType
+    subscription : Subscription
 }
 ];
 
@@ -182,6 +219,30 @@ schema {
     #warn $schema->to_type_language;
 
     eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
+
+    subtest '... now parse the expected string and strip the location from the AST' => sub {
+        my @definitions = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->@*;
+
+        #warn Dumper $expected_ast;
+        Graph::QL::Util::AST::null_out_source_locations(
+                $_,
+                # just clean it all out ... :P
+                'types',
+                'operationTypes.type',
+                'fields.type',
+                'fields.arguments.type',
+                'fields.arguments.defaultValue'
+        ) foreach @definitions;
+
+        my $schema_def = pop @definitions;
+        my ($string_def, $my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
+
+        eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
+        eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
+        eq_or_diff($MyQueryRootType->ast->TO_JSON, $my_query_root_type_def, '... got the expected AST');
+        eq_or_diff($MyMutationRootType->ast->TO_JSON, $my_mutation_root_type_def, '... got the expected AST');
+    };
+
 };
 
 done_testing;
