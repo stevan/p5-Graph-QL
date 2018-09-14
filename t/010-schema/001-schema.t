@@ -12,12 +12,13 @@ BEGIN {
     use_ok('Graph::QL::Schema');
 
     use_ok('Graph::QL::Schema::Type::List');
-    use_ok('Graph::QL::Schema::Type::Object');
-    use_ok('Graph::QL::Schema::Type::Scalar');
+    use_ok('Graph::QL::Schema::Object');
+    use_ok('Graph::QL::Schema::Scalar');
 
     use_ok('Graph::QL::Schema::Field');
-    use_ok('Graph::QL::Schema::InputValue');
+    use_ok('Graph::QL::Schema::InputObject::InputValue');
 }
+
 
 subtest '... testing my schema' => sub {
 
@@ -45,7 +46,7 @@ type Person {
 }
 
 type Query {
-    findPerson(name : String) : [Person]
+    findPerson(name : String) : Person
 }
 
 schema {
@@ -53,49 +54,56 @@ schema {
 }
 ];
 
-    my $Int    = Graph::QL::Schema::Type::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
+    my $Int    = Graph::QL::Schema::Scalar->new( name => 'Int' );
+    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
 
-    my $BirthEvent = Graph::QL::Schema::Type::Object->new(
+    my $BirthEvent = Graph::QL::Schema::Object->new(
         name   => 'BirthEvent',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'year',  type => $Int    ),
-            Graph::QL::Schema::Field->new( name => 'place', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'year',  type => Graph::QL::Schema::Type::Named->new( name => 'Int'    ) ),
+            Graph::QL::Schema::Field->new( name => 'place', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
         ]
     );
 
-    my $DeathEvent = Graph::QL::Schema::Type::Object->new(
+    my $DeathEvent = Graph::QL::Schema::Object->new(
         name   => 'DeathEvent',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'year',  type => $Int    ),
-            Graph::QL::Schema::Field->new( name => 'place', type => $String ),
+            Graph::QL::Schema::Field->new( name => 'year',  type => Graph::QL::Schema::Type::Named->new( name => 'Int'    ) ),
+            Graph::QL::Schema::Field->new( name => 'place', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
         ]
     );
 
-    my $Person = Graph::QL::Schema::Type::Object->new(
+    my $Person = Graph::QL::Schema::Object->new(
         name   => 'Person',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'name',        type => $String ),
-            Graph::QL::Schema::Field->new( name => 'nationality', type => $String ),
-            Graph::QL::Schema::Field->new( name => 'gender',      type => $String ),
-            Graph::QL::Schema::Field->new( name => 'birth',       type => $BirthEvent ),
-            Graph::QL::Schema::Field->new( name => 'death',       type => $DeathEvent ),
+            Graph::QL::Schema::Field->new( name => 'name',        type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
+            Graph::QL::Schema::Field->new( name => 'nationality', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
+            Graph::QL::Schema::Field->new( name => 'gender',      type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
+            Graph::QL::Schema::Field->new( name => 'birth',       type => Graph::QL::Schema::Type::Named->new( name => 'BirthEvent' ) ),
+            Graph::QL::Schema::Field->new( name => 'death',       type => Graph::QL::Schema::Type::Named->new( name => 'DeathEvent' ) ),
         ]
     );
 
-    my $Query = Graph::QL::Schema::Type::Object->new(
+    my $Query = Graph::QL::Schema::Object->new(
         name   => 'Query',
         fields => [
             Graph::QL::Schema::Field->new(
                 name => 'findPerson',
-                args => [ Graph::QL::Schema::InputValue->new( name => 'name', type => $String ) ],
-                type => Graph::QL::Schema::Type::List->new( of_type => $Person ),
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name => 'name',
+                        type => Graph::QL::Schema::Type::Named->new( name => 'String' )
+                    )
+                ],
+                type => Graph::QL::Schema::Type::Named->new(
+                    name => 'Person'
+                ),
             )
         ]
     );
 
     my $schema = Graph::QL::Schema->new(
-        query_type => $Query,
+        query_type => Graph::QL::Schema::Type::Named->new( name => 'Query' ),
         types => [
             $Int,
             $String,
@@ -131,29 +139,34 @@ schema {
 }
 ];
 
-    my $String = Graph::QL::Schema::Type::Scalar->new( name => 'String' );
+    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
 
-    my $MyQueryRootType = Graph::QL::Schema::Type::Object->new(
+    my $MyQueryRootType = Graph::QL::Schema::Object->new(
         name   => 'MyQueryRootType',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'someField',  type => $String ),
+            Graph::QL::Schema::Field->new( name => 'someField',  type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
         ]
     );
 
-    my $MyMutationRootType = Graph::QL::Schema::Type::Object->new(
+    my $MyMutationRootType = Graph::QL::Schema::Object->new(
         name   => 'MyMutationRootType',
         fields => [
             Graph::QL::Schema::Field->new(
                 name => 'setSomeField',
-                args => [ Graph::QL::Schema::InputValue->new( name => 'to', type => $String ) ],
-                type => $String,
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name => 'to',
+                        type => Graph::QL::Schema::Type::Named->new( name => 'String' )
+                    )
+                ],
+                type => Graph::QL::Schema::Type::Named->new( name => 'String' ),
             ),
         ]
     );
 
     my $schema = Graph::QL::Schema->new(
-        query_type    => $MyQueryRootType,
-        mutation_type => $MyMutationRootType,
+        query_type    => Graph::QL::Schema::Type::Named->new( name => 'MyQueryRootType' ),
+        mutation_type => Graph::QL::Schema::Type::Named->new( name => 'MyMutationRootType' ),
         types => [
             $String,
             $MyQueryRootType,
@@ -165,6 +178,5 @@ schema {
 
     eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 };
-
 
 done_testing;

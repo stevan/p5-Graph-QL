@@ -33,7 +33,7 @@ sub BUILD ($self, $params) {
     $self->{_ast} //= Graph::QL::AST::Node::FieldDefinition->new(
         name      => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
         type      => $params->{type}->ast,
-        arguments => [] # TODO ...
+        arguments => [ map $_->ast, $params->{args}->@* ],
     );
 }
 
@@ -51,8 +51,10 @@ sub type ($self) {
     Graph::QL::Schema::Type::Named->new( ast => $self->ast->type )
 }
 
-sub args { +[] }
-sub has_args { 0 }
+sub has_args ($self) { !! scalar $self->ast->arguments->@* }
+sub args ($self) {
+    [ map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->ast->arguments->@* ]
+}
 
 ## ...
 

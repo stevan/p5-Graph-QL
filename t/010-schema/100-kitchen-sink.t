@@ -48,8 +48,8 @@ q[schema {
 }];
 
     my $schema = Graph::QL::Schema->new(
-        query_type    => Graph::QL::Schema::Object->new( name => 'QueryType' ),
-        mutation_type => Graph::QL::Schema::Object->new( name => 'MutationType' ),
+        query_type    => Graph::QL::Schema::Type::Named->new( name => 'QueryType' ),
+        mutation_type => Graph::QL::Schema::Type::Named->new( name => 'MutationType' ),
     );
     isa_ok($schema, 'Graph::QL::Schema');
     eq_or_diff($schema->to_type_language, $string, '... the type language roundtripped');
@@ -127,20 +127,28 @@ subtest '... interface' => sub {
     my $string =
 q[interface Bar {
     one : Type
-    #four(argument : String = "string") : String
+    four(argument : String) : String
 }];
+
+# TODO: `default_value` in Field
+# four(argument : String = "string") : String
 
     my $interface = Graph::QL::Schema::Interface->new(
         name => 'Bar',
         fields => [
             Graph::QL::Schema::Field->new( name => 'one', type => $Type ),
-            #Graph::QL::Schema::Field->new(
-            #    name => 'four',
-            #    args => [
-            #        Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $String, default_value => '"string"' ),
-            #    ],
-            #    type => $String
-            #),
+            Graph::QL::Schema::Field->new(
+                name => 'four',
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name => 'argument',
+                        type => $String,
+                        # TODO: `default_value` in Field
+                        # default_value => '"string"'
+                    ),
+                ],
+                type => $String
+            ),
         ]
     );
     isa_ok($interface, 'Graph::QL::Schema::Interface');
@@ -189,27 +197,34 @@ q[enum Site {
     eq_or_diff($enum->to_type_language, $string, '... the type language roundtripped');
 };
 
-=pod
-
 subtest '... input-object' => sub {
     my $string =
 q[input InputType {
-    key : String!
-    answer : Int = 42
+    key : String
+    answer : Int
 }];
 
+# TODO: fix types for nullable and list
+# key : String!
+
+# TODO: fix `default_value` in InputValue
+# answer : Int = 42
+
     my $input_object = Graph::QL::Schema::InputObject->new(
-        name => 'InputType',
-        input_fields => [
-            Graph::QL::Schema::InputObject::InputValue->new( name => 'key', type => $nn_String ),
-            Graph::QL::Schema::InputObject::InputValue->new( name => 'answer', type => $Int, default_value => '42' ),
+        name   => 'InputType',
+        fields => [
+            Graph::QL::Schema::InputObject::InputValue->new( name => 'key', type => $String ),
+            Graph::QL::Schema::InputObject::InputValue->new(
+                name => 'answer',
+                type => $Int,
+                # TODO: fix `default_value` in InputValue
+                # default_value => '42'
+            ),
         ]
     );
     isa_ok($input_object, 'Graph::QL::Schema::InputObject');
     eq_or_diff($input_object->to_type_language, $string, '... the type language roundtripped');
 };
-
-=pod
 
 done_testing;
 
