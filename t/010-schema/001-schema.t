@@ -126,7 +126,8 @@ schema {
     eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
-        my @definitions = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->@*;
+        my $expected_ast = Graph::QL::Parser->parse_raw( $expected_type_language );
+        my @definitions  = $expected_ast->{definitions}->@*;
 
         #warn Dumper $expected_ast;
         Graph::QL::Util::AST::null_out_source_locations(
@@ -138,7 +139,7 @@ schema {
                 'fields.type.type',
                 'fields.arguments.type',
                 'fields.arguments.defaultValue'
-        ) foreach @definitions;
+        ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
         my ($int_def,
@@ -149,6 +150,7 @@ schema {
             $query_def,
         ) = @definitions;
 
+        eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
         eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
         eq_or_diff($Int->ast->TO_JSON, $int_def, '... got the expected AST');
         eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
@@ -221,7 +223,8 @@ schema {
     eq_or_diff($schema->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
-        my @definitions = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->@*;
+        my $expected_ast = Graph::QL::Parser->parse_raw( $expected_type_language );
+        my @definitions  = $expected_ast->{definitions}->@*;
 
         #warn Dumper $expected_ast;
         Graph::QL::Util::AST::null_out_source_locations(
@@ -232,11 +235,12 @@ schema {
                 'fields.type',
                 'fields.arguments.type',
                 'fields.arguments.defaultValue'
-        ) foreach @definitions;
+        ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
         my ($string_def, $my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
 
+        eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
         eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
         eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
         eq_or_diff($MyQueryRootType->ast->TO_JSON, $my_query_root_type_def, '... got the expected AST');
