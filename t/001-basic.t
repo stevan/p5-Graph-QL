@@ -2,7 +2,7 @@
 
 use v5.24;
 use warnings;
-use experimental 'signatures';
+use experimental 'signatures', 'postderef';
 
 use Test::More;
 use Test::Differences;
@@ -165,6 +165,100 @@ q[query findAllBobs {
             )
         ]
     );
+
+    subtest '... reherse the type check and field selection' => sub {
+
+        # get the query type name ...
+        my $schema_query_type = $schema_as_object->query_type;
+        isa_ok($schema_query_type, 'Graph::QL::Schema::Type::Named');
+
+        # find the Query type within the schema ...
+        my ($schema_query) = grep $_->name eq $schema_query_type->name, $schema_as_object->types->@*;
+        isa_ok($schema_query, 'Graph::QL::Schema::Object');
+        is($schema_query->ast, $Query->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
+
+        # get the root field from the query Op ...
+        my $query_field = $query_as_object->selections->[0];
+        isa_ok($query_field, 'Graph::QL::Query::Field');
+
+        # and use it to find the field in the (schema) Query object ...
+        my ($schema_field) = grep $_->name eq $query_field->name, $schema_query->fields->@*;
+        isa_ok($schema_field, 'Graph::QL::Schema::Field');
+
+        # check the args
+        foreach my $i ( 0 .. $#{ $schema_field->args } ) {
+            my $schema_arg = $schema_field->args->[ $i ];
+            my $query_arg  = $query_field->args->[ $i ];
+
+            isa_ok($schema_arg, 'Graph::QL::Schema::InputObject::InputValue');
+            isa_ok($query_arg, 'Graph::QL::Query::Argument');
+
+            # make sure the name of each arg matches ...
+            is($schema_arg->name, $query_arg->name, '... the args are the same name');
+
+            # get the type of the arg from the
+            # perspective of the schema ....
+            my $schema_arg_type = $schema_arg->type;
+            isa_ok($schema_arg_type, 'Graph::QL::Schema::Type::Named');
+
+            # now get the type of the arg that the
+            # query is sending us ...
+            my $query_arg_type = Graph::QL::Util::AST::ast_value_to_schema_type( $query_arg->ast->value );
+            isa_ok($query_arg_type, 'Graph::QL::Schema::Type::Named');
+
+            # are they the same name type? ... yes!
+            is($query_arg_type->name, $schema_arg_type->name, '... these are the same type');
+        }
+
+        # find the return type of all this ...
+        my $schema_field_return_type = $schema_field->type;
+        isa_ok($schema_field_return_type, 'Graph::QL::Schema::Type::List');
+
+        is($schema_field_return_type->name, '[Person]', '... got the name we expected');
+
+        # look at the of-type ...
+        my $schema_field_return_inner_type = $schema_field_return_type->of_type;
+        isa_ok($schema_field_return_inner_type, 'Graph::QL::Schema::Type::Named');
+        is($schema_field_return_inner_type->name, 'Person', '... got the name we expected');
+
+        # find the Person type within the schema ...
+        my ($schema_person) = grep $_->name eq $schema_field_return_inner_type->name, $schema_as_object->types->@*;
+        isa_ok($schema_person, 'Graph::QL::Schema::Object');
+        is($schema_person->ast, $Person->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
+
+        # verify that the selection will work,
+        # foreach of the selected fields, we must ...
+        foreach my $query_field ( $query_field->selections->@* ) {
+            isa_ok($query_field, 'Graph::QL::Query::Field');
+
+            # find the field from the schema object ...
+            my ($schema_field) = grep $_->name eq $query_field->name, $schema_person->fields->@*;
+            isa_ok($schema_field, 'Graph::QL::Schema::Field');
+
+            # then check to see if this query has any sub-selections ...
+            if ( $query_field->has_selections ) {
+
+                # if so, grab the type of the field ...
+                my $schema_field_type = $schema_field->type;
+                isa_ok($schema_field_type, 'Graph::QL::Schema::Type::Named');
+
+                # then find the object for that type ...
+                my ($schema_field_object) = grep $_->name eq $schema_field_type->name, $schema_as_object->types->@*;
+                isa_ok($schema_field_object, 'Graph::QL::Schema::Object');
+
+                # then lets look through the sub-selections ...
+                foreach my $sub_query_field ( $query_field->selections->@* ) {
+                    isa_ok($sub_query_field, 'Graph::QL::Query::Field');
+
+                    # and make sure that there is a field in the sub-object
+                    # for all the sub-selected fields
+                    my ($schema_sub_field) = grep $_->name eq $sub_query_field->name, $schema_field_object->fields->@*;
+                    isa_ok($schema_sub_field, 'Graph::QL::Schema::Field');
+                }
+
+            }
+        }
+    };
 
 ## test that the type language pretty printing works
 
