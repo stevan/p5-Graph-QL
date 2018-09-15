@@ -172,6 +172,42 @@ sub ast_type_to_schema_type ($ast) {
     }
 }
 
+sub ast_type_def_to_schema_type_def ($ast_type_def) {
+    if ( $ast_type_def->isa('Graph::QL::AST::Node::EnumTypeDefinition') ) {
+        require Graph::QL::Schema::Enum;
+        return Graph::QL::Schema::Enum->new( ast => $ast_type_def )
+    }
+    elsif ( $ast_type_def->isa('Graph::QL::AST::Node::UnionTypeDefinition') ) {
+        require Graph::QL::Schema::Union;
+        return Graph::QL::Schema::Union->new( ast => $ast_type_def )
+    }
+    elsif ( $ast_type_def->isa('Graph::QL::AST::Node::InputObjectTypeDefinition') ) {
+        require Graph::QL::Schema::InputObject;
+        return Graph::QL::Schema::InputObject->new( ast => $ast_type_def )
+    }
+    elsif ( $ast_type_def->isa('Graph::QL::AST::Node::InterfaceTypeDefinition') ) {
+        require Graph::QL::Schema::Interface;
+        return Graph::QL::Schema::Interface->new( ast => $ast_type_def )
+    }
+    elsif ( $ast_type_def->isa('Graph::QL::AST::Node::ObjectTypeDefinition') ) {
+        require Graph::QL::Schema::Object;
+        return Graph::QL::Schema::Object->new( ast => $ast_type_def )
+    }
+    elsif ( $ast_type_def->isa('Graph::QL::AST::Node::ScalarTypeDefinition') ) {
+        require Graph::QL::Schema::Scalar;
+        return Graph::QL::Schema::Scalar->new( ast => $ast_type_def )
+    }
+    else {
+        # NOTE:
+        # Not going to support these yet
+        # (most cause I am not sure enough what they are)
+            # Graph::QL::AST::Node::OperationDefinition
+            # Graph::QL::AST::Node::TypeExtensionDefinition
+            # Graph::QL::AST::Node::FragmentDefinition
+
+        throw('Do not recognize the ast type def(%s), unable to convert to schema type def', $ast_type_def);
+    }
+}
 ## ----------------------------------------------
 ## General utils for AST data structures
 ## ----------------------------------------------

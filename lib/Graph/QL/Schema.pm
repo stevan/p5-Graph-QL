@@ -78,36 +78,12 @@ sub ast : ro(_);
 
 sub has_types ($self) { $self->has_type_definitions }
 sub types ($self) {
-
-    my @types;
-    foreach my $definition ( $self->type_definitions->@* ) {
-        push @types => Graph::QL::Schema::Enum->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::EnumTypeDefinition');
-        push @types => Graph::QL::Schema::Union->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::UnionTypeDefinition');
-        push @types => Graph::QL::Schema::InputObject->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::InputObjectTypeDefinition');
-        push @types => Graph::QL::Schema::Interface->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::InterfaceTypeDefinition');
-        push @types => Graph::QL::Schema::Object->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::ObjectTypeDefinition');
-        push @types => Graph::QL::Schema::Scalar->new( ast => $definition )
-            if $definition->isa('Graph::QL::AST::Node::ScalarTypeDefinition');
-
-        # NOTE:
-        # Not going to support these yet
-        # (most cause I am not sure enough what they are)
-            # Graph::QL::AST::Node::OperationDefinition
-            # Graph::QL::AST::Node::TypeExtensionDefinition
-            # Graph::QL::AST::Node::FragmentDefinition
-    }
-
-    return \@types;
+    [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->type_definitions->@* ]
 }
 
 sub schema_definition    ($self) { $self->ast->definitions->[-1] }
 
-sub type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } ] ] }
+sub type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
 sub has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
 
 sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[0]->type ) }
