@@ -13,6 +13,8 @@ use Graph::QL::Query::Field;
 
 our $VERSION = '0.01';
 
+use constant ANON_NAME => '__ANON__';
+
 use parent 'UNIVERSAL::Object::Immutable';
 use slots ( _ast => sub {} );
 
@@ -25,7 +27,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
-        $params->{name} ||= '__ANON__';
+        $params->{name} ||= ANON_NAME;
 
         # TODO:
         # check `selections` is Graph::QL::Query::Field
@@ -46,11 +48,21 @@ sub BUILD ($self, $params) {
 
 sub ast : ro(_);
 
-sub name ($self) { $self->ast->name->value }
+sub name    ($self) { $self->ast->name->value  }
+sub is_anon ($self) { $self->name eq ANON_NAME }
 
 sub has_selections ($self) { !! scalar $self->ast->selection_set->selections->@* }
 sub selections ($self) {
     [ map Graph::QL::Query::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ]
+}
+
+## ...
+
+sub to_type_language ($self) {
+
+    my $selections = join "\n    " => map { join "\n    " => split /\n/ => $_ } map $_->to_type_language, $self->selections->@*;
+
+    return 'query '.($self->is_anon ? '' : $self->name.' ')."{\n    ".$selections."\n}";
 }
 
 1;

@@ -49,20 +49,6 @@ Graph::QL::Util::AST::null_out_source_locations(
     'selectionSet.selections.selectionSet.selections.arguments.value',
 );
 
-my $query = Graph::QL::Query->new(
-    name       => 'queryName',
-    selections => [
-        Graph::QL::Query::Field->new(
-            name       => 'find',
-            args       => [ Graph::QL::Query::Argument->new( name => 'id', value => 4 ) ],
-            selections => [
-                Graph::QL::Query::Field->new( name => 'id' ),
-                Graph::QL::Query::Field->new( name => 'name' ),
-            ]
-        )
-    ]
-);
-
 my $node_2 = Graph::QL::AST::Node::OperationDefinition->new(
     operation     => 'query',
     name          => Graph::QL::AST::Node::Name->new( value => 'queryName' ),
@@ -88,6 +74,21 @@ my $node_2 = Graph::QL::AST::Node::OperationDefinition->new(
 );
 
 eq_or_diff($node_2->TO_JSON, $expected_ast, '... round-tripped the ast');
+
+my $query = Graph::QL::Query->new(
+    name       => 'queryName',
+    selections => [
+        Graph::QL::Query::Field->new(
+            name       => 'find',
+            args       => [ Graph::QL::Query::Argument->new( name => 'id', value => 4 ) ],
+            selections => [
+                Graph::QL::Query::Field->new( name => 'id' ),
+                Graph::QL::Query::Field->new( name => 'name' ),
+            ]
+        )
+    ]
+);
+
 eq_or_diff($query->ast->TO_JSON, $expected_ast, '... round-tripped the ast');
 
 done_testing;

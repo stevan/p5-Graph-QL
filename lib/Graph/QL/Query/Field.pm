@@ -57,10 +57,23 @@ sub args ($self) {
     [ map Graph::QL::Query::Argument->new( ast => $_ ), $self->ast->arguments->@* ]
 }
 
-sub has_selections ($self) { !! scalar $self->ast->selection_set->selections->@* }
+sub has_selections ($self) { !! $self->ast->selection_set && scalar $self->ast->selection_set->selections->@* }
 sub selections ($self) {
-    [ map Graph::QL::Query::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ]
+    return [] unless $self->has_selections;
+    return [ map Graph::QL::Query::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ];
 }
+
+## ...
+
+sub to_type_language ($self) {
+
+    my $name       = ($self->has_alias      ? ($self->alias.' : ') : '').$self->name;
+    my $args       = ($self->has_args       ? ('('.(join ', ' => map $_->to_type_language, $self->args->@*).')') : '');
+    my $selections = ($self->has_selections ? (" {\n    ".(join "\n    " => map {join "\n    " => split /\n/ => $_ } map $_->to_type_language, $self->selections->@*)."\n}"):'');
+
+    return $name.$args.$selections;
+}
+
 
 1;
 

@@ -62,7 +62,6 @@ sub args ($self) {
 sub to_type_language ($self) {
     # TODO:
     # handle the `description`
-    # handle the `args` form
     if ( $self->has_args ) {
         return $self->name.'('.(join ', ' => map $_->to_type_language, $self->args->@*).') : '.$self->type->name;
     }

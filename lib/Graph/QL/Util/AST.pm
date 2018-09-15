@@ -80,7 +80,7 @@ sub guess_literal_to_ast_node ($literal) {
     # this is a bad way to handle Booleans, should
     # likely also check for JSON::PP::Booleans and
     # other such esoteria ...
-    elsif ( $literal eq '' || $literal == 1 || $literal == 0  ) {
+    elsif ( $literal eq '' || $literal =~ /^1$/ || $literal =~ /^0$/  ) {
         require Graph::QL::AST::Node::BooleanValue;
         return Graph::QL::AST::Node::BooleanValue->new( value => $literal );
     }

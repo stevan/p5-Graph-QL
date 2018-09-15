@@ -41,6 +41,10 @@ sub value ($self) {
     return;
 }
 
+sub to_type_language ($self) {
+    return $self->name.' : '.Graph::QL::Util::AST::ast_node_to_type_language( $self->ast->value );
+}
+
 1;
 
 __END__
