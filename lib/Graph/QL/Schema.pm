@@ -5,6 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::AST;
+
 use Graph::QL::AST::Node::Document;
 use Graph::QL::AST::Node::SchemaDefinition;
 use Graph::QL::AST::Node::OperationTypeDefinition;
@@ -76,19 +78,21 @@ sub BUILD ($self, $params) {
 
 sub ast : ro(_);
 
-sub has_types ($self) { $self->has_type_definitions }
+sub has_types ($self) { $self->_has_type_definitions }
 sub types ($self) {
-    [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->type_definitions->@* ]
+    [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
 }
 
-sub schema_definition    ($self) { $self->ast->definitions->[-1] }
 
-sub type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
-sub has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
 
-sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[0]->type ) }
-sub mutation_type     ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[1]->type ) }
-sub subscription_type ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->schema_definition->operation_types->[2]->type ) }
+sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
+
+sub _type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
+sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
+
+sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[0]->type ) }
+sub mutation_type     ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[1]->type ) }
+sub subscription_type ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[2]->type ) }
 
 ## ...
 

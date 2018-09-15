@@ -151,7 +151,7 @@ schema {
         ) = @definitions;
 
         eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
-        eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
+        eq_or_diff($schema->_schema_definition->TO_JSON, $schema_def, '... got the expected AST');
         eq_or_diff($Int->ast->TO_JSON, $int_def, '... got the expected AST');
         eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
         eq_or_diff($BirthEvent->ast->TO_JSON, $birth_event_def, '... got the expected AST');
@@ -241,7 +241,7 @@ schema {
         my ($string_def, $my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
 
         eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
-        eq_or_diff($schema->schema_definition->TO_JSON, $schema_def, '... got the expected AST');
+        eq_or_diff($schema->_schema_definition->TO_JSON, $schema_def, '... got the expected AST');
         eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
         eq_or_diff($MyQueryRootType->ast->TO_JSON, $my_query_root_type_def, '... got the expected AST');
         eq_or_diff($MyMutationRootType->ast->TO_JSON, $my_mutation_root_type_def, '... got the expected AST');
