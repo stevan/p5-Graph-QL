@@ -8,12 +8,15 @@ use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
-# Literal types ...
+## base types ...
 
+use constant OBJECT  => 'Object';
+use constant ENUM    => 'Enum';
 use constant BOOLEAN => 'Boolean';
 use constant FLOAT   => 'Float';
 use constant INT     => 'Int';
 use constant STRING  => 'String';
+use constant NULL    => 'Null';
 
 1;
 
