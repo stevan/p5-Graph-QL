@@ -208,6 +208,28 @@ sub ast_type_def_to_schema_type_def ($ast_type_def) {
         throw('Do not recognize the ast type def(%s), unable to convert to schema type def', $ast_type_def);
     }
 }
+
+sub ast_value_to_schema_type ($ast_value) {
+    if ( $ast_value->isa('Graph::QL::AST::Node::NullValue') ) {
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->NULL );
+    }
+    elsif ( $ast_value->isa('Graph::QL::AST::Node::BooleanValue') ) {
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->BOOLEAN );
+    }
+    elsif ( $ast_value->isa('Graph::QL::AST::Node::FloatValue') ) {
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->FLOAT );
+    }
+    elsif ( $ast_value->isa('Graph::QL::AST::Node::IntValue') ) {
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->INT );
+    }
+    elsif ( $ast_value->isa('Graph::QL::AST::Node::StringValue') ) {
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->STRING );
+    }
+    else {
+        throw('Do not recognize the ast-value(%s), unable to convert to schema type', $ast_value);
+    }
+}
+
 ## ----------------------------------------------
 ## General utils for AST data structures
 ## ----------------------------------------------
