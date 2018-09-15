@@ -57,6 +57,19 @@ sub fields ($self) {
     [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
+sub lookup_field ($self, $name) {
+
+    # coerce query fields into strings ...
+    $name = $name->name
+        if Ref::Util::is_blessed_ref( $name )
+        && $name->isa('Graph::QL::Query::Field');
+
+    my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
+    return unless defined $field_ast;
+    return Graph::QL::Schema::Field->new( ast => $field_ast );
+}
+
+
 sub interfaces ($self) {
     [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->interfaces->@* ]
 }

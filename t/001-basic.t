@@ -173,7 +173,7 @@ q[query findAllBobs {
         isa_ok($schema_query_type, 'Graph::QL::Schema::Type::Named');
 
         # find the Query type within the schema ...
-        my ($schema_query) = grep $_->name eq $schema_query_type->name, $schema_as_object->types->@*;
+        my ($schema_query) = $schema_as_object->lookup_type( $schema_query_type );
         isa_ok($schema_query, 'Graph::QL::Schema::Object');
         is($schema_query->ast, $Query->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
 
@@ -182,7 +182,7 @@ q[query findAllBobs {
         isa_ok($query_field, 'Graph::QL::Query::Field');
 
         # and use it to find the field in the (schema) Query object ...
-        my ($schema_field) = grep $_->name eq $query_field->name, $schema_query->fields->@*;
+        my ($schema_field) = $schema_query->lookup_field( $query_field );
         isa_ok($schema_field, 'Graph::QL::Schema::Field');
 
         # check the args
@@ -222,7 +222,7 @@ q[query findAllBobs {
         is($schema_field_return_inner_type->name, 'Person', '... got the name we expected');
 
         # find the Person type within the schema ...
-        my ($schema_person) = grep $_->name eq $schema_field_return_inner_type->name, $schema_as_object->types->@*;
+        my ($schema_person) = $schema_as_object->lookup_type( $schema_field_return_inner_type );
         isa_ok($schema_person, 'Graph::QL::Schema::Object');
         is($schema_person->ast, $Person->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
 
@@ -232,7 +232,7 @@ q[query findAllBobs {
             isa_ok($query_field, 'Graph::QL::Query::Field');
 
             # find the field from the schema object ...
-            my ($schema_field) = grep $_->name eq $query_field->name, $schema_person->fields->@*;
+            my ($schema_field) = $schema_person->lookup_field( $query_field );
             isa_ok($schema_field, 'Graph::QL::Schema::Field');
 
             # then check to see if this query has any sub-selections ...
@@ -243,7 +243,7 @@ q[query findAllBobs {
                 isa_ok($schema_field_type, 'Graph::QL::Schema::Type::Named');
 
                 # then find the object for that type ...
-                my ($schema_field_object) = grep $_->name eq $schema_field_type->name, $schema_as_object->types->@*;
+                my ($schema_field_object) = $schema_as_object->lookup_type( $schema_field_type );
                 isa_ok($schema_field_object, 'Graph::QL::Schema::Object');
 
                 # then lets look through the sub-selections ...
@@ -252,7 +252,7 @@ q[query findAllBobs {
 
                     # and make sure that there is a field in the sub-object
                     # for all the sub-selected fields
-                    my ($schema_sub_field) = grep $_->name eq $sub_query_field->name, $schema_field_object->fields->@*;
+                    my ($schema_sub_field) = $schema_field_object->lookup_field( $sub_query_field );
                     isa_ok($schema_sub_field, 'Graph::QL::Schema::Field');
                 }
 

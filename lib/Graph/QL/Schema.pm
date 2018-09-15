@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
 use Graph::QL::Util::AST;
 
 use Graph::QL::AST::Node::Document;
@@ -83,7 +86,17 @@ sub types ($self) {
     [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
 }
 
+sub lookup_type ($self, $name) {
 
+    # coerce named types into strings ...
+    $name = $name->name
+        if Ref::Util::is_blessed_ref( $name )
+        && $name->isa('Graph::QL::Schema::Type::Named');
+
+    my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
+    return unless defined $type_def;
+    return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
+}
 
 sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
 
