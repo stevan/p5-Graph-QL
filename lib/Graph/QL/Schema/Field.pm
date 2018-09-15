@@ -6,9 +6,12 @@ use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
 use Ref::Util ();
+
 use Graph::QL::Util::Errors 'throw';
-use Graph::QL::Util::Types;
+use Graph::QL::Util::AST;
+
 use Graph::QL::Schema::Type::Named;
+
 use Graph::QL::AST::Node::FieldDefinition;
 use Graph::QL::AST::Node::Name;
 
@@ -46,7 +49,7 @@ sub ast : ro(_);
 
 sub name ($self) { $self->ast->name->value }
 sub type ($self) {
-    return Graph::QL::Util::Types::ast_type_to_schema_type( $self->ast->type );
+    return Graph::QL::Util::AST::ast_type_to_schema_type( $self->ast->type );
 }
 
 sub has_args ($self) { !! scalar $self->ast->arguments->@* }

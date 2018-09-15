@@ -7,8 +7,7 @@ use decorators ':accessors', ':constructor';
 
 use Ref::Util ();
 use Graph::QL::Util::Errors 'throw';
-use Graph::QL::Util::Types;
-use Graph::QL::Util::Types;
+use Graph::QL::Util::AST;
 use Graph::QL::AST::Node::InputValueDefinition;
 
 our $VERSION = '0.01';
@@ -34,7 +33,7 @@ sub BUILD ($self, $params) {
             name          => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
             type          => $params->{type}->ast,
             (exists $params->{default_value}
-                ? (default_value => Graph::QL::Util::Types::literal_to_ast_node( $params->{default_value}, $params->{type} ))
+                ? (default_value => Graph::QL::Util::AST::literal_to_ast_node( $params->{default_value}, $params->{type} ))
                 : ())
         );
     }
@@ -44,13 +43,13 @@ sub ast : ro(_);
 
 sub name ($self) { $self->ast->name->value }
 sub type ($self) {
-    return Graph::QL::Util::Types::ast_type_to_schema_type( $self->ast->type );
+    return Graph::QL::Util::AST::ast_type_to_schema_type( $self->ast->type );
 }
 
 sub has_default_value ($self) { !! $self->ast->default_value }
 sub default_value ($self) {
     if ( my $default_value = $self->ast->default_value ) {
-        return Graph::QL::Util::Types::ast_node_to_literal( $default_value );
+        return Graph::QL::Util::AST::ast_node_to_literal( $default_value );
     }
     return;
 }
@@ -64,7 +63,7 @@ sub to_type_language ($self) {
           .' : '
           .$self->type->name
           .($self->has_default_value
-                ? (' = '.Graph::QL::Util::Types::ast_node_to_type_language( $self->ast->default_value ))
+                ? (' = '.Graph::QL::Util::AST::ast_node_to_type_language( $self->ast->default_value ))
                 : '');
 }
 
