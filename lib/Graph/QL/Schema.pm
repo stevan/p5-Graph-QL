@@ -81,9 +81,12 @@ sub BUILD ($self, $params) {
 
 sub ast : ro(_);
 
+## ...
+
 sub has_types ($self) { $self->_has_type_definitions }
+
 sub types ($self) {
-    [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
+    return [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
 }
 
 sub lookup_type ($self, $name) {
@@ -93,15 +96,20 @@ sub lookup_type ($self, $name) {
         if Ref::Util::is_blessed_ref( $name )
         && $name->isa('Graph::QL::Schema::Type::Named');
 
+    $name = $name->name->value
+        if Ref::Util::is_blessed_ref( $name )
+        && $name->isa('Graph::QL::AST::Node::NamedType');
+
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
     return unless defined $type_def;
     return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
 }
 
-sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
+sub lookup_query_type        ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[0]->type ) }
+sub lookup_mutation_type     ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[1]->type ) }
+sub lookup_subscription_type ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[2]->type ) }
 
-sub _type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
-sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
+## ...
 
 sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[0]->type ) }
 sub mutation_type     ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[1]->type ) }
@@ -121,6 +129,12 @@ sub to_type_language ($self) {
         '    subscription : '.$self->subscription_type->name."\n".
         '}'.($self->has_types ? "\n" : '');
 }
+
+## ...
+
+sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
+sub _type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
+sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
 
 1;
 

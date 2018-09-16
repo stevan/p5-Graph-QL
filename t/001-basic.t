@@ -168,21 +168,17 @@ q[query findAllBobs {
 
     subtest '... reherse the type check and field selection' => sub {
 
-        # get the query type name ...
-        my $schema_query_type = $schema_as_object->query_type;
-        isa_ok($schema_query_type, 'Graph::QL::Schema::Type::Named');
-
         # find the Query type within the schema ...
-        my ($schema_query) = $schema_as_object->lookup_type( $schema_query_type );
-        isa_ok($schema_query, 'Graph::QL::Schema::Object');
-        is($schema_query->ast, $Query->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
+        my $Query = $schema_as_object->lookup_query_type;
+        isa_ok($Query, 'Graph::QL::Schema::Object');
+
 
         # get the root field from the query Op ...
         my $query_field = $query_as_object->selections->[0];
         isa_ok($query_field, 'Graph::QL::Query::Field');
 
         # and use it to find the field in the (schema) Query object ...
-        my ($schema_field) = $schema_query->lookup_field( $query_field );
+        my $schema_field = $Query->lookup_field( $query_field );
         isa_ok($schema_field, 'Graph::QL::Schema::Field');
 
         # check the args
@@ -210,6 +206,7 @@ q[query findAllBobs {
             is($query_arg_type->name, $schema_arg_type->name, '... these are the same type');
         }
 
+
         # find the return type of all this ...
         my $schema_field_return_type = $schema_field->type;
         isa_ok($schema_field_return_type, 'Graph::QL::Schema::Type::List');
@@ -224,7 +221,6 @@ q[query findAllBobs {
         # find the Person type within the schema ...
         my ($schema_person) = $schema_as_object->lookup_type( $schema_field_return_inner_type );
         isa_ok($schema_person, 'Graph::QL::Schema::Object');
-        is($schema_person->ast, $Person->ast, '... these are different wrapper objects, but they are the same AST, so equivalent');
 
         # verify that the selection will work,
         # foreach of the selected fields, we must ...

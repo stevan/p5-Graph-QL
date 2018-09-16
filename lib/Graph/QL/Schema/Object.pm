@@ -53,12 +53,14 @@ sub BUILD ($self, $params) {
 sub ast : ro(_);
 
 sub name   ($self) { $self->ast->name->value }
+
+## ...
+
 sub fields ($self) {
-    [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
+    return [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
 sub lookup_field ($self, $name) {
-
     # coerce query fields into strings ...
     $name = $name->name
         if Ref::Util::is_blessed_ref( $name )
@@ -69,6 +71,7 @@ sub lookup_field ($self, $name) {
     return Graph::QL::Schema::Field->new( ast => $field_ast );
 }
 
+## ...
 
 sub interfaces ($self) {
     [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->interfaces->@* ]
