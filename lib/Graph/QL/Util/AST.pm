@@ -116,6 +116,11 @@ sub literal_to_ast_node ($literal, $type) {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
+    # TODO:
+    # we are going to want to handle some other types:
+    # - INPUT_OBJECT
+    # - LIST
+    # - Enum Value
     else {
         throw('Do not recognize the expected type(%s), unable to convert to ast-node', $type->name);
     }
