@@ -36,8 +36,6 @@ sub name ($self) { $self->ast->name->value }
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle `directives`
     return $self->name;
 }
 

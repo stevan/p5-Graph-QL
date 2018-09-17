@@ -57,8 +57,6 @@ sub default_value ($self) {
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `description`
     return $self->name
           .' : '
           .$self->type->name

@@ -42,7 +42,6 @@ sub types ($self) {
     [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->types->@* ]
 }
 
-
 ## ...
 
 sub to_type_language ($self) {

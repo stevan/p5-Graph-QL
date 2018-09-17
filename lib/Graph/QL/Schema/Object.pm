@@ -80,8 +80,6 @@ sub interfaces ($self) {
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `directives`
     my $interfaces = '';
     if ( $self->interfaces->@* ) {
         $interfaces = ' implements '.(join ' & ' => map $_->name, $self->interfaces->@*);

@@ -118,8 +118,6 @@ sub subscription_type ($self) { Graph::QL::Schema::Type::Named->new( ast => $sel
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `directives`
     return ($self->has_types # print the types first ...
         ? ("\n".(join "\n\n" => map $_->to_type_language, $self->types->@*)."\n\n")
         : ''). # followed by the base `schema` object

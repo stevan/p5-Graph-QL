@@ -45,8 +45,6 @@ sub fields ($self) {
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `description`
     return 'interface '.$self->name.' {'."\n    ".
         (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
     '}';
