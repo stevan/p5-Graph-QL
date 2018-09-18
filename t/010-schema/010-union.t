@@ -35,7 +35,7 @@ subtest '... testing my schema' => sub {
     );
 
     is_deeply($SearchResult->name, 'SearchResult', '... got the expected name');
-    is_deeply($SearchResult->types, [ $Photo, $Person ], '... got the expected types');
+    is_deeply($SearchResult->all_types, [ $Photo, $Person ], '... got the expected types');
 
     #warn $SearchResult->to_type_language;
     eq_or_diff($SearchResult->to_type_language, $expected_type_language, '... got the pretty printed schema as expected');

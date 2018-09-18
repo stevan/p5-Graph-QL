@@ -38,7 +38,7 @@ sub BUILD ($self, $params) {
 sub ast : ro(_);
 
 sub name   ($self) { $self->ast->name->value }
-sub fields ($self) {
+sub all_fields ($self) {
     [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 

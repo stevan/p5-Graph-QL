@@ -38,14 +38,15 @@ sub BUILD ($self, $params) {
 sub ast : ro(_);
 
 sub name  ($self) { $self->ast->name->value }
-sub types ($self) {
+
+sub all_types ($self) {
     [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->types->@* ]
 }
 
 ## ...
 
 sub to_type_language ($self) {
-    return sprintf 'union %s = %s' => $self->name, (join ' | ' => map $_->name, $self->types->@*);
+    return sprintf 'union %s = %s' => $self->name, (join ' | ' => map $_->name, $self->all_types->@*);
 }
 
 1;

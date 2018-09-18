@@ -36,7 +36,7 @@ sub ast : ro(_);
 
 sub name ($self) { $self->ast->name->value }
 
-sub fields ($self) {
+sub all_fields ($self) {
     [ map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
@@ -44,7 +44,7 @@ sub fields ($self) {
 
 sub to_type_language ($self) {
     return 'input '.$self->name.' {'."\n    ".
-        (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
+        (join "\n    " => map $_->to_type_language, $self->all_fields->@*)."\n".
     '}';
 }
 

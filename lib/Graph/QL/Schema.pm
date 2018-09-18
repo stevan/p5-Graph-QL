@@ -83,9 +83,7 @@ sub ast : ro(_);
 
 ## ...
 
-sub has_types ($self) { $self->_has_type_definitions }
-
-sub types ($self) {
+sub all_types ($self) {
     return [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
 }
 

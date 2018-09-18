@@ -56,7 +56,7 @@ sub name   ($self) { $self->ast->name->value }
 
 ## ...
 
-sub fields ($self) {
+sub all_fields ($self) {
     return [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
@@ -85,7 +85,7 @@ sub to_type_language ($self) {
         $interfaces = ' implements '.(join ' & ' => map $_->name, $self->interfaces->@*);
     }
     return 'type '.$self->name.$interfaces.' {'."\n    ".
-        (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
+        (join "\n    " => map $_->to_type_language, $self->all_fields->@*)."\n".
     '}';
 }
 
