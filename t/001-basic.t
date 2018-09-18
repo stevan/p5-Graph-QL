@@ -59,8 +59,6 @@ type Query {
 
 schema {
     query : Query
-    mutation : Mutation
-    subscription : Subscription
 }
 ];
 
@@ -169,9 +167,8 @@ q[query findAllBobs {
     subtest '... reherse the type check and field selection' => sub {
 
         # find the Query type within the schema ...
-        my $Query = $schema_as_object->lookup_query_type;
+        my $Query = $schema_as_object->lookup_root_type('query');
         isa_ok($Query, 'Graph::QL::Schema::Object');
-
 
         # get the root field from the query Op ...
         my $query_field = $query_as_object->selections->[0];

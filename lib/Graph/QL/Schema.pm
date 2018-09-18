@@ -41,11 +41,6 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-        # set up some defaults ...
-        $params->{query_type}        ||= Graph::QL::Schema::Type::Named->new( name => 'Query' );
-        $params->{mutation_type}     ||= Graph::QL::Schema::Type::Named->new( name => 'Mutation' );
-        $params->{subscription_type} ||= Graph::QL::Schema::Type::Named->new( name => 'Subscription' );
-
         my @definitions;
 
         # So converting these is simple, just
@@ -61,14 +56,16 @@ sub BUILD ($self, $params) {
                     operation => 'query',
                     type      => $params->{query_type}->ast
                 ),
-                Graph::QL::AST::Node::OperationTypeDefinition->new(
-                    operation => 'mutation',
-                    type      => $params->{mutation_type}->ast
-                ),
-                Graph::QL::AST::Node::OperationTypeDefinition->new(
-                    operation => 'subscription',
-                    type      => $params->{subscription_type}->ast
-                )
+                ($params->{mutation_type} ?
+                    Graph::QL::AST::Node::OperationTypeDefinition->new(
+                        operation => 'mutation',
+                        type      => $params->{mutation_type}->ast
+                    ) : ()),
+                ($params->{subscription_type} ?
+                    Graph::QL::AST::Node::OperationTypeDefinition->new(
+                        operation => 'subscription',
+                        type      => $params->{subscription_type}->ast
+                    ) : ()),
             ]
         );
 
@@ -100,30 +97,43 @@ sub lookup_type ($self, $name) {
 
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
     return unless defined $type_def;
+
     return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
 }
 
-sub lookup_query_type        ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[0]->type ) }
-sub lookup_mutation_type     ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[1]->type ) }
-sub lookup_subscription_type ($self) { $self->lookup_type( $self->_schema_definition->operation_types->[2]->type ) }
+sub lookup_root_type ($self, $op_kind) {
+    # TODO:
+    # validate $op_kind against OperationKind
 
-## ...
+    my $type;
+    $type = $self->_get_query_type        if $op_kind eq 'query';
+    $type = $self->_get_mutation_type     if $op_kind eq 'mutation';
+    $type = $self->_get_subscription_type if $op_kind eq 'subscription';
+    # NOTE:
+    # we should have validated the $op_kind so
+    # that it cannot have any other values then
+    # the three we tested.
+    # - SL
 
-sub query_type        ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[0]->type ) }
-sub mutation_type     ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[1]->type ) }
-sub subscription_type ($self) { Graph::QL::Schema::Type::Named->new( ast => $self->_schema_definition->operation_types->[2]->type ) }
+    return unless $type;
+    return $self->lookup_type( $type );
+}
 
 ## ...
 
 sub to_type_language ($self) {
-    return ($self->has_types # print the types first ...
-        ? ("\n".(join "\n\n" => map $_->to_type_language, $self->types->@*)."\n\n")
+    my $query        = $self->lookup_root_type( 'query' );
+    my $mutation     = $self->lookup_root_type( 'mutation' );
+    my $subscription = $self->lookup_root_type( 'subscription' );
+
+    return ($self->_has_type_definitions # print the types first ...
+        ? ("\n".(join "\n\n" => map $_->to_type_language, $self->all_types->@*)."\n\n")
         : ''). # followed by the base `schema` object
         'schema {'."\n".
-        '    query : '.$self->query_type->name."\n".
-        '    mutation : '.$self->mutation_type->name."\n".
-        '    subscription : '.$self->subscription_type->name."\n".
-        '}'.($self->has_types ? "\n" : '');
+        ($query        ? ('    query : '.$query->name."\n") : '').
+        ($mutation     ? ('    mutation : '.$mutation->name."\n") : '').
+        ($subscription ? ('    subscription : '.$subscription->name."\n") : '').
+        '}'.($self->_has_type_definitions ? "\n" : '');
 }
 
 ## ...
@@ -131,6 +141,10 @@ sub to_type_language ($self) {
 sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
 sub _type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
 sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
+
+sub _get_query_type        ($self) { if ( my $op = $self->_schema_definition->operation_types->[0] ) { return $op->type } return; }
+sub _get_mutation_type     ($self) { if ( my $op = $self->_schema_definition->operation_types->[1] ) { return $op->type } return; }
+sub _get_subscription_type ($self) { if ( my $op = $self->_schema_definition->operation_types->[2] ) { return $op->type } return; }
 
 1;
 
