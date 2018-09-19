@@ -5,32 +5,69 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Ref::Util ();
+
+use Graph::QL::Util::Errors 'throw';
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema     => sub {},
+    schema     => sub {}, # Graph::QL::Schema
     operation  => sub {}, # Graph::QL::Core::Operation
-    root_value => sub { +{} },
-    variables  => sub { +{} },
+    root_value => sub { +{} }, # root object for execution result
+    variables  => sub { +{} }, # any variables passed to execution
+    resolvers  => sub { +{} }, # a mapping of TypeName to Resolver instance
     # internals ...
-    _errors    => sub { +[] },
-
-    # TODO:
-    # contextValue: mixed,
-    # fieldResolver: GraphQLFieldResolver<any, any>,
+    _context   => sub { +{} }, # the context arg (3rd) to any resolver funtions
+    _errors    => sub { +[] }, # a place for errors to accumulate
 );
 
 sub BUILDARGS : strict(
     schema      => schema,
     operation   => operation,
     root_value? => root_value,
-    variables?  => variables
+    variables?  => variables,
+    resovlers?  => resolvers,
 );
 
 sub BUILD ($self, $params) {
 
+    throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
+        unless Ref::Util::is_blessed_ref( $self->{schema} )
+            && $self->{schema}->isa('Graph::QL::Schema');
+
+    throw('The `schema` must be of an instance that does the `Graph::QL::Core::Operation` role, not `%s`', $self->{operation})
+        unless Ref::Util::is_blessed_ref( $self->{operation} )
+            && $self->{operation}->roles::DOES('Graph::QL::Core::Operation');
+
+    if ( exists $params->{root_value} ) {
+        throw('The `root_value` must be a HASH ref, not `%s`', $self->{root_value})
+            unless Ref::Util::is_hashref( $self->{root_value} );
+    }
+
+    if ( exists $params->{variables} ) {
+        throw('The `variables` must be a HASH ref, not `%s`', $self->{variables})
+            unless Ref::Util::is_hashref( $self->{variables} );
+    }
+
+    if ( exists $params->{resolvers} ) {
+        throw('The `resolvers` must be a HASH ref, not `%s`', $self->{resolvers})
+            unless Ref::Util::is_hashref( $self->{resolvers} );
+
+        foreach ( values $self->{resolvers}->%* ) {
+             throw('The values in `resolvers` must all be of type(Graph::QL::Execution::FieldResovler), not `%s`', $_ )
+                unless Ref::Util::is_blessed_ref( $_ )
+                    && $_->isa('Graph::QL::Execution::FieldResovler');
+        }
+    }
 }
+
+sub schema    : ro;
+sub operation : ro;
+
+sub root_value : ro;
+sub variables  : ro;
 
 1;
 
