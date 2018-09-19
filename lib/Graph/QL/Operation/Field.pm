@@ -1,4 +1,4 @@
-package Graph::QL::Query::Field;
+package Graph::QL::Operation::Field;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
@@ -9,7 +9,7 @@ use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::Field;
 use Graph::QL::AST::Node::SelectionSet;
 
-use Graph::QL::Query::Argument;
+use Graph::QL::Operation::Field::Argument;
 
 our $VERSION = '0.01';
 
@@ -29,8 +29,8 @@ sub BUILD ($self, $params) {
     if ( not exists $params->{_ast} ) {
 
         # TODO:
-        # check `selections` is Graph::QL::Query::Field
-        # check `args` is Graph::QL::Query::Argument
+        # check `selections` is Graph::QL::Operation::Field
+        # check `args` is Graph::QL::Operation::Field::Argument
 
         $self->{_ast} = Graph::QL::AST::Node::Field->new(
             name => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
@@ -54,13 +54,13 @@ sub alias     ($self) {    $self->ast->alias->value }
 
 sub has_args ($self) { !! scalar $self->ast->arguments->@* }
 sub args ($self) {
-    [ map Graph::QL::Query::Argument->new( ast => $_ ), $self->ast->arguments->@* ]
+    [ map Graph::QL::Operation::Field::Argument->new( ast => $_ ), $self->ast->arguments->@* ]
 }
 
 sub has_selections ($self) { !! $self->ast->selection_set && scalar $self->ast->selection_set->selections->@* }
 sub selections ($self) {
     return [] unless $self->has_selections;
-    return [ map Graph::QL::Query::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ];
+    return [ map Graph::QL::Operation::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ];
 }
 
 ## ...

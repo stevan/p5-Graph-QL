@@ -18,9 +18,9 @@ BEGIN {
     use_ok('Graph::QL::Schema::Field');
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
-    use_ok('Graph::QL::Query');
-    use_ok('Graph::QL::Query::Field');
-    use_ok('Graph::QL::Query::Argument');
+    use_ok('Graph::QL::Operation::Query');
+    use_ok('Graph::QL::Operation::Field');
+    use_ok('Graph::QL::Operation::Field::Argument');
 
     use_ok('Graph::QL::Util::AST');
     use_ok('Graph::QL::Parser');
@@ -139,24 +139,24 @@ q[query findAllBobs {
         ]
     );
 
-    my $query_as_object = Graph::QL::Query->new(
+    my $query_as_object = Graph::QL::Operation::Query->new(
         name       => 'findAllBobs',
         selections => [
-            Graph::QL::Query::Field->new(
+            Graph::QL::Operation::Field->new(
                 name       => 'findPerson',
-                args       => [ Graph::QL::Query::Argument->new( name => 'name', value => 'Bob' ) ],
+                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                 selections => [
-                    Graph::QL::Query::Field->new( name => 'name' ),
-                    Graph::QL::Query::Field->new(
+                    Graph::QL::Operation::Field->new( name => 'name' ),
+                    Graph::QL::Operation::Field->new(
                         name       => 'birth',
                         selections => [
-                            Graph::QL::Query::Field->new( name => 'year' ),
+                            Graph::QL::Operation::Field->new( name => 'year' ),
                         ]
                     ),
-                    Graph::QL::Query::Field->new(
+                    Graph::QL::Operation::Field->new(
                         name       => 'death',
                         selections => [
-                            Graph::QL::Query::Field->new( name => 'year' ),
+                            Graph::QL::Operation::Field->new( name => 'year' ),
                         ]
                     ),
                 ]
@@ -172,7 +172,7 @@ q[query findAllBobs {
 
         # get the root field from the query Op ...
         my $query_field = $query_as_object->selections->[0];
-        isa_ok($query_field, 'Graph::QL::Query::Field');
+        isa_ok($query_field, 'Graph::QL::Operation::Field');
 
         # and use it to find the field in the (schema) Query object ...
         my $schema_field = $Query->lookup_field( $query_field );
@@ -184,7 +184,7 @@ q[query findAllBobs {
             my $query_arg  = $query_field->args->[ $i ];
 
             isa_ok($schema_arg, 'Graph::QL::Schema::InputObject::InputValue');
-            isa_ok($query_arg, 'Graph::QL::Query::Argument');
+            isa_ok($query_arg, 'Graph::QL::Operation::Field::Argument');
 
             # make sure the name of each arg matches ...
             is($schema_arg->name, $query_arg->name, '... the args are the same name');
@@ -222,7 +222,7 @@ q[query findAllBobs {
         # verify that the selection will work,
         # foreach of the selected fields, we must ...
         foreach my $query_field ( $query_field->selections->@* ) {
-            isa_ok($query_field, 'Graph::QL::Query::Field');
+            isa_ok($query_field, 'Graph::QL::Operation::Field');
 
             # find the field from the schema object ...
             my ($schema_field) = $schema_person->lookup_field( $query_field );
@@ -241,7 +241,7 @@ q[query findAllBobs {
 
                 # then lets look through the sub-selections ...
                 foreach my $sub_query_field ( $query_field->selections->@* ) {
-                    isa_ok($sub_query_field, 'Graph::QL::Query::Field');
+                    isa_ok($sub_query_field, 'Graph::QL::Operation::Field');
 
                     # and make sure that there is a field in the sub-object
                     # for all the sub-selected fields

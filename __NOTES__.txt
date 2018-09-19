@@ -49,7 +49,7 @@ use warnings;
 
 use Graph::QL;
 use Graph::QL::Schema;
-use Graph::QL::Query;
+use Graph::QL::Operation::Query;
 
 use JSON::MaybeXS ();
 
@@ -119,7 +119,7 @@ package MyApp::Schema::Person {
 }
 
 my $schema = Graph::QL::Schema->new_from_namespace( 'MyApp::Schema' );
-my $query  = Graph::QL::Query->new(
+my $query  = Graph::QL::Operation::Query->new(
     schema   => $schema,
     root_env => {},
     context  => { api => \&harvardartmuseum }

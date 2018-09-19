@@ -1,4 +1,4 @@
-package Graph::QL::Query::Argument;
+package Graph::QL::Operation::Field::Argument;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;

@@ -10,7 +10,7 @@ use Ref::Util ();
 use Graph::QL::Util::Errors 'throw';
 use Graph::QL::Util::AST;
 
-use Graph::QL::Core::Operation::Kind;
+use Graph::QL::Core::OperationKind;
 
 use Graph::QL::AST::Node::Document;
 use Graph::QL::AST::Node::SchemaDefinition;
@@ -59,17 +59,17 @@ sub BUILD ($self, $params) {
         push @definitions => Graph::QL::AST::Node::SchemaDefinition->new(
             operation_types => [
                 Graph::QL::AST::Node::OperationTypeDefinition->new(
-                    operation => 'query',
+                    operation => Graph::QL::Core::OperationKind->QUERY,
                     type      => $params->{query_type}->ast
                 ),
                 ($params->{mutation_type} ?
                     Graph::QL::AST::Node::OperationTypeDefinition->new(
-                        operation => 'mutation',
+                        operation => Graph::QL::Core::OperationKind->MUTATION,
                         type      => $params->{mutation_type}->ast
                     ) : ()),
                 ($params->{subscription_type} ?
                     Graph::QL::AST::Node::OperationTypeDefinition->new(
-                        operation => 'subscription',
+                        operation => Graph::QL::Core::OperationKind->SUBSCRIPTION,
                         type      => $params->{subscription_type}->ast
                     ) : ()),
             ]
@@ -112,19 +112,19 @@ sub lookup_root_type ($self, $op_kind) {
     # coerce operation objects into strings ...
     $op_kind = $op_kind->operation_kind
         if Ref::Util::is_blessed_ref( $op_kind )
-        && $op_kind->roles::DOES('Graph::QL::Core::Operation');
+        && $op_kind->roles::DOES('Graph::QL::Operation');
 
     $op_kind = $op_kind->operation
         if Ref::Util::is_blessed_ref( $op_kind )
         && $op_kind->isa('Graph::QL::AST::Node::OperationDefinition');
 
     throw('The kind(%s) is not a valid Operation::Kind', $op_kind)
-        unless Graph::QL::Core::Operation::Kind->is_operation_kind( $op_kind );
+        unless Graph::QL::Core::OperationKind->is_operation_kind( $op_kind );
 
     my $type;
-    $type = $self->_get_query_type        if $op_kind eq 'query';
-    $type = $self->_get_mutation_type     if $op_kind eq 'mutation';
-    $type = $self->_get_subscription_type if $op_kind eq 'subscription';
+    $type = $self->_get_query_type        if $op_kind eq Graph::QL::Core::OperationKind->QUERY;
+    $type = $self->_get_mutation_type     if $op_kind eq Graph::QL::Core::OperationKind->MUTATION;
+    $type = $self->_get_subscription_type if $op_kind eq Graph::QL::Core::OperationKind->SUBSCRIPTION;
 
     return unless $type;
     return $self->lookup_type( $type );
@@ -141,9 +141,9 @@ sub to_type_language ($self) {
         ? ("\n".(join "\n\n" => map $_->to_type_language, $self->all_types->@*)."\n\n")
         : ''). # followed by the base `schema` object
         'schema {'."\n".
-        ($query        ? ('    query : '.$query->name->value."\n") : '').
-        ($mutation     ? ('    mutation : '.$mutation->name->value."\n") : '').
-        ($subscription ? ('    subscription : '.$subscription->name->value."\n") : '').
+        ($query        ? ('    '.Graph::QL::Core::OperationKind->QUERY.' : '.$query->name->value."\n") : '').
+        ($mutation     ? ('    '.Graph::QL::Core::OperationKind->MUTATION.' : '.$mutation->name->value."\n") : '').
+        ($subscription ? ('    '.Graph::QL::Core::OperationKind->SUBSCRIPTION.' : '.$subscription->name->value."\n") : '').
         '}'.($self->_has_type_definitions ? "\n" : '');
 }
 

@@ -1,4 +1,4 @@
-package Graph::QL::Core::Operation::Kind;
+package Graph::QL::Core::OperationKind;
 # ABSTRACT: Enumeration for the OperationKind
 use v5.24;
 use warnings;

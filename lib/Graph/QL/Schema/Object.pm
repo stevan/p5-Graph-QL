@@ -64,7 +64,7 @@ sub lookup_field ($self, $name) {
     # coerce query fields into strings ...
     $name = $name->name
         if Ref::Util::is_blessed_ref( $name )
-        && $name->isa('Graph::QL::Query::Field');
+        && $name->isa('Graph::QL::Operation::Field');
 
     my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
     return unless defined $field_ast;
