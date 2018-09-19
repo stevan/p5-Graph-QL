@@ -1,6 +1,6 @@
 # Graph::QL
 
-GraphQL in Perl
+An implementation of GraphQL in Perl
 
 # Copyright and License
 

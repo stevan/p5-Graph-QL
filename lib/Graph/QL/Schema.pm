@@ -10,6 +10,8 @@ use Ref::Util ();
 use Graph::QL::Util::Errors 'throw';
 use Graph::QL::Util::AST;
 
+use Graph::QL::Core::Operation::Kind;
+
 use Graph::QL::AST::Node::Document;
 use Graph::QL::AST::Node::SchemaDefinition;
 use Graph::QL::AST::Node::OperationTypeDefinition;
@@ -106,18 +108,23 @@ sub lookup_type ($self, $name) {
 }
 
 sub lookup_root_type ($self, $op_kind) {
-    # TODO:
-    # validate $op_kind against OperationKind
+
+    # coerce operation objects into strings ...
+    $op_kind = $op_kind->operation_kind
+        if Ref::Util::is_blessed_ref( $op_kind )
+        && $op_kind->roles::DOES('Graph::QL::Core::Operation');
+
+    $op_kind = $op_kind->operation
+        if Ref::Util::is_blessed_ref( $op_kind )
+        && $op_kind->isa('Graph::QL::AST::Node::OperationDefinition');
+
+    throw('The kind(%s) is not a valid Operation::Kind', $op_kind)
+        unless Graph::QL::Core::Operation::Kind->is_operation_kind( $op_kind );
 
     my $type;
     $type = $self->_get_query_type        if $op_kind eq 'query';
     $type = $self->_get_mutation_type     if $op_kind eq 'mutation';
     $type = $self->_get_subscription_type if $op_kind eq 'subscription';
-    # NOTE:
-    # we should have validated the $op_kind so
-    # that it cannot have any other values then
-    # the three we tested.
-    # - SL
 
     return unless $type;
     return $self->lookup_type( $type );

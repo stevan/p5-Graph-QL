@@ -16,6 +16,7 @@ our $VERSION = '0.01';
 use constant ANON_NAME => '__ANON__';
 
 use parent 'UNIVERSAL::Object::Immutable';
+use roles  'Graph::QL::Core::Operation';
 use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
@@ -37,7 +38,7 @@ sub BUILD ($self, $params) {
         # handle `directives`
 
         $self->{_ast} = Graph::QL::AST::Node::OperationDefinition->new(
-            operation     => 'query',
+            operation     => Graph::QL::Core::Operation->Kind->QUERY,
             name          => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
             selection_set => Graph::QL::AST::Node::SelectionSet->new(
                 selections => [ map $_->ast, $params->{selections}->@* ]
@@ -47,6 +48,8 @@ sub BUILD ($self, $params) {
 }
 
 sub ast : ro(_);
+
+sub operation_kind ($self) { $self->ast->operation }
 
 sub name    ($self) { $self->ast->name->value  }
 sub is_anon ($self) { $self->name eq ANON_NAME }
@@ -62,7 +65,7 @@ sub to_type_language ($self) {
 
     my $selections = join "\n    " => map { join "\n    " => split /\n/ => $_ } map $_->to_type_language, $self->selections->@*;
 
-    return 'query '.($self->is_anon ? '' : $self->name.' ')."{\n    ".$selections."\n}";
+    return $self->operation_kind.' '.($self->is_anon ? '' : $self->name.' ')."{\n    ".$selections."\n}";
 }
 
 1;
