@@ -41,6 +41,10 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
+        # TODO:
+        # - check for `query` type being defined (maybe?)
+        # - type-check {query,mutation,subscription}_type
+
         my @definitions;
 
         # So converting these is simple, just
@@ -122,17 +126,17 @@ sub lookup_root_type ($self, $op_kind) {
 ## ...
 
 sub to_type_language ($self) {
-    my $query        = $self->lookup_root_type( 'query' );
-    my $mutation     = $self->lookup_root_type( 'mutation' );
-    my $subscription = $self->lookup_root_type( 'subscription' );
+    my $query        = $self->_get_query_type;
+    my $mutation     = $self->_get_mutation_type;
+    my $subscription = $self->_get_subscription_type;
 
     return ($self->_has_type_definitions # print the types first ...
         ? ("\n".(join "\n\n" => map $_->to_type_language, $self->all_types->@*)."\n\n")
         : ''). # followed by the base `schema` object
         'schema {'."\n".
-        ($query        ? ('    query : '.$query->name."\n") : '').
-        ($mutation     ? ('    mutation : '.$mutation->name."\n") : '').
-        ($subscription ? ('    subscription : '.$subscription->name."\n") : '').
+        ($query        ? ('    query : '.$query->name->value."\n") : '').
+        ($mutation     ? ('    mutation : '.$mutation->name->value."\n") : '').
+        ($subscription ? ('    subscription : '.$subscription->name->value."\n") : '').
         '}'.($self->_has_type_definitions ? "\n" : '');
 }
 

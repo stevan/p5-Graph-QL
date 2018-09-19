@@ -54,8 +54,6 @@ type Query {
 
 schema {
     query : Query
-    mutation : Mutation
-    subscription : Subscription
 }
 ];
 
@@ -179,7 +177,6 @@ type MyMutationRootType {
 schema {
     query : MyQueryRootType
     mutation : MyMutationRootType
-    subscription : Subscription
 }
 ];
 

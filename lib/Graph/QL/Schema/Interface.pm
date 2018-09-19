@@ -46,7 +46,7 @@ sub all_fields ($self) {
 
 sub to_type_language ($self) {
     return 'interface '.$self->name.' {'."\n    ".
-        (join "\n    " => map $_->to_type_language, $self->fields->@*)."\n".
+        (join "\n    " => map $_->to_type_language, $self->all_fields->@*)."\n".
     '}';
 }
 
