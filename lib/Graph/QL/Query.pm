@@ -28,7 +28,6 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
-        $params->{name} ||= ANON_NAME;
 
         # TODO:
         # check `selections` is Graph::QL::Query::Field
@@ -39,10 +38,12 @@ sub BUILD ($self, $params) {
 
         $self->{_ast} = Graph::QL::AST::Node::OperationDefinition->new(
             operation     => Graph::QL::Core::Operation->Kind->QUERY,
-            name          => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
             selection_set => Graph::QL::AST::Node::SelectionSet->new(
                 selections => [ map $_->ast, $params->{selections}->@* ]
-            )
+            ),
+            ($params->{name}
+                ? (name => Graph::QL::AST::Node::Name->new( value => $params->{name} ))
+                : ()),
         );
     }
 }
@@ -51,8 +52,8 @@ sub ast : ro(_);
 
 sub operation_kind ($self) { $self->ast->operation }
 
-sub name    ($self) { $self->ast->name->value  }
-sub is_anon ($self) { $self->name eq ANON_NAME }
+sub has_name ($self) { !! $self->ast->name }
+sub name     ($self) { $self->ast->name->value }
 
 sub has_selections ($self) { !! scalar $self->ast->selection_set->selections->@* }
 sub selections ($self) {
@@ -65,7 +66,7 @@ sub to_type_language ($self) {
 
     my $selections = join "\n    " => map { join "\n    " => split /\n/ => $_ } map $_->to_type_language, $self->selections->@*;
 
-    return $self->operation_kind.' '.($self->is_anon ? '' : $self->name.' ')."{\n    ".$selections."\n}";
+    return $self->operation_kind.' '.($self->has_name ? $self->name.' ' : '')."{\n    ".$selections."\n}";
 }
 
 1;
