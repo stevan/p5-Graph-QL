@@ -14,20 +14,30 @@ use overload   '""' => 'to_string';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     _message     => sub { 'An error has occurred:' },
-    _stack_trace => sub { Devel::StackTrace->new( skip_frames => 6, indent => 1 ) },
+    _skip_frames => sub { 6 },
+    _stack_trace => sub {},
 );
 
 ## constructor
 
 sub BUILDARGS : strict(
-    message? => '_message',
-    msg?     => '_message',
+    message?     => '_message',
+    msg?         => '_message',
+    skip_frames? => '_skip_frames',
 );
+
+sub BUILD ($self, $params) {
+    $self->{_stack_trace} = Devel::StackTrace->new(
+        skip_frames => $self->{_skip_frames},
+        indent      => 1,
+    );
+}
 
 ## accessor
 
-sub message     : ro(_);
-sub stack_trace : ro(_);
+sub message        : ro(_);
+sub stack_trace    : ro(_);
+sub frames_skipped : ro(_skip_frames);
 
 ## methods
 
