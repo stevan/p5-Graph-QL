@@ -67,16 +67,12 @@ sub BUILD ($self, $params) {
     }
 }
 
-sub schema    : ro;
-sub operation : ro;
 sub validate ($self) {
     Graph::QL::Validation::QueryValidator->new(
         schema => $self->{schema},
     )->validate( $self->{operation} );
 }
 
-sub root_value : ro;
-sub variables  : ro;
 
 1;
 
