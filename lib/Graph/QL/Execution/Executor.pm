@@ -57,8 +57,8 @@ sub BUILD ($self, $params) {
             unless assert_non_empty( $self->{resolvers} );
 
         foreach ( values $self->{resolvers}->%* ) {
-             throw('The values in `resolvers` must all be of type(Graph::QL::Execution::FieldResovler), not `%s`', $_ )
-                unless assert_isa( $_, 'Graph::QL::Execution::FieldResovler' );
+             throw('The values in `resolvers` must all be of type(Graph::QL::Execution::FieldResolver), not `%s`', $_ )
+                unless assert_isa( $_, 'Graph::QL::Execution::FieldResolver' );
         }
     }
 }

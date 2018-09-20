@@ -1,4 +1,4 @@
-package Graph::QL::Execution::FieldResovler;
+package Graph::QL::Execution::FieldResolver;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
