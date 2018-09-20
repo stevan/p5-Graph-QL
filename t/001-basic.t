@@ -6,6 +6,7 @@ use experimental 'signatures', 'postderef';
 
 use Test::More;
 use Test::Differences;
+use Test::Fatal;
 use Data::Dumper;
 
 BEGIN {
@@ -24,6 +25,8 @@ BEGIN {
 
     use_ok('Graph::QL::Util::AST');
     use_ok('Graph::QL::Parser');
+
+    use_ok('Graph::QL::Execution::Executor');
 }
 
 subtest '... testing it all together' => sub {
@@ -164,103 +167,12 @@ q[query findAllBobs {
         ]
     );
 
-    use Graph::QL::Execution::Executor;
+## test the validation with the executor ...
 
-    my $ctx = Graph::QL::Execution::Executor->new(
-        schema    => $schema_as_object,
-        operation => $query_as_object,
-    );
+    my $e = Graph::QL::Execution::Executor->new( schema => $schema_as_object );
+    isa_ok($e, 'Graph::QL::Execution::Executor');
 
-    $ctx->validate;
-
-    subtest '... reherse the type check and field selection' => sub {
-
-        # find the Query type within the schema ...
-        my $Query = $schema_as_object->lookup_root_type( $query_as_object );
-        isa_ok($Query, 'Graph::QL::Schema::Object');
-
-        # get the root field from the query Op ...
-        my $query_field = $query_as_object->selections->[0];
-        isa_ok($query_field, 'Graph::QL::Operation::Field');
-
-        # and use it to find the field in the (schema) Query object ...
-        my $schema_field = $Query->lookup_field( $query_field );
-        isa_ok($schema_field, 'Graph::QL::Schema::Field');
-
-        # check the args
-        foreach my $i ( 0 .. $#{ $schema_field->args } ) {
-            my $schema_arg = $schema_field->args->[ $i ];
-            my $query_arg  = $query_field->args->[ $i ];
-
-            isa_ok($schema_arg, 'Graph::QL::Schema::InputObject::InputValue');
-            isa_ok($query_arg, 'Graph::QL::Operation::Field::Argument');
-
-            # make sure the name of each arg matches ...
-            is($schema_arg->name, $query_arg->name, '... the args are the same name');
-
-            # get the type of the arg from the
-            # perspective of the schema ....
-            my $schema_arg_type = $schema_arg->type;
-            isa_ok($schema_arg_type, 'Graph::QL::Schema::Type::Named');
-
-            # now get the type of the arg that the
-            # query is sending us ...
-            my $query_arg_type = Graph::QL::Util::AST::ast_value_to_schema_type( $query_arg->ast->value );
-            isa_ok($query_arg_type, 'Graph::QL::Schema::Type::Named');
-
-            # are they the same name type? ... yes!
-            is($query_arg_type->name, $schema_arg_type->name, '... these are the same type');
-        }
-
-
-        # find the return type of all this ...
-        my $schema_field_return_type = $schema_field->type;
-        isa_ok($schema_field_return_type, 'Graph::QL::Schema::Type::List');
-
-        is($schema_field_return_type->name, '[Person]', '... got the name we expected');
-
-        # look at the of-type ...
-        my $schema_field_return_inner_type = $schema_field_return_type->of_type;
-        isa_ok($schema_field_return_inner_type, 'Graph::QL::Schema::Type::Named');
-        is($schema_field_return_inner_type->name, 'Person', '... got the name we expected');
-
-        # find the Person type within the schema ...
-        my ($schema_person) = $schema_as_object->lookup_type( $schema_field_return_inner_type );
-        isa_ok($schema_person, 'Graph::QL::Schema::Object');
-
-        # verify that the selection will work,
-        # foreach of the selected fields, we must ...
-        foreach my $query_field ( $query_field->selections->@* ) {
-            isa_ok($query_field, 'Graph::QL::Operation::Field');
-
-            # find the field from the schema object ...
-            my ($schema_field) = $schema_person->lookup_field( $query_field );
-            isa_ok($schema_field, 'Graph::QL::Schema::Field');
-
-            # then check to see if this query has any sub-selections ...
-            if ( $query_field->has_selections ) {
-
-                # if so, grab the type of the field ...
-                my $schema_field_type = $schema_field->type;
-                isa_ok($schema_field_type, 'Graph::QL::Schema::Type::Named');
-
-                # then find the object for that type ...
-                my ($schema_field_object) = $schema_as_object->lookup_type( $schema_field_type );
-                isa_ok($schema_field_object, 'Graph::QL::Schema::Object');
-
-                # then lets look through the sub-selections ...
-                foreach my $sub_query_field ( $query_field->selections->@* ) {
-                    isa_ok($sub_query_field, 'Graph::QL::Operation::Field');
-
-                    # and make sure that there is a field in the sub-object
-                    # for all the sub-selected fields
-                    my ($schema_sub_field) = $schema_field_object->lookup_field( $sub_query_field );
-                    isa_ok($schema_sub_field, 'Graph::QL::Schema::Field');
-                }
-
-            }
-        }
-    };
+    is(exception { $e->validate_operation( $query_as_object ) }, undef, '... validated operation successfully');
 
 ## test that the type language pretty printing works
 

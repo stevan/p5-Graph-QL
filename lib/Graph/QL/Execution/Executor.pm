@@ -17,30 +17,24 @@ our $VERSION = '0.01';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     schema     => sub {}, # Graph::QL::Schema
-    operation  => sub {}, # Graph::QL::Operation
+    # optionals ...
     root_value => sub { +{} }, # root object for execution result
     variables  => sub { +{} }, # any variables passed to execution
     resolvers  => sub { +{} }, # a mapping of TypeName to Resolver instance
     # internals ...
-    _context   => sub { +{} }, # the context arg (3rd) to any resolver funtions
-    _errors    => sub { +[] }, # a place for errors to accumulate
 );
 
 sub BUILDARGS : strict(
     schema      => schema,
-    operation   => operation,
     root_value? => root_value,
     variables?  => variables,
-    resovlers?  => resolvers,
+    resolvers?  => resolvers,
 );
 
 sub BUILD ($self, $params) {
 
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
-
-    throw('The `schema` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $self->{operation})
-        unless assert_does( $self->{operation}, 'Graph::QL::Operation' );
 
     if ( exists $params->{root_value} ) {
         throw('The `root_value` must be a HASH ref, not `%s`', $self->{root_value})
@@ -63,10 +57,23 @@ sub BUILD ($self, $params) {
     }
 }
 
-sub validate ($self) {
-    Graph::QL::Validation::QueryValidator->new(
-        schema => $self->{schema},
-    )->validate( $self->{operation} );
+sub execute ($self, $operation) {
+
+    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation)
+        unless assert_does( $operation, 'Graph::QL::Operation' );
+
+    $self->validate_operation( $operation );
+
+    # TODO:
+    # the rest ...
+}
+
+sub validate_operation ($self, $operation) {
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $self->{schema} );
+    $v->validate( $operation ) or throw(
+        'The `operation` did not pass validation, got the following errors:'."\n    %s",
+        join "\n    " => $v->get_errors
+    );
 }
 
 
