@@ -14,35 +14,37 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema  => sub {},
+    schema    => sub {},
+    operation => sub {},
     # internals ...
-    _errors => sub { +[] }
+    _errors   => sub { +[] }
 );
 
-sub BUILDARGS : strict( schema => schema );
+sub BUILDARGS : strict(
+    schema    => schema,
+    operation => operation,
+);
 
 sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
+
+    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $self->{operation})
+        unless assert_does( $self->{operation}, 'Graph::QL::Operation' );
 }
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
 sub get_errors ($self) {           $self->{_errors}->@* }
 
-sub validate ($self, $operation) {
-
-    # if this fails, we stop
-    return $self->_add_error(
-        'The `schema` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation
-    ) unless assert_does( $operation, 'Graph::QL::Operation' );
+sub validate ($self) {
 
     # find the Query type within the schema ...
-    my $root_type = $self->{schema}->lookup_root_type( $operation );
+    my $root_type = $self->{schema}->lookup_root_type( $self->{operation} );
     # get the root field from the query Op ...
-    my $query_field = $operation->selections->[0];
+    my $query_field = $self->{operation}->selections->[0];
 
     $self->_add_error(
-        'The `schema.root(%s) type must be present in the schema', $operation->operation_kind
+        'The `schema.root(%s) type must be present in the schema', $self->{operation}->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
     $self->_add_error(
@@ -58,7 +60,7 @@ sub validate ($self, $operation) {
     my $schema_field = $root_type->lookup_field( $query_field );
 
     return $self->_add_error(
-        'Unable to find the `query.field(%s)` in the `schema.root(%s)` type', $query_field->name, $operation->operation_kind
+        'Unable to find the `query.field(%s)` in the `schema.root(%s)` type', $query_field->name, $self->{operation}->operation_kind
     ) unless defined $schema_field;
 
     return $self->validate_field( $schema_field, $query_field );

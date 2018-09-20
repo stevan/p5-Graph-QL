@@ -16,17 +16,15 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema     => sub {}, # Graph::QL::Schema
-    # optionals ...
-    root_value => sub { +{} }, # root object for execution result
-    resolvers  => sub { +{} }, # a mapping of TypeName to Resolver instance
+    schema    => sub {}, # Graph::QL::Schema
+    resolvers => sub { +{} }, # a mapping of TypeName to Resolver instance
     # internals ...
+    _errors   => sub { +[] },
 );
 
 sub BUILDARGS : strict(
-    schema      => schema,
-    root_value? => root_value,
-    resolvers?  => resolvers,
+    schema     => schema,
+    resolvers? => resolvers,
 );
 
 sub BUILD ($self, $params) {
@@ -34,12 +32,8 @@ sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 
-    if ( exists $params->{root_value} ) {
-        throw('The `root_value` must be a HASH ref, not `%s`', $self->{root_value})
-            unless assert_hashref( $self->{root_value} );
-    }
-
     # TODO:
+    # - handle `initial-value`
     # - handle `variables`
     # - handle `context-value`
 
@@ -56,9 +50,14 @@ sub BUILD ($self, $params) {
 
 sub schema : ro;
 
+sub has_errors ($self) { !! scalar $self->{_errors}->@* }
+sub get_errors ($self) {           $self->{_errors}->@* }
+
 sub execute ($self, $operation) {
 
     $self->validate_operation( $operation );
+
+    # What do we do when we have an error?
 
     # TODO:
     # the rest ...
@@ -69,12 +68,26 @@ sub validate_operation ($self, $operation) {
     throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation)
         unless assert_does( $operation, 'Graph::QL::Operation' );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $self->{schema} );
-
-    $v->validate( $operation ) or throw(
-        'The `operation` did not pass validation, got the following errors:'."\n    %s",
-        join "\n    " => $v->get_errors
+    my $v = Graph::QL::Validation::QueryValidator->new(
+        schema    => $self->{schema},
+        operation => $operation,
     );
+
+    # if the validation fails ...
+    if ( not $v->validate ) {
+        $self->_add_error('The `operation` did not pass validation.');
+        $self->_add_error( $_ ) foreach $v->get_errors; # tranfer errors ...
+    }
+
+    return $v;
+}
+
+## ...
+
+sub _add_error ($self, $msg, @args) {
+    $msg = sprintf $msg => @args if @args;
+    push $self->{_errors}->@* => $msg;
+    return;
 }
 
 

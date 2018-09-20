@@ -136,26 +136,6 @@ subtest '... validating the query against the schema' => sub {
     my $query = Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Field->new(
-                name => 'locatePerson',
-            )
-        ]
-    );
-
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
-
-    like(
-        exception { $e->validate_operation( $query ) },
-        qr/Unable to find the \`query\.field\(locatePerson\)\` in the \`schema\.root\(query\)\` type/,
-        '... got exceptions while validating'
-    );
-};
-
-subtest '... validating the query against the schema' => sub {
-
-    my $query = Graph::QL::Operation::Query->new(
-        selections => [
-            Graph::QL::Operation::Field->new(
                 name => 'findPerson',
                 args => [],
             )
@@ -165,31 +145,15 @@ subtest '... validating the query against the schema' => sub {
     my $e = Graph::QL::Execution::Executor->new( schema => $schema );
     isa_ok($e, 'Graph::QL::Execution::Executor');
 
-    like(
-        exception { $e->validate_operation( $query ) },
-        qr/The \`schema\.field\(findPerson\)\` and \`query\.field\(findPerson\)\` both must expect arguments\, not \`yes\` and \`no\`/,
-        '... got exceptions while validating'
-    );
-};
-
-subtest '... validating the query against the schema' => sub {
-
-    my $query = Graph::QL::Operation::Query->new(
-        selections => [
-            Graph::QL::Operation::Field->new(
-                name => 'findPerson',
-                args => [ Graph::QL::Operation::Field::Argument->new( name => 'id', value => 'Bob' ) ],
-            )
-        ]
-    );
-
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
-
-    like(
-        exception { $e->validate_operation( $query ) },
-        qr/The \`schema\.field\(findPerson\)\.arg\.name\` and \`query\.field\(findPerson\)\.arg\.name\` must match\, got \`name\` and \`id\`/,
-        '... got exceptions while validating'
+    is(exception { $e->validate_operation( $query ) }, undef, '... no exceptions while validating');
+    ok($e->has_errors, '... errors hve been be found');
+    eq_or_diff(
+        [ $e->get_errors ],
+        [
+            'The `operation` did not pass validation.',
+            'The `schema.field(findPerson)` and `query.field(findPerson)` both must expect arguments, not `yes` and `no`'
+        ],
+        '... got the expected validation errors'
     );
 };
 
@@ -200,9 +164,9 @@ subtest '... validating the query against the schema' => sub {
             Graph::QL::Operation::Field->new(
                 name => 'findExactPerson',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new( name => 'foo', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'bar', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'baz', value => 10.5 ),
+                    Graph::QL::Operation::Field::Argument->new( name => 'name', value => "Bob" ),
+                    Graph::QL::Operation::Field::Argument->new( name => 'gender', value => 10 ),
+                    Graph::QL::Operation::Field::Argument->new( name => 'honk', value => "Murican" ),
                 ],
             )
         ]
@@ -211,21 +175,16 @@ subtest '... validating the query against the schema' => sub {
     my $e = Graph::QL::Execution::Executor->new( schema => $schema );
     isa_ok($e, 'Graph::QL::Execution::Executor');
 
-    my $x = exception { $e->validate_operation( $query ) };
-    like(
-        $x,
-        qr/The \`schema\.field\(findExactPerson\)\.arg\.name\` and \`query\.field\(findExactPerson\)\.arg\.name\` must match, got \`name\` and \`foo\`/,
-        '... got exceptions while validating'
-    );
-    like(
-        $x,
-        qr/The \`schema\.field\(findExactPerson\)\.arg\.name\` and \`query\.field\(findExactPerson\)\.arg\.name\` must match, got \`gender\` and \`bar\`/,
-        '... got exceptions while validating'
-    );
-    like(
-        $x,
-        qr/The \`schema\.field\(findExactPerson\)\.arg\.name\` and \`query\.field\(findExactPerson\)\.arg\.name\` must match, got \`nationality\` and \`baz\`/,
-        '... got exceptions while validating'
+    is(exception { $e->validate_operation( $query ) }, undef, '... no exceptions while validating');
+    ok($e->has_errors, '... errors have been found');
+    eq_or_diff(
+        [ $e->get_errors ],
+        [
+            'The `operation` did not pass validation.',
+            'The `schema.field(findExactPerson).arg(gender).type` and `query.field(findExactPerson).arg(gender).type` , not `String` and `Int`',
+            'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `honk`',
+        ],
+        '... got the expected validation errors'
     );
 };
 
