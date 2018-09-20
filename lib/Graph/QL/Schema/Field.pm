@@ -18,6 +18,7 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
+use roles  'Graph::QL::Core::Field';
 use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
@@ -51,6 +52,8 @@ sub name ($self) { $self->ast->name->value }
 sub type ($self) {
     return Graph::QL::Util::AST::ast_type_to_schema_type( $self->ast->type );
 }
+
+sub arity ($self) { scalar $self->ast->arguments->@* }
 
 sub has_args ($self) { !! scalar $self->ast->arguments->@* }
 sub args ($self) {

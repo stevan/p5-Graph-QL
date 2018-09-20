@@ -14,6 +14,7 @@ use Graph::QL::Operation::Field::Argument;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
+use roles  'Graph::QL::Core::Field';
 use slots ( _ast => sub {} );
 
 sub BUILDARGS : strict(
@@ -51,6 +52,8 @@ sub name ($self) { $self->ast->name->value }
 
 sub has_alias ($self) { !! $self->ast->alias        }
 sub alias     ($self) {    $self->ast->alias->value }
+
+sub arity ($self) { scalar $self->ast->arguments->@* }
 
 sub has_args ($self) { !! scalar $self->ast->arguments->@* }
 sub args ($self) {
