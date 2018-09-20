@@ -19,7 +19,6 @@ use slots (
     schema     => sub {}, # Graph::QL::Schema
     # optionals ...
     root_value => sub { +{} }, # root object for execution result
-    variables  => sub { +{} }, # any variables passed to execution
     resolvers  => sub { +{} }, # a mapping of TypeName to Resolver instance
     # internals ...
 );
@@ -27,7 +26,6 @@ use slots (
 sub BUILDARGS : strict(
     schema      => schema,
     root_value? => root_value,
-    variables?  => variables,
     resolvers?  => resolvers,
 );
 
@@ -41,10 +39,9 @@ sub BUILD ($self, $params) {
             unless assert_hashref( $self->{root_value} );
     }
 
-    if ( exists $params->{variables} ) {
-        throw('The `variables` must be a HASH ref, not `%s`', $self->{variables})
-            unless assert_hashref( $self->{variables} );
-    }
+    # TODO:
+    # - handle `variables`
+    # - handle `context-value`
 
     if ( exists $params->{resolvers} ) {
         throw('The `resolvers` must be a HASH ref, not `%s`', $self->{resolvers})
