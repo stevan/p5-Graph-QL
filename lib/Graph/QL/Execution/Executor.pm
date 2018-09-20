@@ -9,6 +9,10 @@ use Ref::Util ();
 
 use Graph::QL::Util::Errors 'throw';
 
+use Graph::QL::Validation::QueryValidator;
+
+use constant DEBUG => $ENV{GRAPHQL_EXECUTOR_DEBUG} // 0;
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
@@ -65,6 +69,11 @@ sub BUILD ($self, $params) {
 
 sub schema    : ro;
 sub operation : ro;
+sub validate ($self) {
+    Graph::QL::Validation::QueryValidator->new(
+        schema => $self->{schema},
+    )->validate( $self->{operation} );
+}
 
 sub root_value : ro;
 sub variables  : ro;

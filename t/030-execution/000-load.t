@@ -8,7 +8,7 @@ use Test::More;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL::Execution::Context');
+    use_ok('Graph::QL::Execution::Executor');
     use_ok('Graph::QL::Execution::FieldResolver');
 }
 
