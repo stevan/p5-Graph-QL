@@ -124,12 +124,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok($result, '... validation completed successfully');
     ok(!$v->has_errors, '... no errors to be found');
 };
 
@@ -143,12 +140,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -170,12 +164,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -197,12 +188,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -227,12 +215,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -254,12 +239,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -285,12 +267,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -318,12 +297,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -349,12 +325,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -381,12 +354,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -417,12 +387,9 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, operation => $query );
+    my $v = Graph::QL::Validation::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Validation::QueryValidator');
 
-    my $result;
-    is(exception { $result = $v->validate }, undef, '... no exceptions while validating');
-    ok(!$result, '... validation failed');
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],

@@ -24,7 +24,7 @@ BEGIN {
     use_ok('Graph::QL::Operation::Field::Argument');
 
     use_ok('Graph::QL::Validation::QueryValidator');
-    use_ok('Graph::QL::Execution::Executor');
+    use_ok('Graph::QL::Execution::ExecuteQuery');
 }
 
 my $schema = Graph::QL::Schema->new(
@@ -125,10 +125,11 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
+    my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
+    isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->validate_operation( $query ) }, undef, '... no exceptions while validating');
+    is(exception { $e->execute }, undef, '... no exceptions while validating');
+    ok(!$e->has_errors, '... no errors have been be found');
 };
 
 subtest '... validating the query against the schema' => sub {
@@ -142,11 +143,11 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
+    my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
+    isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->validate_operation( $query ) }, undef, '... no exceptions while validating');
-    ok($e->has_errors, '... errors hve been be found');
+    is(exception { $e->execute }, undef, '... no exceptions while validating');
+    ok($e->has_errors, '... errors have been be found');
     eq_or_diff(
         [ $e->get_errors ],
         [
@@ -172,10 +173,10 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
+    my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
+    isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->validate_operation( $query ) }, undef, '... no exceptions while validating');
+    is(exception { $e->execute }, undef, '... no exceptions while validating');
     ok($e->has_errors, '... errors have been found');
     eq_or_diff(
         [ $e->get_errors ],

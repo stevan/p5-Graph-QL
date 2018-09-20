@@ -26,7 +26,7 @@ BEGIN {
     use_ok('Graph::QL::Util::AST');
     use_ok('Graph::QL::Parser');
 
-    use_ok('Graph::QL::Execution::Executor');
+    use_ok('Graph::QL::Execution::ExecuteQuery');
 }
 
 subtest '... testing it all together' => sub {
@@ -166,13 +166,6 @@ q[query findAllBobs {
             )
         ]
     );
-
-## test the validation with the executor ...
-
-    my $e = Graph::QL::Execution::Executor->new( schema => $schema_as_object );
-    isa_ok($e, 'Graph::QL::Execution::Executor');
-
-    is(exception { $e->validate_operation( $query_as_object ) }, undef, '... validated operation successfully');
 
 ## test that the type language pretty printing works
 

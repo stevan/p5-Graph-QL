@@ -1,4 +1,4 @@
-package Graph::QL::Execution::Executor;
+package Graph::QL::Execution::ExecuteQuery;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
@@ -17,13 +17,16 @@ our $VERSION = '0.01';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     schema    => sub {}, # Graph::QL::Schema
+    query     => sub {}, # Graph::QL::Operation::Query
     resolvers => sub { +{} }, # a mapping of TypeName to Resolver instance
     # internals ...
+    _data     => sub { +{} },
     _errors   => sub { +[] },
 );
 
 sub BUILDARGS : strict(
     schema     => schema,
+    query      => query,
     resolvers? => resolvers,
 );
 
@@ -31,6 +34,9 @@ sub BUILD ($self, $params) {
 
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
+
+    throw('The `query` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $self->{query})
+        unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
 
     # TODO:
     # - handle `initial-value`
@@ -49,37 +55,33 @@ sub BUILD ($self, $params) {
 }
 
 sub schema : ro;
+sub query  : ro;
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
 sub get_errors ($self) {           $self->{_errors}->@* }
 
-sub execute ($self, $operation) {
+sub has_data ($self) { !! scalar keys $self->{_data}->%* }
+sub get_data ($self) {                $self->{_data}->%* }
 
-    $self->validate_operation( $operation );
+## ...
 
-    # What do we do when we have an error?
+sub execute ($self) {
 
-    # TODO:
-    # the rest ...
-}
-
-sub validate_operation ($self, $operation) {
-
-    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation)
-        unless assert_does( $operation, 'Graph::QL::Operation' );
-
+    # this will validate that the query supplied
+    # can be executed by the schema supplied
     my $v = Graph::QL::Validation::QueryValidator->new(
-        schema    => $self->{schema},
-        operation => $operation,
+        schema => $self->{schema},
+        query  => $self->{query},
     );
 
     # if the validation fails ...
-    if ( not $v->validate ) {
-        $self->_add_error('The `operation` did not pass validation.');
-        $self->_add_error( $_ ) foreach $v->get_errors; # tranfer errors ...
+    if ( $v->has_errors ) {
+        $self->_absorb_errors( 'The `operation` did not pass validation.' => $v );
+        # What do we do when we have an error?
     }
 
-    return $v;
+    # TODO:
+    # the rest ...
 }
 
 ## ...
@@ -87,6 +89,16 @@ sub validate_operation ($self, $operation) {
 sub _add_error ($self, $msg, @args) {
     $msg = sprintf $msg => @args if @args;
     push $self->{_errors}->@* => $msg;
+    return;
+}
+
+sub _absorb_errors ($self, $msgs, $e) {
+    push $self->{_errors}->@* => $msgs, $e->get_errors;
+    return;
+}
+
+sub _add_data_key ($self, $key, $value) {
+    $self->{_data}->{ $key } = $value;
     return;
 }
 

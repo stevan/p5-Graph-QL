@@ -14,37 +14,44 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema    => sub {},
-    operation => sub {},
+    schema  => sub {},
+    query   => sub {},
     # internals ...
-    _errors   => sub { +[] }
+    _errors => sub { +[] }
 );
 
 sub BUILDARGS : strict(
-    schema    => schema,
-    operation => operation,
+    schema => schema,
+    query  => query,
 );
 
 sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 
-    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $self->{operation})
-        unless assert_does( $self->{operation}, 'Graph::QL::Operation' );
+    throw('The `query` must be of an instance that does the `Graph::QL::Operation::Query` role, not `%s`', $self->{query})
+        unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
+
+    # ... and here we go ...
+    $self->_validate;
 }
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
 sub get_errors ($self) {           $self->{_errors}->@* }
 
-sub validate ($self) {
+## ...
+# once they've run, there is no sense in running them again,
+# so we make them private, to say, don't touch these ...
+
+sub _validate ($self) {
 
     # find the Query type within the schema ...
-    my $root_type = $self->{schema}->lookup_root_type( $self->{operation} );
+    my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
     # get the root field from the query Op ...
-    my $query_field = $self->{operation}->selections->[0];
+    my $query_field = $self->{query}->selections->[0];
 
     $self->_add_error(
-        'The `schema.root(%s) type must be present in the schema', $self->{operation}->operation_kind
+        'The `schema.root(%s) type must be present in the schema', $self->{query}->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
     $self->_add_error(
@@ -60,13 +67,14 @@ sub validate ($self) {
     my $schema_field = $root_type->lookup_field( $query_field );
 
     return $self->_add_error(
-        'Unable to find the `query.field(%s)` in the `schema.root(%s)` type', $query_field->name, $self->{operation}->operation_kind
+        'Unable to find the `query.field(%s)` in the `schema.root(%s)` type', $query_field->name, $self->{query}->operation_kind
     ) unless defined $schema_field;
 
-    return $self->validate_field( $schema_field, $query_field );
+    $self->_validate_field( $schema_field, $query_field );
+    return;
 }
 
-sub validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
+sub _validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
 
     $self->_add_error(
         'The `query.field` must be of type `Graph::QL::Operation::Field`, not `%s`', $query_field
@@ -92,18 +100,15 @@ sub validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
         'The `schema.field.name` and `query.field.name` must match, got `%s` and `%s`', $schema_field->name, $query_field->name
     ) unless $schema_field->name eq $query_field->name;
 
-    if ( $self->validate_args( $schema_field, $query_field, $recursion_depth + 1 ) ) {
-        return $self->validate_selections( $schema_field, $query_field, $recursion_depth + 1 );
-    }
-    else {
-        return;
-    }
+    $self->_validate_args( $schema_field, $query_field, $recursion_depth + 1 );
+    $self->_validate_selections( $schema_field, $query_field, $recursion_depth + 1 );
+    return;
 }
 
-sub validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
+sub _validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
 
     # we can skip this if there are no args ...
-    return 1 if not($schema_field->has_args) && not($query_field->has_args);
+    return if not($schema_field->has_args) && not($query_field->has_args);
 
     $self->_debug_log(
         $recursion_depth,
@@ -193,16 +198,13 @@ sub validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
             unless $schema_arg_type->name eq $query_arg_type->name;
     }
 
-    # if we accumulated errors while
-    # checking the args, abort this
-    return if $self->has_errors;
-    return 1;
+    return;
 }
 
-sub validate_selections ($self, $schema_field, $query_field, $recursion_depth=0) {
+sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0) {
 
     # we can skip this if there are no selections ...
-    return 1 unless $query_field->has_selections;
+    return unless $query_field->has_selections;
 
     # NOTE:
     # if it has a selection, that means that the
@@ -237,18 +239,15 @@ sub validate_selections ($self, $schema_field, $query_field, $recursion_depth=0)
         ) unless defined $selected_schema_field;
 
         # and then validate ...
-        if ( not $self->validate_field( $selected_schema_field, $query_selection_field, ($recursion_depth + 1) ) ) {
+        if ( not $self->_validate_field( $selected_schema_field, $query_selection_field, ($recursion_depth + 1) ) ) {
             # if one of them fails to validate, then
             # it pretty much means they all fail, so
             # can just return ...
-            return;
+            next;
         }
     }
 
-    # if we accumulated errors while
-    # checking the selections, abort this
-    return if $self->has_errors;
-    return 1;
+    return;
 }
 
 ## ...
