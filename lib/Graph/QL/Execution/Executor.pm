@@ -54,10 +54,9 @@ sub BUILD ($self, $params) {
     }
 }
 
-sub execute ($self, $operation) {
+sub schema : ro;
 
-    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation)
-        unless assert_does( $operation, 'Graph::QL::Operation' );
+sub execute ($self, $operation) {
 
     $self->validate_operation( $operation );
 
@@ -66,7 +65,12 @@ sub execute ($self, $operation) {
 }
 
 sub validate_operation ($self, $operation) {
+
+    throw('The `operation` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation)
+        unless assert_does( $operation, 'Graph::QL::Operation' );
+
     my $v = Graph::QL::Validation::QueryValidator->new( schema => $self->{schema} );
+
     $v->validate( $operation ) or throw(
         'The `operation` did not pass validation, got the following errors:'."\n    %s",
         join "\n    " => $v->get_errors
