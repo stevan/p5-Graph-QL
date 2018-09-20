@@ -1,4 +1,4 @@
-package Graph::QL::Execution::Context;
+package Graph::QL::Execution::Executor;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;

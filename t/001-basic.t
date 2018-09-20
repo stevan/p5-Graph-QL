@@ -164,6 +164,15 @@ q[query findAllBobs {
         ]
     );
 
+    use Graph::QL::Execution::Executor;
+
+    my $ctx = Graph::QL::Execution::Executor->new(
+        schema    => $schema_as_object,
+        operation => $query_as_object,
+    );
+
+    $ctx->validate;
+
     subtest '... reherse the type check and field selection' => sub {
 
         # find the Query type within the schema ...
