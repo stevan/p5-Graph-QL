@@ -4,6 +4,7 @@ use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
+use Ref::Util       ();
 use Module::Runtime ();
 
 use Graph::QL::Util::Errors 'throw';

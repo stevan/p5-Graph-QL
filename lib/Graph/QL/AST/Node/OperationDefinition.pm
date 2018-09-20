@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 
@@ -37,31 +36,27 @@ sub BUILD ($self, $params) {
     
     if ( exists $params->{name} ) {
         throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
-            unless Ref::Util::is_blessed_ref( $self->{name} )
-                && $self->{name}->isa('Graph::QL::AST::Node::Name');
+            unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name');
     }
     
     throw('The `variable_definitions` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{variable_definitions} );
+        unless assert_arrayref( $self->{variable_definitions} );
     
     foreach ( $self->{variable_definitions}->@* ) {
          throw('The values in `variable_definitions` must all be of type(Graph::QL::AST::Node::VariableDefinition), not `%s`', $_ )
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->isa('Graph::QL::AST::Node::VariableDefinition');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::VariableDefinition');
     }
     
     throw('The `directives` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{directives} );
+        unless assert_arrayref( $self->{directives} );
     
     foreach ( $self->{directives}->@* ) {
          throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->isa('Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
     }
     
     throw('The `selection_set` must be of type(Graph::QL::AST::Node::SelectionSet), not `%s`', $self->{selection_set})
-        unless Ref::Util::is_blessed_ref( $self->{selection_set} )
-            && $self->{selection_set}->isa('Graph::QL::AST::Node::SelectionSet');
+        unless assert_isa( $self->{selection_set}, 'Graph::QL::AST::Node::SelectionSet');
     
 }
 

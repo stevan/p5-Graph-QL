@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 
@@ -25,8 +24,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
-        unless Ref::Util::is_blessed_ref( $self->{type} )
-            && $self->{type}->roles::DOES('Graph::QL::AST::Node::Role::Type');
+        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type');
     
 }
 

@@ -5,10 +5,6 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
-
 our $VERSION = '0.01';
 
 # class or role?

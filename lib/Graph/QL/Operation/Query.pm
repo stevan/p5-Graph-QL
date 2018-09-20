@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_non_empty';
+
 use Graph::QL::AST::Node::OperationDefinition;
 use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::SelectionSet;
@@ -29,8 +32,13 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-        # TODO:
-        # check `selections` is Graph::QL::Operation::Field
+        throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
+            unless assert_non_empty( $params->{selections} );
+
+        foreach my $selection ( $params->{selections}->@* ) {
+            throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
+                unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
+        }
 
         # TODO:
         # handle `variable_definitions` with Graph::QL::AST::Node::VariableDefinition

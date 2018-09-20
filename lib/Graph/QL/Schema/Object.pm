@@ -5,6 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Assertions 'assert_isa';
+
 use Graph::QL::Schema::Field;
 use Graph::QL::Schema::Type::Named;
 
@@ -62,9 +64,7 @@ sub all_fields ($self) {
 
 sub lookup_field ($self, $name) {
     # coerce query fields into strings ...
-    $name = $name->name
-        if Ref::Util::is_blessed_ref( $name )
-        && $name->isa('Graph::QL::Operation::Field');
+    $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Field' );
 
     my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
     return unless defined $field_ast;

@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_non_empty';
+
 use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::Field;
 use Graph::QL::AST::Node::SelectionSet;
@@ -29,9 +32,23 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-        # TODO:
-        # check `selections` is Graph::QL::Operation::Field
-        # check `args` is Graph::QL::Operation::Field::Argument
+        if ( exists $params->{selections} ) {
+
+            throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
+                unless assert_non_empty( $params->{selections} );
+
+            foreach my $selection ( $params->{selections}->@* ) {
+                throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
+                    unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
+            }
+        }
+
+        if ( exists $params->{args} ) {
+            foreach my $arg ( $params->{args}->@* ) {
+                throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $arg)
+                    unless assert_isa( $arg, 'Graph::QL::Operation::Field::Argument' );
+            }
+        }
 
         $self->{_ast} = Graph::QL::AST::Node::Field->new(
             name => Graph::QL::AST::Node::Name->new( value => $params->{name} ),

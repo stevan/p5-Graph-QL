@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_does';
 
 use constant DEBUG => $ENV{GRAPHQL_QUERY_VALIDATOR_DEBUG} // 0;
 
@@ -24,8 +23,7 @@ sub BUILDARGS : strict( schema => schema );
 
 sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
-        unless Ref::Util::is_blessed_ref( $self->{schema} )
-            && $self->{schema}->isa('Graph::QL::Schema');
+        unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 }
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
@@ -36,8 +34,7 @@ sub validate ($self, $operation) {
     # if this fails, we stop
     return $self->_add_error(
         'The `schema` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $operation
-    ) unless Ref::Util::is_blessed_ref( $operation )
-          && $operation->roles::DOES('Graph::QL::Operation');
+    ) unless assert_does( $operation, 'Graph::QL::Operation' );
 
     # find the Query type within the schema ...
     my $root_type = $self->{schema}->lookup_root_type( $operation );
@@ -46,13 +43,11 @@ sub validate ($self, $operation) {
 
     $self->_add_error(
         'The `schema.root(%s) type must be present in the schema', $operation->operation_kind
-    ) unless Ref::Util::is_blessed_ref( $root_type )
-          && $root_type->isa('Graph::QL::Schema::Object');
+    ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
     $self->_add_error(
         'The `query.field` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $query_field
-    ) unless Ref::Util::is_blessed_ref( $query_field )
-          && $query_field->isa('Graph::QL::Operation::Field');
+    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
 
     # if we accumulated an error in
     # the last two statements, we
@@ -73,13 +68,11 @@ sub validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
 
     $self->_add_error(
         'The `query.field` must be of type `Graph::QL::Operation::Field`, not `%s`', $query_field
-    ) unless Ref::Util::is_blessed_ref( $query_field )
-          && $query_field->isa('Graph::QL::Operation::Field');
+    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
 
     $self->_add_error(
         'The `schema.field` must be of type `Graph::QL::Schema::Field`, not `%s`', $schema_field
-    ) unless Ref::Util::is_blessed_ref( $schema_field )
-          && $schema_field->isa('Graph::QL::Schema::Field');
+    ) unless assert_isa( $schema_field, 'Graph::QL::Schema::Field' );
 
     # if we accumulated an error in
     # the last two statements, we
@@ -136,15 +129,13 @@ sub validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
             'The `schema.field(%s).arg` must be of type `Graph::QL::Schema::InputObject::InputValue`, not `%s`',
             $schema_field->name, $schema_arg
         ), next
-            unless Ref::Util::is_blessed_ref( $schema_arg )
-                && $schema_arg->isa('Graph::QL::Schema::InputObject::InputValue');
+            unless assert_isa( $schema_arg, 'Graph::QL::Schema::InputObject::InputValue' );
 
         $self->_add_error(
             'The `query.field(%s).arg` must be of type `Graph::QL::Operation::Field::Argument`, not `%s`',
             $query_field->name, $query_arg
         ), next
-            unless Ref::Util::is_blessed_ref( $query_arg )
-                && $query_arg->isa('Graph::QL::Operation::Field::Argument');
+            unless assert_isa( $query_arg, 'Graph::QL::Operation::Field::Argument' );
 
         $self->_debug_log(
             ($recursion_depth + 1),
@@ -178,8 +169,7 @@ sub validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
             $query_arg->name,
             $query_arg->ast->value
         ), next
-            unless Ref::Util::is_blessed_ref( $query_arg_type )
-                && $query_arg_type->isa('Graph::QL::Schema::Type::Named');
+            unless assert_isa( $query_arg_type, 'Graph::QL::Schema::Type::Named' );
 
         $self->_debug_log(
             ($recursion_depth + 1),
@@ -226,15 +216,13 @@ sub validate_selections ($self, $schema_field, $query_field, $recursion_depth=0)
 
     return $self->_add_error(
         'The `schema.field.type` must be of type `Graph::QL::Schema::Type`, not `%s`', $schema_field_type
-    ) unless Ref::Util::is_blessed_ref( $schema_field_type )
-          && $schema_field_type->roles::DOES('Graph::QL::Schema::Type');
+    ) unless assert_does( $schema_field_type, 'Graph::QL::Schema::Type' );
 
     my $schema_object = $self->{schema}->lookup_type( $schema_field_type );
 
     return $self->_add_error(
         'The `schema.field.object` must exist, unable to find `%s`', $schema_field_type->name
-    ) unless Ref::Util::is_blessed_ref( $schema_object )
-          && $schema_object->isa('Graph::QL::Schema::Object');
+    ) unless assert_isa( $schema_object, 'Graph::QL::Schema::Object' );
 
     # verify that the selection will work,
     # foreach of the selected fields, we must ...

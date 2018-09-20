@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 

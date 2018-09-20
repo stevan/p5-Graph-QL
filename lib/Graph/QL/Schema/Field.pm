@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_does';
 use Graph::QL::Util::AST;
 
 use Graph::QL::Schema::Type::Named;
@@ -32,8 +31,7 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
         throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $params->{type})
-            unless Ref::Util::is_blessed_ref( $params->{type} )
-                && $params->{type}->roles::DOES('Graph::QL::Schema::Type');
+            unless assert_does( $params->{type}, 'Graph::QL::Schema::Type' );
 
         # TODO:
         # - check `args`

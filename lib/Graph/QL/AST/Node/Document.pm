@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 
@@ -24,12 +23,11 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `definitions` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{definitions} );
+        unless assert_arrayref( $self->{definitions} );
     
     foreach ( $self->{definitions}->@* ) {
          throw('The values in `definitions` must all be of type(Graph::QL::AST::Node::Role::Definition), not `%s`', $_ )
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->roles::DOES('Graph::QL::AST::Node::Role::Definition');
+            unless assert_does( $_, 'Graph::QL::AST::Node::Role::Definition');
     }
     
 }

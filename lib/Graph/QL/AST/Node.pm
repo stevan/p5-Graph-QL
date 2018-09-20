@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_hashref';
 use Graph::QL::Util::Strings;
 
 our $VERSION = '0.01';
@@ -31,7 +30,7 @@ sub BUILD ($self, $) {
     my $loc = $self->{location};
 
     throw('The `location` field must be a HASH ref')
-        unless Ref::Util::is_hashref( $loc );
+        unless assert_hashref( $loc );
 
     throw('The `location` HASH ref must have both a `start` and `end` entry')
         unless exists $loc->{start}
@@ -40,12 +39,12 @@ sub BUILD ($self, $) {
     my ($start, $end) = $loc->@{'start', 'end'};
 
     throw('The `start` entry in the `location` HASH ref must have both a `line` and `column` entry')
-        unless Ref::Util::is_hashref( $start )
+        unless assert_hashref( $start )
             && exists $start->{line}
             && exists $start->{column};
 
     throw('The `end` entry in the `location` HASH ref must have both a `line` and `column` entry')
-        unless Ref::Util::is_hashref( $end )
+        unless assert_hashref( $end )
             && exists $end->{line}
             && exists $end->{column};
 

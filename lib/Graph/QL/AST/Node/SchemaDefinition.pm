@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 
@@ -27,21 +26,19 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `directives` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{directives} );
+        unless assert_arrayref( $self->{directives} );
     
     foreach ( $self->{directives}->@* ) {
          throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->isa('Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
     }
     
     throw('The `operation_types` value must be an ARRAY ref')
-        unless Ref::Util::is_arrayref( $self->{operation_types} );
+        unless assert_arrayref( $self->{operation_types} );
     
     foreach ( $self->{operation_types}->@* ) {
          throw('The values in `operation_types` must all be of type(Graph::QL::AST::Node::OperationTypeDefinition), not `%s`', $_ )
-            unless Ref::Util::is_blessed_ref( $_ )
-                && $_->isa('Graph::QL::AST::Node::OperationTypeDefinition');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::OperationTypeDefinition');
     }
     
 }

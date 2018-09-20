@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions ':all';
 
 our $VERSION = '0.01';
 
@@ -25,8 +24,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `definition` must be of type(Graph::QL::AST::Node::ObjectTypeDefinition), not `%s`', $self->{definition})
-        unless Ref::Util::is_blessed_ref( $self->{definition} )
-            && $self->{definition}->isa('Graph::QL::AST::Node::ObjectTypeDefinition');
+        unless assert_isa( $self->{definition}, 'Graph::QL::AST::Node::ObjectTypeDefinition');
     
 }
 

@@ -5,9 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Ref::Util ();
-
-use Graph::QL::Util::Errors 'throw';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_does';
 use Graph::QL::Util::AST;
 
 use Graph::QL::Core::OperationKind;
@@ -93,13 +92,8 @@ sub all_types ($self) {
 sub lookup_type ($self, $name) {
 
     # coerce named types into strings ...
-    $name = $name->name
-        if Ref::Util::is_blessed_ref( $name )
-        && $name->isa('Graph::QL::Schema::Type::Named');
-
-    $name = $name->name->value
-        if Ref::Util::is_blessed_ref( $name )
-        && $name->isa('Graph::QL::AST::Node::NamedType');
+    $name = $name->name        if assert_isa( $name, 'Graph::QL::Schema::Type::Named' );
+    $name = $name->name->value if assert_isa( $name, 'Graph::QL::AST::Node::NamedType' );
 
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
     return unless defined $type_def;
@@ -110,13 +104,8 @@ sub lookup_type ($self, $name) {
 sub lookup_root_type ($self, $op_kind) {
 
     # coerce operation objects into strings ...
-    $op_kind = $op_kind->operation_kind
-        if Ref::Util::is_blessed_ref( $op_kind )
-        && $op_kind->roles::DOES('Graph::QL::Operation');
-
-    $op_kind = $op_kind->operation
-        if Ref::Util::is_blessed_ref( $op_kind )
-        && $op_kind->isa('Graph::QL::AST::Node::OperationDefinition');
+    $op_kind = $op_kind->operation_kind if assert_does( $op_kind, 'Graph::QL::Operation' );
+    $op_kind = $op_kind->operation      if assert_isa( $op_kind, 'Graph::QL::AST::Node::OperationDefinition' );
 
     throw('The kind(%s) is not a valid Operation::Kind', $op_kind)
         unless Graph::QL::Core::OperationKind->is_operation_kind( $op_kind );
