@@ -8,7 +8,7 @@ use decorators ':accessors', ':constructor';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions ':all';
 
-use Graph::QL::Validation::QueryValidator;
+use Graph::QL::Execution::QueryValidator;
 
 use constant DEBUG => $ENV{GRAPHQL_EXECUTOR_DEBUG} // 0;
 
@@ -69,7 +69,7 @@ sub execute ($self) {
 
     # this will validate that the query supplied
     # can be executed by the schema supplied
-    my $v = Graph::QL::Validation::QueryValidator->new(
+    my $v = Graph::QL::Execution::QueryValidator->new(
         schema => $self->{schema},
         query  => $self->{query},
     );

@@ -1,4 +1,4 @@
-package Graph::QL::Validation::QueryValidator;
+package Graph::QL::Execution::QueryValidator;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;

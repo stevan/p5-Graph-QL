@@ -23,7 +23,7 @@ BEGIN {
     use_ok('Graph::QL::Operation::Field');
     use_ok('Graph::QL::Operation::Field::Argument');
 
-    use_ok('Graph::QL::Validation::QueryValidator');
+    use_ok('Graph::QL::Execution::QueryValidator');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 }
 
