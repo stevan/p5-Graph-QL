@@ -36,96 +36,47 @@ sub BUILD ($self, $params) {
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
 sub get_errors ($self) {           $self->{_errors}->@* }
 
-## ...
-# once they've run, there is no sense in running them again,
-# so we make them private, to say, don't touch these ...
-
-sub validate ($self, $name=undef) {
+sub validate ($self) {
 
     # find the Query type within the schema ...
     my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
 
-    # get the root field from the query Op ...
-    my $root_query_field;
-
-    my @selections = $self->{query}->selections->@*;
-
-    # if we only have one selection ...
-    if ( scalar @selections == 1 ) {
-        # ideally it would be good to
-        # check the name, but really
-        # doesn't matter, it will be
-        # checked in the next stage
-        $root_query_field = $selections[0];
-    }
-    # if we have multiple selections ...
-    else {
-        # we must have a name ...
-        unless ( defined $name ) {
-            $self->_add_error(
-                'Unable to determine the `query.root` without an explicit name, options are (%s)',
-                (join ', ' => map $_->name, @selections)
-            );
-            return $self;
-        }
-
-        # otherwise find that name in the selections ...
-        foreach my $selection ( @selections ) {
-            if ($selection->name eq $name ) {
-                $root_query_field = $selection;
-            }
-        }
-
-        # and return error if we can't find it ...
-        unless ( defined $root_query_field ) {
-            $self->_add_error(
-                'Unable to find the `query.root(%s)`, other options are (%s)',
-                $name,
-                (join ', ' => map $_->name, @selections)
-            );
-            return $self;
-        }
-    }
-
-    $self->_add_error(
-        'The `schema.root(%s) type must be present in the schema', $self->{query}->operation_kind
+    # if not, return and mark the error
+    return $self->_add_error(
+        'The `schema.type(%s) type must be present in the schema',
+        $self->{query}->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
-    $self->_add_error(
-        'The `query.root` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $root_query_field
-    ) unless assert_isa( $root_query_field, 'Graph::QL::Operation::Field' );
 
-    # if we accumulated an error in
-    # the last two statements, we
-    # cannot go on from here ...
-    return $self if $self->has_errors;
-
-    # and use it to find the field in the (schema) Query object ...
-    my $schema_field = $root_type->lookup_field( $root_query_field );
-
-    unless ( defined $schema_field ) {
-        $self->_add_error(
-            'Unable to find the `query.root(%s)` in the `schema.root(%s)` type',
-            $root_query_field->name,
-            $self->{query}->operation_kind
-        );
-        return $self;
+    foreach my $query_field ( $self->{query}->selections->@* ) {
+        # and use it to find the field in the (schema) Query object ...
+        if ( my $schema_field = $root_type->lookup_field( $query_field ) ) {
+            $self->_validate_field( $schema_field, $query_field );
+        }
+        else {
+            $self->_add_error(
+                'Unable to find the `query.field(%s)` in the `schema.type(%s)` type',
+                $query_field->name,
+                $root_type->name
+            );
+        }
     }
 
-    $self->_validate_field( $schema_field, $root_query_field );
-
-    return $self;
+    return 0 if $self->has_errors;
+    return 1;
 }
+
+## ...
 
 sub _validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
 
     $self->_add_error(
-        'The `query.field` must be of type `Graph::QL::Operation::Field`, not `%s`', $query_field
-    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
-
-    $self->_add_error(
         'The `schema.field` must be of type `Graph::QL::Schema::Field`, not `%s`', $schema_field
     ) unless assert_isa( $schema_field, 'Graph::QL::Schema::Field' );
+
+    $self->_add_error(
+        'The `query.field` must be of type `Graph::QL::Operation::Field`, not `%s`', $query_field
+    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
 
     # if we accumulated an error in
     # the last two statements, we
@@ -297,6 +248,10 @@ sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0
 
 
 sub _add_error ($self, $msg, @args) {
+    defined $_
+        or Carp::cluck('Undef value to be sent to `sprintf`')
+            foreach @args;
+
     $msg = sprintf $msg => @args if @args;
     push $self->{_errors}->@* => $msg;
     return;
