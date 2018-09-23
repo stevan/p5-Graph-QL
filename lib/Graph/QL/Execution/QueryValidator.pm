@@ -31,9 +31,6 @@ sub BUILD ($self, $params) {
 
     throw('The `query` must be of an instance that does the `Graph::QL::Operation::Query` role, not `%s`', $self->{query})
         unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
-
-    # ... and here we go ...
-    $self->_validate;
 }
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
@@ -43,7 +40,7 @@ sub get_errors ($self) {           $self->{_errors}->@* }
 # once they've run, there is no sense in running them again,
 # so we make them private, to say, don't touch these ...
 
-sub _validate ($self) {
+sub validate ($self, $name=undef) {
 
     # find the Query type within the schema ...
     my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
