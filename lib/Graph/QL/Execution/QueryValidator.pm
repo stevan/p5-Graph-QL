@@ -197,30 +197,50 @@ sub _validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
 
 sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0) {
 
-    # we can skip this if there are no selections ...
-    return unless $query_field->has_selections;
-
-    # NOTE:
-    # if it has a selection, that means that the
-    # underlying field type must be an Object,
-    # so we check it here ...
-
-    $self->_debug_log(
-        $recursion_depth,
-        'Validating schema.field(%s).selections and query.field(%s).selections' => $schema_field->name, $query_field->name
-    ) if DEBUG;
-
+    # find the base type for this field ...
     my $schema_field_type = $self->_find_base_type( $schema_field->type );
 
     return $self->_add_error(
         'The `schema.field.type` must be of type `Graph::QL::Schema::Type`, not `%s`', $schema_field_type
     ) unless assert_does( $schema_field_type, 'Graph::QL::Schema::Type' );
 
+    # get the type from the schema ...
     my $schema_object = $self->{schema}->lookup_type( $schema_field_type );
 
-    return $self->_add_error(
-        'The `schema.field.object` must exist, unable to find `%s`', $schema_field_type->name
-    ) unless assert_isa( $schema_object, 'Graph::QL::Schema::Object' );
+    # if it is an object type ...
+    if ( assert_isa( $schema_object, 'Graph::QL::Schema::Object' ) ) {
+        # and it doesn't have selections, ...
+        if ( not $query_field->has_selections ) {
+            # that is wrong ...
+            return $self->_add_error(
+                'The `query.field(%s)` must have selections, because `schema.type(%s)` is an object type',
+                $query_field->name,
+                $schema_field_type->name,
+            );
+        }
+        # else ... all is well, continue ...
+    }
+    # if it is not an object type ...
+    else {
+        # and if it does have selections ....
+        if ( $query_field->has_selections ) {
+            # that is wrong ...
+            return $self->_add_error(
+                'The `query.field(%s)` has selections, but the `schema.type(%s)` is not an object type, it is `%s`',
+                $query_field->name,
+                $schema_field_type->name,
+                $schema_object->name
+            );
+        }
+        # else, ... no selections to find
+        # so we can just return ...
+        return;
+    }
+
+    $self->_debug_log(
+        $recursion_depth,
+        'Validating schema.field(%s).selections and query.field(%s).selections' => $schema_field->name, $query_field->name
+    ) if DEBUG;
 
     # verify that the selection will work,
     # foreach of the selected fields, we must ...

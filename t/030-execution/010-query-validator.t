@@ -177,7 +177,8 @@ subtest '... validating the query against the schema' => sub {
     eq_or_diff(
         [ $v->get_errors ],
         [
-            'The `schema.field(findPerson)` and `query.field(findPerson)` both must expect arguments, not `yes` and `no`'
+            'The `schema.field(findPerson)` and `query.field(findPerson)` both must expect arguments, not `yes` and `no`',
+            'The `query.field(findPerson)` must have selections, because `schema.type(Person)` is an object type',
         ],
         '... got the expected validation errors'
     );
@@ -203,7 +204,8 @@ subtest '... validating the query against the schema' => sub {
     eq_or_diff(
         [ $v->get_errors ],
         [
-            'The `schema.field(findPerson).arg.name` and `query.field(findPerson).arg.name` must match, got `name` and `id`'
+            'The `schema.field(findPerson).arg.name` and `query.field(findPerson).arg.name` must match, got `name` and `id`',
+            'The `query.field(findPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
@@ -232,7 +234,8 @@ subtest '... validating the query against the schema' => sub {
     eq_or_diff(
         [ $v->get_errors ],
         [
-            'The `schema.field(findPerson).arity` and `query.field(findPerson).arity` must match, not `1` and `2`'
+            'The `schema.field(findPerson).arity` and `query.field(findPerson).arity` must match, not `1` and `2`',
+            'The `query.field(findPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
@@ -259,6 +262,7 @@ subtest '... validating the query against the schema' => sub {
         [ $v->get_errors ],
         [
             'The `schema.field(findPerson).arg.name` and `query.field(findPerson).arg.name` must match, got `name` and `id`',
+            'The `query.field(findPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
@@ -291,6 +295,7 @@ subtest '... validating the query against the schema' => sub {
             'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `name` and `foo`',
             'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `gender` and `bar`',
             'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `baz`',
+            'The `query.field(findExactPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
@@ -321,6 +326,7 @@ subtest '... validating the query against the schema' => sub {
         [ $v->get_errors ],
         [
             'The `schema.field(findExactPerson).arg(gender).type` and `query.field(findExactPerson).arg(gender).type` , not `String` and `Int`',
+            'The `query.field(findExactPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
@@ -352,6 +358,7 @@ subtest '... validating the query against the schema' => sub {
         [
             'The `schema.field(findExactPerson).arg(gender).type` and `query.field(findExactPerson).arg(gender).type` , not `String` and `Int`',
             'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `honk`',
+            'The `query.field(findExactPerson)` must have selections, because `schema.type(Person)` is an object type'
         ],
         '... got the expected validation errors'
     );
