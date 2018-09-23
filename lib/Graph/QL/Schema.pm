@@ -138,9 +138,9 @@ sub to_type_language ($self) {
 
 ## ...
 
-sub _schema_definition    ($self) { $self->ast->definitions->[-1] }
-sub _type_definitions     ($self) { [ $self->ast->definitions->@[ 0 .. $#{ $self->ast->definitions } - 1 ] ] }
-sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 1 }
+sub _schema_definition    ($self) { ( grep  $_->isa('Graph::QL::AST::Node::SchemaDefinition'), $self->ast->definitions->@* )[0] }
+sub _type_definitions     ($self) { [ grep !$_->isa('Graph::QL::AST::Node::SchemaDefinition'), $self->ast->definitions->@* ]    }
+sub _has_type_definitions ($self) { (scalar $self->ast->definitions->@*) > 2 }
 
 sub _get_query_type        ($self) { if ( my $op = $self->_schema_definition->operation_types->[0] ) { return $op->type } return; }
 sub _get_mutation_type     ($self) { if ( my $op = $self->_schema_definition->operation_types->[1] ) { return $op->type } return; }
