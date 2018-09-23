@@ -14,8 +14,8 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema  => sub {},
-    query   => sub {},
+    schema  => sub {}, # Graph::QL::Schema
+    query   => sub {}, # Graph::QL::Operation::Query
     # internals ...
     _errors => sub { +[] }
 );
@@ -44,31 +44,77 @@ sub validate ($self, $name=undef) {
 
     # find the Query type within the schema ...
     my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
+
     # get the root field from the query Op ...
-    my $query_field = $self->{query}->selections->[0];
+    my $root_query_field;
+
+    my @selections = $self->{query}->selections->@*;
+
+    # if we only have one selection ...
+    if ( scalar @selections == 1 ) {
+        # ideally it would be good to
+        # check the name, but really
+        # doesn't matter, it will be
+        # checked in the next stage
+        $root_query_field = $selections[0];
+    }
+    # if we have multiple selections ...
+    else {
+        # we must have a name ...
+        unless ( defined $name ) {
+            $self->_add_error(
+                'Unable to determine the `query.root` without an explicit name, options are (%s)',
+                (join ', ' => map $_->name, @selections)
+            );
+            return $self;
+        }
+
+        # otherwise find that name in the selections ...
+        foreach my $selection ( @selections ) {
+            if ($selection->name eq $name ) {
+                $root_query_field = $selection;
+            }
+        }
+
+        # and return error if we can't find it ...
+        unless ( defined $root_query_field ) {
+            $self->_add_error(
+                'Unable to find the `query.root(%s)`, other options are (%s)',
+                $name,
+                (join ', ' => map $_->name, @selections)
+            );
+            return $self;
+        }
+    }
 
     $self->_add_error(
         'The `schema.root(%s) type must be present in the schema', $self->{query}->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
     $self->_add_error(
-        'The `query.field` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $query_field
-    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
+        'The `query.root` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $root_query_field
+    ) unless assert_isa( $root_query_field, 'Graph::QL::Operation::Field' );
 
     # if we accumulated an error in
     # the last two statements, we
     # cannot go on from here ...
-    return if $self->has_errors;
+    return $self if $self->has_errors;
 
     # and use it to find the field in the (schema) Query object ...
-    my $schema_field = $root_type->lookup_field( $query_field );
+    my $schema_field = $root_type->lookup_field( $root_query_field );
 
-    return $self->_add_error(
-        'Unable to find the `query.field(%s)` in the `schema.root(%s)` type', $query_field->name, $self->{query}->operation_kind
-    ) unless defined $schema_field;
+    unless ( defined $schema_field ) {
+        $self->_add_error(
+            'Unable to find the `query.root(%s)` in the `schema.root(%s)` type',
+            $root_query_field->name,
+            $self->{query}->operation_kind
+        );
+        return $self;
+    }
 
-    $self->_validate_field( $schema_field, $query_field );
-    return;
+    $self->_validate_field( $schema_field, $root_query_field );
+
+    return $self;
 }
 
 sub _validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
@@ -248,6 +294,7 @@ sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0
 }
 
 ## ...
+
 
 sub _add_error ($self, $msg, @args) {
     $msg = sprintf $msg => @args if @args;

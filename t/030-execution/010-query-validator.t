@@ -127,6 +127,8 @@ subtest '... validating the query against the schema' => sub {
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
     ok(!$v->has_errors, '... no errors to be found');
 };
 
@@ -143,11 +145,13 @@ subtest '... validating the query against the schema' => sub {
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
         [
-            'Unable to find the `query.field(locatePerson)` in the `schema.root(query)` type'
+            'Unable to find the `query.root(locatePerson)` in the `schema.root(query)` type'
         ],
         '... got the expected validation errors'
     );
@@ -166,6 +170,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -190,6 +196,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -218,6 +226,8 @@ subtest '... validating the query against the schema' => sub {
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -241,6 +251,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -269,6 +281,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -300,6 +314,8 @@ subtest '... validating the query against the schema' => sub {
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -327,6 +343,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -356,6 +374,8 @@ subtest '... validating the query against the schema' => sub {
 
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
 
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
@@ -390,6 +410,8 @@ subtest '... validating the query against the schema' => sub {
     my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
     ok($v->has_errors, '... no errors to be found');
     eq_or_diff(
         [ $v->get_errors ],
@@ -399,5 +421,102 @@ subtest '... validating the query against the schema' => sub {
         '... got the expected validation errors'
     );
 };
+
+## test the $name arg in validate
+
+subtest '... validating the query against the schema' => sub {
+
+    my $query = Graph::QL::Operation::Query->new(
+        selections => [
+            Graph::QL::Operation::Field->new(
+                name => 'findAllBobs',
+            ),
+            Graph::QL::Operation::Field->new(
+                name => 'findOneAlice',
+            )
+        ]
+    );
+
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate }, undef, '... validation happened without incident');
+
+    ok($v->has_errors, '... no errors to be found');
+    eq_or_diff(
+        [ $v->get_errors ],
+        [
+            'Unable to determine the `query.root` without an explicit name, options are (findAllBobs, findOneAlice)'
+        ],
+        '... got the expected validation errors'
+    );
+};
+
+subtest '... validating the query against the schema' => sub {
+
+    my $query = Graph::QL::Operation::Query->new(
+        selections => [
+            Graph::QL::Operation::Field->new(
+                name => 'findAllBobs',
+            ),
+            Graph::QL::Operation::Field->new(
+                name => 'findOneAlice',
+            )
+        ]
+    );
+
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate('findAllAlices') }, undef, '... validation happened without incident');
+
+    ok($v->has_errors, '... no errors to be found');
+    eq_or_diff(
+        [ $v->get_errors ],
+        [
+            'Unable to find the `query.root(findAllAlices)`, other options are (findAllBobs, findOneAlice)'
+        ],
+        '... got the expected validation errors'
+    );
+};
+
+subtest '... validating the query against the schema' => sub {
+
+    my $query = Graph::QL::Operation::Query->new(
+        name       => 'findAllBobs',
+        selections => [
+            Graph::QL::Operation::Field->new(
+                name => 'findOneAlice',
+            ),
+            Graph::QL::Operation::Field->new(
+                name       => 'findPerson',
+                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
+                selections => [
+                    Graph::QL::Operation::Field->new( name => 'name' ),
+                    Graph::QL::Operation::Field->new(
+                        name       => 'birth',
+                        selections => [
+                            Graph::QL::Operation::Field->new( name => 'year' ),
+                        ]
+                    ),
+                    Graph::QL::Operation::Field->new(
+                        name       => 'death',
+                        selections => [
+                            Graph::QL::Operation::Field->new( name => 'year' ),
+                        ]
+                    ),
+                ]
+            )
+        ]
+    );
+
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    isa_ok($v, 'Graph::QL::Execution::QueryValidator');
+
+    is(exception { $v->validate('findPerson') }, undef, '... validation happened without incident');
+
+    ok(!$v->has_errors, '... no errors to be found');
+};
+
 
 done_testing;
