@@ -176,7 +176,7 @@ q[query findAllBobs {
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
         my $expected_schema_ast = Graph::QL::Parser->parse_raw( $schema_as_type_lang );
-        my $expected_query_ast  = Graph::QL::Parser->parse_raw( $query_as_type_lang )->{definitions}->[0];
+        my $expected_query_ast  = Graph::QL::Parser->parse_raw( $query_as_type_lang );
 
         Graph::QL::Util::AST::null_out_source_locations(
             $expected_schema_ast,
@@ -192,9 +192,9 @@ q[query findAllBobs {
         Graph::QL::Util::AST::null_out_source_locations(
             $expected_query_ast,
             # just clean it all out ... :P
-            'selectionSet.selections.arguments.value',
-            'selectionSet.selections.selectionSet.selections.arguments.value',
-            'selectionSet.selections.selectionSet.selections.selectionSet.selections.arguments.value',
+            'definitions.selectionSet.selections.arguments.value',
+            'definitions.selectionSet.selections.selectionSet.selections.arguments.value',
+            'definitions.selectionSet.selections.selectionSet.selections.selectionSet.selections.arguments.value',
         );
 
         eq_or_diff($schema_as_object->ast->TO_JSON, $expected_schema_ast, '... got the expected schema ast');
