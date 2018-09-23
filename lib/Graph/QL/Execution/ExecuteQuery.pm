@@ -16,6 +16,7 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
+    name      => sub {}, # optional name of operation to run
     schema    => sub {}, # Graph::QL::Schema
     query     => sub {}, # Graph::QL::Operation::Query
     resolvers => sub { +{} }, # a mapping of TypeName to Resolver instance
@@ -65,7 +66,7 @@ sub get_data ($self) {                $self->{_data}->%* }
 
 ## ...
 
-sub execute ($self) {
+sub validate ($self) {
 
     # this will validate that the query supplied
     # can be executed by the schema supplied
@@ -74,14 +75,16 @@ sub execute ($self) {
         query  => $self->{query},
     );
 
-    # if the validation fails ...
-    if ( $v->has_errors ) {
-        $self->_absorb_errors( 'The `operation` did not pass validation.' => $v );
-        # What do we do when we have an error?
-    }
+    # validate the schema ...
+    $v->validate( $self->{name} );
 
-    # TODO:
-    # the rest ...
+    # if the validation succeeds,
+    # there are no errors ...
+    return 1 unless $v->has_errors;
+    # if the validation fails, then
+    # we absorb the errors and return
+    $self->_absorb_errors( 'The `operation` did not pass validation.' => $v );
+    return 0;
 }
 
 ## ...

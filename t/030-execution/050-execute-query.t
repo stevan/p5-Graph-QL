@@ -128,7 +128,7 @@ subtest '... validating the query against the schema' => sub {
     my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
     isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->execute }, undef, '... no exceptions while validating');
+    is(exception { $e->validate }, undef, '... no exceptions while validating');
     ok(!$e->has_errors, '... no errors have been be found');
 };
 
@@ -146,7 +146,7 @@ subtest '... validating the query against the schema' => sub {
     my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
     isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->execute }, undef, '... no exceptions while validating');
+    is(exception { $e->validate }, undef, '... no exceptions while validating');
     ok($e->has_errors, '... errors have been be found');
     eq_or_diff(
         [ $e->get_errors ],
@@ -176,7 +176,7 @@ subtest '... validating the query against the schema' => sub {
     my $e = Graph::QL::Execution::ExecuteQuery->new( schema => $schema, query => $query );
     isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    is(exception { $e->execute }, undef, '... no exceptions while validating');
+    is(exception { $e->validate }, undef, '... no exceptions while validating');
     ok($e->has_errors, '... errors have been found');
     eq_or_diff(
         [ $e->get_errors ],
