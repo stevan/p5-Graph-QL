@@ -63,7 +63,6 @@ sub operation_kind ($self) { $self->ast->operation }
 sub has_name ($self) { !! $self->ast->name }
 sub name     ($self) { $self->ast->name->value }
 
-sub has_selections ($self) { !! scalar $self->ast->selection_set->selections->@* }
 sub selections ($self) {
     [ map Graph::QL::Operation::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ]
 }
