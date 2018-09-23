@@ -152,7 +152,7 @@ subtest '... validating the query against the schema' => sub {
         [ $e->get_errors ],
         [
             'The `operation` did not pass validation.',
-            'The `schema.field(findPerson)` and `query.field(findPerson)` both must expect arguments, not `yes` and `no`'
+            '[VALIDATION] The `schema.field(findPerson)` and `query.field(findPerson)` both must expect arguments, not `yes` and `no`'
         ],
         '... got the expected validation errors'
     );
@@ -182,8 +182,8 @@ subtest '... validating the query against the schema' => sub {
         [ $e->get_errors ],
         [
             'The `operation` did not pass validation.',
-            'The `schema.field(findExactPerson).arg(gender).type` and `query.field(findExactPerson).arg(gender).type` , not `String` and `Int`',
-            'The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `honk`',
+            '[VALIDATION] The `schema.field(findExactPerson).arg(gender).type` and `query.field(findExactPerson).arg(gender).type` , not `String` and `Int`',
+            '[VALIDATION] The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `honk`',
         ],
         '... got the expected validation errors'
     );

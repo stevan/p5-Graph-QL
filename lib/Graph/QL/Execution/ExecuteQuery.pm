@@ -67,7 +67,6 @@ sub get_data ($self) {                $self->{_data}->%* }
 ## ...
 
 sub validate ($self) {
-
     # this will validate that the query supplied
     # can be executed by the schema supplied
     my $v = Graph::QL::Execution::QueryValidator->new(
@@ -82,9 +81,18 @@ sub validate ($self) {
     # there are no errors ...
     return 1 unless $v->has_errors;
     # if the validation fails, then
-    # we absorb the errors and return
-    $self->_absorb_errors( 'The `operation` did not pass validation.' => $v );
+    # we absorb the errors and ...
+    $self->_absorb_validation_errors( 'The `operation` did not pass validation.' => $v );
+    # and return false
     return 0;
+}
+
+sub execute ($self) {
+
+    throw('You cannot execute a query that has errors')
+        if $self->has_errors;
+
+
 }
 
 ## ...
@@ -95,16 +103,15 @@ sub _add_error ($self, $msg, @args) {
     return;
 }
 
-sub _absorb_errors ($self, $msgs, $e) {
-    push $self->{_errors}->@* => $msgs, $e->get_errors;
-    return;
-}
-
 sub _add_data_key ($self, $key, $value) {
     $self->{_data}->{ $key } = $value;
     return;
 }
 
+sub _absorb_validation_errors ($self, $msgs, $e) {
+    push $self->{_errors}->@* => $msgs, map "[VALIDATION] $_", $e->get_errors;
+    return;
+}
 
 1;
 
