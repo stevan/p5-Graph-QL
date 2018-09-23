@@ -19,14 +19,14 @@ use slots (
     schema    => sub {}, # Graph::QL::Schema
     query     => sub {}, # Graph::QL::Operation::Query
     resolvers => sub {}, # a mapping of TypeName to Resolver instance
-    # internals ...
-    _errors   => sub { +[] },
+    validator => sub {}, # Graph::QL::Execution::QueryValidator
 );
 
 sub BUILDARGS : strict(
-    schema    => schema,
-    query     => query,
-    resolvers => resolvers,
+    schema     => schema,
+    query      => query,
+    resolvers  => resolvers,
+    validator? => validator,
 );
 
 sub BUILD ($self, $params) {
@@ -47,13 +47,22 @@ sub BUILD ($self, $params) {
 
     throw('The `resolvers` HASH can not be empty')
         unless assert_non_empty( $self->{resolvers} );
+
+    if ( $params->{validator} ) {
+        throw('The `validator` must be an instance of `Graph::QL::Execution::QueryValidator`, not `%s`', $self->{validator})
+            unless assert_isa( $self->{validator}, 'Graph::QL::Execution::QueryValidator' );
+    }
+    else {
+        $self->{validator} = Graph::QL::Execution::QueryValidator->new(
+            schema => $self->{schema},
+            query  => $self->{query},
+        );
+    }
 }
 
-sub schema : ro;
-sub query  : ro;
-
-sub has_errors ($self) { !! scalar $self->{_errors}->@* }
-sub get_errors ($self) {           $self->{_errors}->@* }
+sub schema    : ro;
+sub query     : ro;
+sub resolvers : ro;
 
 sub get_resolver_for_type ($self, $type) {
     return $self->{resolvers}->{ $type };
@@ -61,26 +70,9 @@ sub get_resolver_for_type ($self, $type) {
 
 ## ...
 
-sub validate ($self) {
-    # this will validate that the query supplied
-    # can be executed by the schema supplied
-    my $v = Graph::QL::Execution::QueryValidator->new(
-        schema => $self->{schema},
-        query  => $self->{query},
-    );
-
-    # validate the schema ...
-    $v->validate;
-
-    # if the validation succeeds,
-    # there are no errors ...
-    return 1 unless $v->has_errors;
-    # if the validation fails, then
-    # we absorb the errors and ...
-    $self->_absorb_validation_errors( 'The `operation` did not pass validation.' => $v );
-    # and return false
-    return 0;
-}
+sub validate   ($self) { $self->{validator}->validate   }
+sub has_errors ($self) { $self->{validator}->has_errors }
+sub get_errors ($self) { $self->{validator}->get_errors }
 
 sub execute ($self) {
 
