@@ -14,6 +14,7 @@ our @EXPORT_OK; BEGIN {
         'assert_does',
         'assert_arrayref',
         'assert_hashref',
+        'assert_coderef',
         'assert_non_empty',
     );
 }
@@ -41,6 +42,7 @@ sub assert_does ($o, $r) { Ref::Util::is_blessed_ref($o) && $o->roles::DOES( $r 
 
 sub assert_arrayref ($a) { Ref::Util::is_arrayref( $a ) }
 sub assert_hashref  ($h) { Ref::Util::is_hashref( $h )  }
+sub assert_coderef  ($c) { Ref::Util::is_coderef( $c )  }
 
 sub assert_non_empty ($t) {
     return !! keys   $t->%* if Ref::Util::is_hashref( $t );
