@@ -10,6 +10,7 @@ use Graph::QL::Util::Assertions 'assert_does';
 use Graph::QL::Util::AST;
 
 use Graph::QL::Schema::Type::Named;
+use Graph::QL::Schema::InputObject::InputValue;
 
 use Graph::QL::AST::Node::FieldDefinition;
 use Graph::QL::AST::Node::Name;
