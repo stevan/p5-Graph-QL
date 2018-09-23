@@ -38,6 +38,9 @@ sub get_errors ($self) {           $self->{_errors}->@* }
 
 sub validate ($self) {
 
+    # make sure we have a clean slate ...
+    $self->_clear_errors;
+
     # find the Query type within the schema ...
     my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
 
@@ -266,6 +269,9 @@ sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0
 
 ## ...
 
+sub _clear_errors ($self) {
+    $self->{_errors}->@* = ();
+}
 
 sub _add_error ($self, $msg, @args) {
     defined $_
