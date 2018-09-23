@@ -156,6 +156,12 @@ subtest '... validating the query against the schema' => sub {
         ],
         '... got the expected validation errors'
     );
+
+    like(
+        exception { $e->execute },
+        qr/You cannot execute a query that has errors/,
+        '... no exceptions while validating'
+    );
 };
 
 subtest '... validating the query against the schema' => sub {
@@ -186,6 +192,12 @@ subtest '... validating the query against the schema' => sub {
             '[VALIDATION] The `schema.field(findExactPerson).arg.name` and `query.field(findExactPerson).arg.name` must match, got `nationality` and `honk`',
         ],
         '... got the expected validation errors'
+    );
+
+    like(
+        exception { $e->execute },
+        qr/You cannot execute a query that has errors/,
+        '... no exceptions while validating'
     );
 };
 
