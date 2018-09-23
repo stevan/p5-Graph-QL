@@ -89,6 +89,8 @@ my $query = Graph::QL::Operation::Query->new(
     ]
 );
 
+isa_ok($query, 'Graph::QL::Operation::Query');
+
 eq_or_diff($query->ast->TO_JSON, $expected_ast, '... round-tripped the ast');
 
 done_testing;
