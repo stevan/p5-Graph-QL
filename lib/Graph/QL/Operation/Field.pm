@@ -32,6 +32,14 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
+        if ( exists $params->{alias} ) {
+            throw('You must pass a defined value to `alias`')
+                unless defined $params->{alias};
+        }
+
         if ( exists $params->{selections} ) {
 
             throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )

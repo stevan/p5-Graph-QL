@@ -47,10 +47,23 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-        # TODO:
-        # - check for `query` type being defined (maybe?)
-        # - type-check {query,mutation,subscription}_type
+        if ( exists $params->{query_type} ) {
+            throw('The `query_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{query_type})
+                unless assert_isa( $params->{query_type}, 'Graph::QL::Schema::Type::Named' );
+        }
 
+        if ( exists $params->{mutation_type} ) {
+            throw('The `mutation_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{mutation_type})
+                unless assert_isa( $params->{mutation_type}, 'Graph::QL::Schema::Type::Named' );
+        }
+
+        if ( exists $params->{subscription_type} ) {
+            throw('The `subscription_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{subscription_type})
+                unless assert_isa( $params->{subscription_type}, 'Graph::QL::Schema::Type::Named' );
+        }
+
+        # TODO:
+        # - check for `query` (and `mutation`, `subscription`) types being defined
         my @definitions;
 
         # So converting these is simple, just
