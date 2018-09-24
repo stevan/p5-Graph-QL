@@ -151,6 +151,7 @@ sub generate_class ($name, $definition) {
     my @inherited_fields = qw[ location ];
 
     my $has_nullable = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
+    my $uses_op_kind = 0;
 
     my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
     my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
@@ -160,6 +161,9 @@ sub generate_class ($name, $definition) {
 
         my $type      = expand_type( $field->{type} );
         my $validator = (is_role($field->{type}) ? 'does' : 'isa');
+
+        # ugly, sorry ...
+        $uses_op_kind++ if $field->{type} eq 'OperationKind';
 
         # if we have a plural field that is not nullable ...
         if ( $field->{is_plural} ) {
@@ -181,10 +185,12 @@ sub generate_class ($name, $definition) {
             push @slots       => sprintf "%-${name_width}s => sub {}," => $field->{name};
             push @type_checks => (
                 (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
-                (sprintf '    throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
+                (sprintf '    throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name}),
                 (is_blessed( $field->{type} )
                     ? (sprintf '        unless assert_%s( $self->{%s}, \'%s\');' => $validator, $field->{name}, $type)
-                    : (sprintf '        unless defined $self->{%s};', $field->{name})),
+                    : ($field->{type} eq 'OperationKind')
+                            ? (sprintf '        unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{%s} );', $field->{name})
+                            : (sprintf '        unless defined $self->{%s};', $field->{name})),
                 ('}'),
                 (''),
             );
@@ -192,10 +198,12 @@ sub generate_class ($name, $definition) {
         else {
             push @slots       => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
             push @type_checks => (
-                (sprintf 'throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name} ),
+                (sprintf 'throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name}),
                 (is_blessed( $field->{type} )
                     ? (sprintf '    unless assert_%s( $self->{%s}, \'%s\');' => $validator, $field->{name}, $type)
-                    : (sprintf '    unless defined $self->{%s};', $field->{name})),
+                    : ($field->{type} eq 'OperationKind')
+                        ? (sprintf '    unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{%s} );', $field->{name})
+                        : (sprintf '    unless defined $self->{%s};', $field->{name})),
                 (''),
             );
         }
@@ -228,7 +236,7 @@ use decorators ':accessors', ':constructor';
 
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions ':all';
-
+].($uses_op_kind ? "\nuse Graph::QL::Core::OperationKind;\n" : '').q[
 our $VERSION = '].$Graph::QL::AST::Node::VERSION.q[';
 
 use parent 'Graph::QL::AST::Node';]
