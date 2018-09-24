@@ -42,11 +42,8 @@ sub BUILD ($self, $params) {
     # - handle `variables`
     # - handle `context-value`
 
-    throw('The `resolvers` must be a HASH ref, not `%s`', $self->{resolvers})
-        unless assert_hashref( $self->{resolvers} );
-
-    throw('The `resolvers` HASH can not be empty')
-        unless assert_non_empty( $self->{resolvers} );
+    throw('The `resolvers` must be a as instance of `Graph::QL::Resolvers`, not `%s`', $self->{resolvers})
+        unless assert_isa( $self->{resolvers}, 'Graph::QL::Resolvers' );
 
     if ( $params->{validator} ) {
         throw('The `validator` must be an instance of `Graph::QL::Execution::QueryValidator`, not `%s`', $self->{validator})
@@ -64,10 +61,6 @@ sub schema    : ro;
 sub query     : ro;
 sub resolvers : ro;
 
-sub get_resolver_for_type ($self, $type) {
-    return $self->{resolvers}->{ $type };
-}
-
 ## ...
 
 sub validate   ($self) { $self->{validator}->validate   }
@@ -84,14 +77,14 @@ sub execute ($self) {
     my $data = $self->execute_selections(
         $root_type,
         $self->{query}->selections,
-        $self->get_resolver_for_type( $root_type->name ),
+        $self->{resolvers}->get_type( $root_type->name ),
         {},
     );
 
     return $data;
 }
 
-sub execute_selections ($self, $schema_type, $selections, $resolvers, $initial_value) {
+sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initial_value) {
 
     my %results;
     foreach my $selection ( $selections->@* ) {
@@ -101,7 +94,7 @@ sub execute_selections ($self, $schema_type, $selections, $resolvers, $initial_v
         $results{ $response_key } = $self->execute_field(
             $schema_field,
             $selection,
-            $resolvers->{ $schema_field->name },
+            $type_resolver->get_field( $schema_field->name ),
             $initial_value
         );
     }
@@ -109,10 +102,10 @@ sub execute_selections ($self, $schema_type, $selections, $resolvers, $initial_v
     return \%results;
 }
 
-sub execute_field ($self, $schema_field, $selection, $resolver, $initial_value) {
+sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_value) {
 
     my %field_args = map { $_->name => $_->value } $selection->args->@*;
-    my $resolved   = $resolver->( $initial_value, \%field_args );
+    my $resolved   = $field_resolver->resolve( $initial_value, \%field_args );
 
     my $schema_field_type = $self->{schema}->lookup_type(
         $self->_find_base_schema_type( $schema_field->type )
@@ -120,14 +113,14 @@ sub execute_field ($self, $schema_field, $selection, $resolver, $initial_value) 
 
     if ( $selection->has_selections ) {
 
-        my $selections = $selection->selections;
-        my $resolvers  = $self->get_resolver_for_type( $schema_field_type->name );
+        my $selections    = $selection->selections;
+        my $type_resolver = $self->{resolvers}->get_type( $schema_field_type->name );
 
         if ( $schema_field->type->isa('Graph::QL::Schema::Type::Named') ) {
             $resolved = $self->execute_selections(
                 $schema_field_type,
                 $selections,
-                $resolvers,
+                $type_resolver,
                 $resolved,
             );
         }
@@ -138,7 +131,7 @@ sub execute_field ($self, $schema_field, $selection, $resolver, $initial_value) 
                         $self->execute_selections(
                             $schema_field_type,
                             $selections,
-                            $resolvers,
+                            $type_resolver,
                             $_,
                         )
                     } $resolved->@*
