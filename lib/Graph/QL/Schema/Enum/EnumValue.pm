@@ -5,6 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors 'throw';
+
 use Graph::QL::AST::Node::EnumValueDefinition;
 use Graph::QL::AST::Node::Name;
 
@@ -21,6 +23,10 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
         $self->{_ast} = Graph::QL::AST::Node::EnumValueDefinition->new(
             name => Graph::QL::AST::Node::Name->new(
                 value => $params->{name}

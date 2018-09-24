@@ -26,8 +26,18 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
         throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $params->{type})
             unless assert_does( $params->{type}, 'Graph::QL::Schema::Type' );
+
+        # NOTE:
+        # no need to test default_value,
+        # it can be undef and so we can let
+        # the `literal_to_ast_node` to work
+        # it out.
 
         $self->{_ast} = Graph::QL::AST::Node::InputValueDefinition->new(
             name          => Graph::QL::AST::Node::Name->new( value => $params->{name} ),

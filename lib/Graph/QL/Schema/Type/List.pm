@@ -27,6 +27,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
+
         throw('The `of_type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $params->{of_type})
             unless assert_does( $params->{of_type}, 'Graph::QL::Schema::Type' );
 

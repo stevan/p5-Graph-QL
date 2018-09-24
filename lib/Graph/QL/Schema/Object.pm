@@ -5,7 +5,8 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
-use Graph::QL::Util::Assertions 'assert_isa';
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 
 use Graph::QL::Schema::Field;
 use Graph::QL::Schema::Type::Named;
@@ -28,14 +29,34 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
-        # TODO:
-        # - check `fields`
-        # - check `interfaces`
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
+        throw('The `fields` value must be an ARRAY ref')
+            unless assert_arrayref( $params->{fields} );
+
+        foreach ( $params->{fields}->@* ) {
+             throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
+                unless assert_isa( $_, 'Graph::QL::Schema::Field');
+        }
+
+        if ( exists $params->{interfaces} ) {
+            throw('The `interfaces` value must be an ARRAY ref')
+                unless assert_arrayref( $params->{interfaces} );
+
+            foreach ( $params->{interfaces}->@* ) {
+                 throw('The values in `interfaces` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Schema::Type::Named');
+            }
+        }
 
         $self->{_ast} = Graph::QL::AST::Node::ObjectTypeDefinition->new(
             name       => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            fields     => [ map $_->ast, $params->{fields}->@*     ],
-            interfaces => [ map $_->ast, $params->{interfaces}->@* ],
+            fields     => [ map $_->ast, $params->{fields}->@* ],
+            (exists $params->{interfaces}
+                ? (interfaces => [ map $_->ast, $params->{interfaces}->@* ])
+                : ()),
         );
     }
 

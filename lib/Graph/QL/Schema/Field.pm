@@ -6,7 +6,7 @@ use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
 use Graph::QL::Util::Errors     'throw';
-use Graph::QL::Util::Assertions 'assert_does';
+use Graph::QL::Util::Assertions 'assert_does', 'assert_isa', 'assert_arrayref';
 use Graph::QL::Util::AST;
 
 use Graph::QL::Schema::Type::Named;
@@ -31,16 +31,29 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
         throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $params->{type})
             unless assert_does( $params->{type}, 'Graph::QL::Schema::Type' );
 
-        # TODO:
-        # - check `args`
+        if ( exists $params->{args} ) {
+            throw('The `args` value must be an ARRAY ref')
+                unless assert_arrayref( $params->{args} );
+
+            foreach ( $params->{args}->@* ) {
+                 throw('The values in `args` must all be of type(Graph::QL::Schema::InputObject::InputValue), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Schema::InputObject::InputValue');
+            }
+        }
 
         $self->{_ast} = Graph::QL::AST::Node::FieldDefinition->new(
             name      => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
             type      => $params->{type}->ast,
-            arguments => [ map $_->ast, $params->{args}->@* ],
+            (exists $params->{args}
+                ? (arguments => [ map $_->ast, $params->{args}->@* ])
+                : ()),
         );
     }
 }

@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
+
 use Graph::QL::Schema::Type::Named;
 
 use Graph::QL::AST::Node::UnionTypeDefinition;
@@ -25,8 +28,17 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
-        # TODO:
-        # - check `types`
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
+        throw('The `types` value must be an ARRAY ref')
+            unless assert_arrayref( $params->{types} );
+
+        foreach ( $params->{types}->@* ) {
+             throw('The values in `types` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
+                unless assert_isa( $_, 'Graph::QL::Schema::Type::Named');
+        }
 
         $self->{_ast} = Graph::QL::AST::Node::UnionTypeDefinition->new(
             name  => Graph::QL::AST::Node::Name->new( value => $params->{name} ),

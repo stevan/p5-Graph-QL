@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
+
 use Graph::QL::AST::Node::InputObjectTypeDefinition;
 use Graph::QL::AST::Node::Name;
 
@@ -22,8 +25,17 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
-        # TODO:
-        # - check `fields`
+
+        throw('You must pass a defined value to `name`')
+            unless defined $params->{name};
+
+        throw('The `fields` value must be an ARRAY ref')
+            unless assert_arrayref( $params->{fields} );
+
+        foreach ( $params->{fields}->@* ) {
+             throw('The values in `fields` must all be of type(Graph::QL::Schema::InputObject::InputValue), not `%s`', $_ )
+                unless assert_isa( $_, 'Graph::QL::Schema::InputObject::InputValue');
+        }
 
         $self->{_ast} = Graph::QL::AST::Node::InputObjectTypeDefinition->new(
             name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
