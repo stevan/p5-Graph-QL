@@ -99,9 +99,9 @@ my @People = (
         gender      => 'Male',
         culture     => 'United States',
         datebegin   => 'January 28, 1912',
-        birthplace  => 'Cody, Wyoming, United States',
+        birthplace  => 'Cody, Wyoming, U.S.',
         dateend     => 'August 11, 1956',
-        deathplace  => 'Springs, New York, United States',
+        deathplace  => 'Springs, New York, U.S.',
     }
 );
 
