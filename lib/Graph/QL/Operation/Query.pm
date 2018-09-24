@@ -23,6 +23,11 @@ use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Operation';
 use slots ( _ast => sub {} );
 
+sub new_from_source ($class, $source) {
+    require Graph::QL::Parser;
+    $class->new( ast => Graph::QL::Parser->parse_operation( $source ) )
+}
+
 sub BUILDARGS : strict(
     ast?        => _ast,
     name?       => name,

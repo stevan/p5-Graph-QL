@@ -30,6 +30,11 @@ our $VERSION = '0.01';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots ( _ast => sub {} );
 
+sub new_from_source ($class, $source) {
+    require Graph::QL::Parser;
+    $class->new( ast => Graph::QL::Parser->parse_schema( $source ) )
+}
+
 sub BUILDARGS : strict(
     ast?               => _ast,
     types?             => types,
