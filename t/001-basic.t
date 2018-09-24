@@ -7,199 +7,188 @@ use experimental 'signatures', 'postderef';
 use Test::More;
 use Test::Differences;
 use Test::Fatal;
+
 use Data::Dumper;
+use Time::Piece;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
-
-    use_ok('Graph::QL::Schema::Type::List');
-    use_ok('Graph::QL::Schema::Object');
-    use_ok('Graph::QL::Schema::Scalar');
-
-    use_ok('Graph::QL::Schema::Field');
-    use_ok('Graph::QL::Schema::InputObject::InputValue');
-
     use_ok('Graph::QL::Operation::Query');
-    use_ok('Graph::QL::Operation::Field');
-    use_ok('Graph::QL::Operation::Field::Argument');
-
-    use_ok('Graph::QL::Util::AST');
-    use_ok('Graph::QL::Parser');
-
     use_ok('Graph::QL::Execution::ExecuteQuery');
 }
 
-subtest '... testing it all together' => sub {
+my $schema = Graph::QL::Schema->new_from_source(q[
+    scalar Int
+    scalar String
 
-## specify the schema and query in the type language ...
+    type Date {
+        day   : String
+        month : String
+        year  : Int
+    }
 
-    my $schema_as_type_lang = q[
-scalar Int
+    type BirthEvent {
+        date  : Date
+        place : String
+    }
 
-scalar String
+    type DeathEvent {
+        date  : Date
+        place : String
+    }
 
-type BirthEvent {
-    year : Int
-    place : String
-}
+    type Person {
+        name        : String
+        nationality : String
+        gender      : String
+        birth       : BirthEvent
+        death       : DeathEvent
+    }
 
-type DeathEvent {
-    year : Int
-    place : String
-}
+    type Query {
+        findPerson( name : String ) : [Person]
+        getAllPeople : [Person]
+    }
 
-type Person {
-    name : String
-    nationality : String
-    gender : String
-    birth : BirthEvent
-    death : DeathEvent
-}
+    schema {
+        query : Query
+    }
+]);
 
-type Query {
-    findPerson(name : String) : [Person]
-}
-
-schema {
-    query : Query
-}
-];
-
-    my $query_as_type_lang =
-q[query findAllBobs {
-    findPerson(name : "Bob") {
-        name
-        birth {
-            year
+my $query = Graph::QL::Operation::Query->new_from_source(q[
+    query TestQuery {
+        findPerson( name : "Will" ) {
+            name
+            birth {
+                date {
+                    day
+                    month
+                    year
+                }
+            }
+            death {
+                date {
+                    year
+                }
+            }
         }
-        death {
-            year
+        getAllPeople {
+            name
+            gender
+            death {
+                date {
+                    year
+                }
+            }
         }
     }
-}];
+]);
 
-## Construct the object versions ...
+my @People = (
+    {
+        displayname => 'Willem De Kooning',
+        gender      => 'Male',
+        culture     => 'Dutch',
+        datebegin   => 'April 24, 1904',
+        birthplace  => 'Rotterdam, Netherlands',
+        dateend     => 'March 19, 1997',
+        deathplace  => 'East Hampton, New York, U.S.',
+    },
+    {
+        displayname => 'Jackson Pollock',
+        gender      => 'Male',
+        culture     => 'United States',
+        datebegin   => 'January 28, 1912',
+        birthplace  => 'Cody, Wyoming, United States',
+        dateend     => 'August 11, 1956',
+        deathplace  => 'Springs, New York, United States',
+    }
+);
 
-    my $Int    = Graph::QL::Schema::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
+my $e = Graph::QL::Execution::ExecuteQuery->new(
+    schema    => $schema,
+    query     => $query,
+    resolvers => {
+        Query => {
+            getAllPeople => sub ($, $) { [ @People ] },
+            findPerson   => sub ($, $args) {
+                my $name = $args->{name};
+                return [ grep { $_->{displayname} =~ /$name/ } @People ]
+            },
+        },
+        Person => {
+            name        => sub ($data, $) { $data->{displayname} },
+            nationality => sub ($data, $) { $data->{culture}     },
+            gender      => sub ($data, $) { $data->{gender}      },
+            birth       => sub ($data, $) { $data },
+            death       => sub ($data, $) { $data },
+        },
+        BirthEvent => {
+            date  => sub ($data, $) { Time::Piece->strptime( $data->{datebegin}, '%B %d, %Y' ) },
+            place => sub ($data, $) { $data->{birthplace} },
+        },
+        DeathEvent => {
+            date  => sub ($data, $) { Time::Piece->strptime( $data->{dateend}, '%B %d, %Y' ) },
+            place => sub ($data, $) { $data->{deathplace} },
+        },
+        Date => {
+            day   => sub ($data, $) { $data->mday      },
+            month => sub ($data, $) { $data->fullmonth },
+            year  => sub ($data, $) { $data->year      },
+        }
+    }
+);
+isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
-    my $BirthEvent = Graph::QL::Schema::Object->new(
-        name   => 'BirthEvent',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'year',  type => Graph::QL::Schema::Type::Named->new( name => 'Int'    ) ),
-            Graph::QL::Schema::Field->new( name => 'place', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
+ok($e->validate, '... the schema and query validated correctly');
+ok(!$e->has_errors, '... no errors have been be found');
+
+my $result = $e->execute;
+
+eq_or_diff(
+    $result,
+    {
+        findPerson => [
+            {
+                name  => 'Willem De Kooning',
+                birth => {
+                    date => {
+                        day   => 24,
+                        month => 'April',
+                        year  => 1904,
+                    }
+                },
+                death => {
+                    date => {
+                        year => 1997
+                    }
+                },
+            }
+        ],
+        getAllPeople => [
+            {
+                name   => 'Willem De Kooning',
+                gender => 'Male',
+                death  => {
+                    date => {
+                        year => 1997
+                    }
+                }
+            },
+            {
+                name   => 'Jackson Pollock',
+                gender => 'Male',
+                death  => {
+                    date => {
+                        year => 1956
+                    }
+                }
+            }
         ]
-    );
+    },
+    '... got the expected results of the query'
+);
 
-    my $DeathEvent = Graph::QL::Schema::Object->new(
-        name   => 'DeathEvent',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'year',  type => Graph::QL::Schema::Type::Named->new( name => 'Int'    ) ),
-            Graph::QL::Schema::Field->new( name => 'place', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
-        ]
-    );
 
-    my $Person = Graph::QL::Schema::Object->new(
-        name   => 'Person',
-        fields => [
-            Graph::QL::Schema::Field->new( name => 'name',        type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
-            Graph::QL::Schema::Field->new( name => 'nationality', type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
-            Graph::QL::Schema::Field->new( name => 'gender',      type => Graph::QL::Schema::Type::Named->new( name => 'String' ) ),
-            Graph::QL::Schema::Field->new( name => 'birth',       type => Graph::QL::Schema::Type::Named->new( name => 'BirthEvent' ) ),
-            Graph::QL::Schema::Field->new( name => 'death',       type => Graph::QL::Schema::Type::Named->new( name => 'DeathEvent' ) ),
-        ]
-    );
-
-    my $Query = Graph::QL::Schema::Object->new(
-        name   => 'Query',
-        fields => [
-            Graph::QL::Schema::Field->new(
-                name => 'findPerson',
-                args => [
-                    Graph::QL::Schema::InputObject::InputValue->new(
-                        name => 'name',
-                        type => Graph::QL::Schema::Type::Named->new( name => 'String' )
-                    )
-                ],
-                type => Graph::QL::Schema::Type::List->new(
-                    of_type => Graph::QL::Schema::Type::Named->new(
-                        name => 'Person'
-                    )
-                ),
-            )
-        ]
-    );
-
-    my $schema_as_object = Graph::QL::Schema->new(
-        query_type => Graph::QL::Schema::Type::Named->new( name => 'Query' ),
-        types => [
-            $Int,
-            $String,
-            $BirthEvent,
-            $DeathEvent,
-            $Person,
-            $Query
-        ]
-    );
-
-    my $query_as_object = Graph::QL::Operation::Query->new(
-        name       => 'findAllBobs',
-        selections => [
-            Graph::QL::Operation::Field->new(
-                name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
-                selections => [
-                    Graph::QL::Operation::Field->new( name => 'name' ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'birth',
-                        selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
-                        ]
-                    ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'death',
-                        selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
-                        ]
-                    ),
-                ]
-            )
-        ]
-    );
-
-## test that the type language pretty printing works
-
-    eq_or_diff($schema_as_object->to_type_language, $schema_as_type_lang, '... got the pretty printed schema as expected');
-    eq_or_diff($query_as_object->to_type_language, $query_as_type_lang, '... got the pretty printed query as expected');
-
-## now test that we produced valid ASTs from the object versions
-
-    subtest '... now parse the expected string and strip the location from the AST' => sub {
-        my $expected_schema_ast = Graph::QL::Parser->parse_raw( $schema_as_type_lang );
-        my $expected_query_ast  = Graph::QL::Parser->parse_raw( $query_as_type_lang );
-
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_schema_ast,
-            # just clean it all out ... :P
-            'definitions.types',
-            'definitions.operationTypes.type',
-            'definitions.fields.type',
-            'definitions.fields.type.type',
-            'definitions.fields.arguments.type',
-            'definitions.fields.arguments.defaultValue'
-        );
-
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_query_ast,
-            # just clean it all out ... :P
-            'definitions.selectionSet.selections.arguments.value',
-            'definitions.selectionSet.selections.selectionSet.selections.arguments.value',
-            'definitions.selectionSet.selections.selectionSet.selections.selectionSet.selections.arguments.value',
-        );
-
-        eq_or_diff($schema_as_object->ast->TO_JSON, $expected_schema_ast, '... got the expected schema ast');
-        eq_or_diff($query_as_object->ast->TO_JSON, $expected_query_ast, '... got the expected query ast');
-    };
-};
 
 done_testing;
