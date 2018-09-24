@@ -41,9 +41,9 @@ q[interface NamedEntity {
     );
     isa_ok($NamedEntity, 'Graph::QL::Schema::Interface');
 
-    is($NamedEntity->name, 'NamedEntity', '... got the name we expect');
+    subtest '... checking the interface details' => sub {
+        is($NamedEntity->name, 'NamedEntity', '... got the name we expect');
 
-    subtest '... checking the fields' => sub {
         my $name = $NamedEntity->lookup_field('name');
         my $type = $NamedEntity->lookup_field('type');
 

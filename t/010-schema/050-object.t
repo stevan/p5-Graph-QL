@@ -51,6 +51,25 @@ q[type Person {
             ),
         ]
     );
+    isa_ok($Person, 'Graph::QL::Schema::Object');
+
+    subtest '... checking the object details' => sub {
+        is($Person->name, 'Person', '... got the name we expect');
+
+        my $name = $Person->lookup_field('name');
+        my $age  = $Person->lookup_field('age');
+
+        isa_ok($name, 'Graph::QL::Schema::Field');
+        isa_ok($age,  'Graph::QL::Schema::Field');
+
+        is($name->name, 'name', '... got the name we expect');
+        is($age->name,  'age',  '... got the name we expect');
+
+        is($name->type->name, $String->name, '... got the type we expect');
+        is($age->type->name, $Int->name, '... got the type we expect');
+
+        ok($age->has_args, '... the age has args');
+    };
 
     #warn $Person->to_type_language;
 
