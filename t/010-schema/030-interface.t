@@ -39,6 +39,23 @@ q[interface NamedEntity {
             Graph::QL::Schema::Field->new( name => 'type', type => $EntityType ),
         ]
     );
+    isa_ok($NamedEntity, 'Graph::QL::Schema::Interface');
+
+    is($NamedEntity->name, 'NamedEntity', '... got the name we expect');
+
+    subtest '... checking the fields' => sub {
+        my $name = $NamedEntity->lookup_field('name');
+        my $type = $NamedEntity->lookup_field('type');
+
+        isa_ok($name, 'Graph::QL::Schema::Field');
+        isa_ok($type, 'Graph::QL::Schema::Field');
+
+        is($name->name, 'name', '... got the name we expect');
+        is($type->name, 'type', '... got the name we expect');
+
+        is($name->type->name, $String->name, '... got the type we expect');
+        is($type->type->name, $EntityType->name, '... got the type we expect');
+    };
 
     #warn $NamedEntity->to_type_language;
 

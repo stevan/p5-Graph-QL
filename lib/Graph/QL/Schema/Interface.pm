@@ -42,6 +42,13 @@ sub all_fields ($self) {
     [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
 }
 
+sub lookup_field ($self, $name) {
+    # no magical coercion here ...
+    my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
+    return unless defined $field_ast;
+    return Graph::QL::Schema::Field->new( ast => $field_ast );
+}
+
 ## ...
 
 sub to_type_language ($self) {
