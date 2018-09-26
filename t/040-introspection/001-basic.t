@@ -194,6 +194,6 @@ my $result = $e->execute;
 
 ok($result, '... we got a defined result');
 
-warn Dumper $result;
+#warn Dumper $result;
 
 done_testing;
