@@ -120,6 +120,11 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
 
     my %field_args = map { $_->name => $_->value } $selection->args->@*;
     my $resolved   = $field_resolver->resolve( $initial_value, \%field_args );
+    # TODO
+    # we need to test the resolved value
+    # and be sure it matches the type we
+    # expect and is a valid value.
+    # - SL
 
     if ( $selection->has_selections ) {
 
