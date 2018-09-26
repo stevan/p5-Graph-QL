@@ -104,6 +104,9 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
                         name
                     }
                 }
+                enumValues(includeDeprecated : true) {
+                    name
+                }
             }
         }
     }
@@ -152,6 +155,18 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
                             }
                         }
                     ),
+                    Graph::QL::Resolvers::FieldResolver->new(
+                        name => 'enumValues',
+                        code => sub ($type, $args, $, $) {
+                            # ignore the includeDeprecated arg for now ...
+                            if ( $type->isa('Graph::QL::Schema::Enum') ) {
+                                return $type->values;
+                            }
+                            else {
+                                return [];
+                            }
+                        }
+                    ),
                 ]
             ),
             Graph::QL::Resolvers::TypeResolver->new(
@@ -159,6 +174,12 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
                 fields => [
                     Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($field, $, $, $) { $field->name } ),
                     Graph::QL::Resolvers::FieldResolver->new( name => 'type', code => sub ($field, $, $, $) { $field->type } ),
+                ]
+            ),
+            Graph::QL::Resolvers::TypeResolver->new(
+                name   => '__EnumValue',
+                fields => [
+                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($value, $, $, $) { $value->name } ),
                 ]
             )
         ]
@@ -173,6 +194,6 @@ my $result = $e->execute;
 
 ok($result, '... we got a defined result');
 
-# warn Dumper $result;
+warn Dumper $result;
 
 done_testing;
