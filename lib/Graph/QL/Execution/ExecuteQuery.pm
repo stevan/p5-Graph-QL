@@ -20,12 +20,15 @@ use slots (
     query     => sub {}, # Graph::QL::Operation::Query
     resolvers => sub {}, # a mapping of TypeName to Resolver instance
     validator => sub {}, # Graph::QL::Execution::QueryValidator
+    context   => sub { +{} }, # HashRef[Any]
+    info      => sub { +{} }, # HashRef[Any]
 );
 
 sub BUILDARGS : strict(
     schema     => schema,
     query      => query,
     resolvers  => resolvers,
+    context?   => context,
     validator? => validator,
 );
 
@@ -44,6 +47,11 @@ sub BUILD ($self, $params) {
 
     throw('The `resolvers` must be a as instance of `Graph::QL::Resolvers`, not `%s`', $self->{resolvers})
         unless assert_isa( $self->{resolvers}, 'Graph::QL::Resolvers' );
+
+    if ( $params->{context} ) {
+        throw('The `context` must be a defined value, not `%s`', $self->{context})
+            unless defined $self->{context};
+    }
 
     if ( $params->{validator} ) {
         throw('The `validator` must be an instance of `Graph::QL::Execution::QueryValidator`, not `%s`', $self->{validator})
@@ -119,7 +127,13 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
     DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s)', $self->{query}->name, $selection->name, $schema_field->name);
 
     my %field_args = map { $_->name => $_->value } $selection->args->@*;
-    my $resolved   = $field_resolver->resolve( $initial_value, \%field_args );
+    my $resolved   = $field_resolver->resolve(
+        $initial_value,
+        \%field_args,
+        $self->{context},
+        $self->{info},
+    );
+
     # TODO
     # we need to test the resolved value
     # and be sure it matches the type we

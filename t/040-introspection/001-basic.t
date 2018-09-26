@@ -22,7 +22,6 @@ BEGIN {
 
 my $schema = Graph::QL::Schema->new_from_source(q[
 
-scalar Int
 scalar String
 scalar Boolean
 
@@ -121,22 +120,23 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
             Graph::QL::Resolvers::TypeResolver->new(
                 name   => 'Query',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => '__schema', code => sub ($, $) { $schema } )
+                    Graph::QL::Resolvers::FieldResolver->new( name => '__schema', code => sub ($, $, $, $) { $schema } )
                 ]
             ),
             Graph::QL::Resolvers::TypeResolver->new(
                 name   => '__Schema',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'types', code => sub ($schema, $) { $schema->all_types } )
+                    Graph::QL::Resolvers::FieldResolver->new( name => 'types', code => sub ($schema, $, $, $) { $schema->all_types } )
                 ]
             ),
             Graph::QL::Resolvers::TypeResolver->new(
                 name   => '__Type',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($type, $) { $type->name } ),
+                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($type, $, $, $) { $type->name } ),
                     Graph::QL::Resolvers::FieldResolver->new(
                         name => 'fields',
-                        code => sub ($type, $args) {
+                        code => sub ($type, $args, $, $) {
+                            # ignore the includeDeprecated arg for now ...
                             if ( $type->can('all_fields') ) {
                                 return $type->all_fields;
                             }
@@ -150,8 +150,8 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
             Graph::QL::Resolvers::TypeResolver->new(
                 name   => '__Field',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($field, $) { $field->name } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'type', code => sub ($field, $) { $field->type } ),
+                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($field, $, $, $) { $field->name } ),
+                    Graph::QL::Resolvers::FieldResolver->new( name => 'type', code => sub ($field, $, $, $) { $field->type } ),
                 ]
             )
         ]

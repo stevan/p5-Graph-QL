@@ -15,13 +15,12 @@ use slots (
 
 sub name : ro;
 
-sub resolve ($self, $source, $args) {
+sub resolve ($self, $source, $args, $context, $info) {
     # source  => any source data, either it is root_value (from Context) or a decendant
     # args    => arguments in case the field takes them
-    # TODO:
     # context => the context (from Context), usually a hash-ref with callbacks
     # info    => information about the field (name, parent_type, schema, etc.)
-    return $self->{code}->( $source, $args );
+    return $self->{code}->( $source, $args, $context, $info );
 }
 
 1;
