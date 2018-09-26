@@ -18,6 +18,7 @@ BEGIN {
     use_ok('Graph::QL::Resolvers');
     use_ok('Graph::QL::Resolvers::TypeResolver');
     use_ok('Graph::QL::Resolvers::FieldResolver');
+    use_ok('Graph::QL::Schema::TypeKind');
 }
 
 my $schema = Graph::QL::Schema->new_from_source(q[
@@ -94,10 +95,12 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
     query TestQuery {
         __schema {
             types {
+                kind
                 name
                 fields(includeDeprecated : true) {
                     name
                     type {
+                        kind
                         name
                     }
                 }
@@ -126,6 +129,16 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
             Graph::QL::Resolvers::TypeResolver->new(
                 name   => '__Type',
                 fields => [
+                    Graph::QL::Resolvers::FieldResolver->new(
+                        name => 'kind',
+                        code => sub ($type, $, $, $) {
+                            if ( $type->isa('Graph::QL::Schema::Type::Named') ) {
+                                $type = $schema->lookup_type( $type->name );
+                            }
+
+                            Graph::QL::Schema::TypeKind->get_type_kind_for_schema_type( $type )
+                        }
+                    ),
                     Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($type, $, $, $) { $type->name } ),
                     Graph::QL::Resolvers::FieldResolver->new(
                         name => 'fields',
