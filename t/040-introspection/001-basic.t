@@ -78,13 +78,7 @@ enum TypeKind {
     NON_NULL
 }
 
-type TestType {
-    name   : String
-    others : [TestType]
-}
-
 type Query {
-    getTestType : TestType
     __schema    : __Schema!
     __typename  : String!
     __type (name : String!) : __Type
