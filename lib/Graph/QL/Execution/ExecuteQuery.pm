@@ -10,7 +10,7 @@ use Graph::QL::Util::Assertions ':all';
 
 use Graph::QL::Execution::QueryValidator;
 
-use constant DEBUG => $ENV{GRAPHQL_EXECUTOR_DEBUG} // 0;
+use constant DEBUG => $ENV{GRAPHQL_EXECUTE_QUERY_DEBUG} // 0;
 
 our $VERSION = '0.01';
 
@@ -72,7 +72,11 @@ sub execute ($self) {
     throw("You cannot execute a query that has errors:\n%s" => join "\n" => $self->get_errors)
         if $self->has_errors;
 
+    DEBUG && $self->__log(0, 'Starting to execute query(%s)', $self->{query}->name );
+
     my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
+
+    DEBUG && $self->__log(0, 'Found root-type(%s) for query(%s)', $root_type->name, $self->{query}->name );
 
     my $data = $self->execute_selections(
         $root_type,
@@ -81,20 +85,28 @@ sub execute ($self) {
         {},
     );
 
+    DEBUG && $self->__log(0, 'Finished executing selections for query(%s)', $self->{query}->name );
+
     return $data;
 }
 
 sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initial_value) {
 
+    DEBUG && $self->__log(1, 'Executing selections for query(%s) for type(%s)', $self->{query}->name, $schema_type->name);
+
     my %results;
     foreach my $selection ( $selections->@* ) {
         my $response_key = $selection->has_alias ? $selection->alias : $selection->name;
         my $schema_field = $schema_type->lookup_field( $selection );
+        my $resolver     = $type_resolver->get_field( $schema_field->name );
+
+        throw('Unable to find a resolver for type(%s).field(%s)', $schema_type->name, $schema_field->name)
+            unless assert_isa($resolver, 'Graph::QL::Resolvers::FieldResolver');
 
         $results{ $response_key } = $self->execute_field(
             $schema_field,
             $selection,
-            $type_resolver->get_field( $schema_field->name ),
+            $resolver,
             $initial_value
         );
     }
@@ -104,46 +116,94 @@ sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initi
 
 sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_value) {
 
+    DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s)', $self->{query}->name, $selection->name, $schema_field->name);
+
     my %field_args = map { $_->name => $_->value } $selection->args->@*;
     my $resolved   = $field_resolver->resolve( $initial_value, \%field_args );
 
-    my $schema_field_type = $self->{schema}->lookup_type(
-        $self->_find_base_schema_type( $schema_field->type )
-    );
-
     if ( $selection->has_selections ) {
 
-        my $selections    = $selection->selections;
-        my $type_resolver = $self->{resolvers}->get_type( $schema_field_type->name );
+        my $selections = $selection->selections;
+
+        DEBUG && $self->__log(2, 'Executing sub-selections(%s) for query(%s).field(%s) for type.field(%s)', (join ', ' => map $_->name, $selections->@*), $self->{query}->name, $selection->name, $schema_field->name);
 
         if ( $schema_field->type->isa('Graph::QL::Schema::Type::Named') ) {
-            $resolved = $self->execute_selections(
-                $schema_field_type,
-                $selections,
-                $type_resolver,
-                $resolved,
-            );
+            $resolved = $self->_resolve_named_type( $schema_field->type, $selections, $resolved );
         }
         else {
             if ( $schema_field->type->isa('Graph::QL::Schema::Type::List') ) {
-                $resolved = [
-                    map {
-                        $self->execute_selections(
-                            $schema_field_type,
-                            $selections,
-                            $type_resolver,
-                            $_,
-                        )
-                    } $resolved->@*
-                ]
+                throw('Expected ARRAY ref from the resolver for type(%s)', $schema_field->name)
+                    unless assert_arrayref( $resolved );
+
+                $resolved = $self->_resolve_list_type( $schema_field->type, $selections, $resolved );
             }
             elsif ( $schema_field->type->isa('Graph::QL::Schema::Type::NonNull') ) {
-
+                $resolved = $self->_resolve_non_null_type( $schema_field->type, $selections, $resolved );
+            }
+            else {
+                throw('This should never happen, unable to determine type of schema.field, got `%s`', $schema_field->type);
             }
         }
     }
 
     return $resolved;
+}
+
+## ...
+
+sub _resolve_named_type ($self, $schema_type, $selections, $resolved) {
+
+    DEBUG && $self->__log(3, 'Resolving named-type(%s) for selections(%s)', $schema_type->name, (join ', ' => map $_->name, $selections->@*));
+
+    my $schema_field_type = $self->{schema}->lookup_type( $schema_type );
+    my $type_resolver     = $self->{resolvers}->get_type( $schema_field_type->name );
+
+    return $self->execute_selections(
+        $schema_field_type,
+        $selections,
+        $type_resolver,
+        $resolved,
+    );
+}
+
+sub _resolve_list_type ($self, $schema_type, $selections, $resolved) {
+
+    my $of_type = $schema_type->of_type;
+
+    DEBUG && $self->__log(3, 'Resolving list-type(%s) for selections(%s)', $of_type->name, (join ', ' => map $_->name, $selections->@*));
+
+    if ( $of_type->isa('Graph::QL::Schema::Type::Named') ) {
+        return [ map { $self->_resolve_named_type( $of_type, $selections, $_ ) } $resolved->@* ];
+    }
+    elsif ( $of_type->isa('Graph::QL::Schema::Type::List') ) {
+        return [ map { $self->_resolve_list_type( $of_type, $selections, $_ ) } $resolved->@* ];
+    }
+    elsif ( $of_type->isa('Graph::QL::Schema::Type::NonNull') ) {
+        return [ map { $self->_resolve_non_null_type( $of_type, $selections, $_ ) } $resolved->@* ];
+    }
+    else {
+        throw('This should never happen, unable to determine type of schema.field, got `%s`', $schema_type);
+    }
+}
+
+sub _resolve_non_null_type ($self, $schema_type, $selections, $resolved) {
+
+    my $of_type = $schema_type->of_type;
+
+    DEBUG && $self->__log(3, 'Resolving non-null(%s) for selections(%s)', $of_type->name, (join ', ' => map $_->name, $selections->@*));
+
+    if ( $of_type->isa('Graph::QL::Schema::Type::Named') ) {
+        return $self->_resolve_named_type( $of_type, $selections, $resolved );
+    }
+    elsif ( $of_type->isa('Graph::QL::Schema::Type::List') ) {
+        return $self->_resolve_list_type( $of_type, $selections, $resolved );
+    }
+    elsif ( $of_type->isa('Graph::QL::Schema::Type::NonNull') ) {
+        return $self->_resolve_non_null_type( $of_type, $selections, $resolved );
+    }
+    else {
+        throw('This should never happen, unable to determine type of schema.field, got `%s`', $schema_type);
+    }
 }
 
 ## ...
@@ -164,6 +224,14 @@ sub _add_error ($self, $msg, @args) {
 sub _absorb_validation_errors ($self, $msgs, $e) {
     push $self->{_errors}->@* => $msgs, map "[VALIDATION] $_", $e->get_errors;
     return;
+}
+
+## ...
+
+sub __log ($self, $depth, $msg, @args) {
+    my $indent = '  ' x $depth;
+    $msg = sprintf $msg => @args if @args;
+    warn "${indent}${msg}\n";
 }
 
 1;
