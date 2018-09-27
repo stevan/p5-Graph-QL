@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
+
 use Graph::QL::Resolvers::TypeResolver;
 use Graph::QL::Resolvers::FieldResolver;
 
@@ -40,6 +43,23 @@ sub new_from_namespace ($class, $root_namespace) {
 
 	return $class->new( types => \@types );
 }
+
+## ...
+
+sub BUILDARGS : strict( types => types );
+
+sub BUILD ($self, $) {
+	
+    throw('The `types` value must be an ARRAY ref')
+        unless assert_arrayref( $self->{types} );
+
+    foreach ( $self->{types}->@* ) {
+         throw('The types in `types` must all be of type(Graph::QL::Resolvers::TypeResolver), not `%s`', $_ )
+            unless assert_isa( $_, 'Graph::QL::Resolvers::TypeResolver');
+    }
+}
+
+## ...
 
 sub get_type ($self, $name) {
     (grep $_->name eq $name, $self->{types}->@*)[0]

@@ -5,6 +5,9 @@ use warnings;
 use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_coderef';
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
@@ -12,6 +15,25 @@ use slots (
     name => sub {},
     code => sub {},
 );
+
+## ...
+
+sub BUILDARGS : strict(
+	name => name,
+	code => code,
+);
+
+sub BUILD ($self, $) {
+	
+	throw('You must pass a defined value to `name`')
+        unless defined $self->{name};
+    
+	throw('The `code` value must be an CODE ref')
+        unless assert_coderef( $self->{code} );
+
+}
+
+## ...
 
 sub name : ro;
 
