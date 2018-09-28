@@ -62,7 +62,7 @@ sub BUILD ($self, $) {
 ## ...
 
 sub get_type ($self, $name) {
-    (grep $_->name eq $name, $self->{types}->@*)[0]
+    (grep $_->name eq $name, $self->{types}->@*)[0] // undef
 }
 
 1;

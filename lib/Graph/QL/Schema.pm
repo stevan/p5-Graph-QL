@@ -114,7 +114,7 @@ sub lookup_type ($self, $name) {
     $name = $name->name->value if assert_isa( $name, 'Graph::QL::AST::Node::NamedType' );
 
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
-    return unless defined $type_def;
+    return undef unless defined $type_def;
 
     return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
 }
@@ -133,7 +133,7 @@ sub lookup_root_type ($self, $op_kind) {
     $type = $self->_get_mutation_type     if $op_kind eq Graph::QL::Core::OperationKind->MUTATION;
     $type = $self->_get_subscription_type if $op_kind eq Graph::QL::Core::OperationKind->SUBSCRIPTION;
 
-    return unless $type;
+    return undef unless $type;
     return $self->lookup_type( $type );
 }
 

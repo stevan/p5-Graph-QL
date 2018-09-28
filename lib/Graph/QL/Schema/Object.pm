@@ -88,7 +88,7 @@ sub lookup_field ($self, $name) {
     $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Field' );
 
     my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
-    return unless defined $field_ast;
+    return undef unless defined $field_ast;
     return Graph::QL::Schema::Field->new( ast => $field_ast );
 }
 
