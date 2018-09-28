@@ -131,7 +131,11 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         $initial_value,
         \%field_args,
         $self->{context},
-        $self->{info},
+        {
+            $self->{info}->%*,
+            schema => $self->{schema},
+            query  => $self->{query},
+        },
     );
 
     # TODO
