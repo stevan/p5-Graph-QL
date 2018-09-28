@@ -49,12 +49,12 @@ sub new_from_namespace ($class, $root_namespace) {
 sub BUILDARGS : strict( types => types );
 
 sub BUILD ($self, $) {
-	
+
     throw('The `types` value must be an ARRAY ref')
         unless assert_arrayref( $self->{types} );
 
     foreach ( $self->{types}->@* ) {
-         throw('The types in `types` must all be of type(Graph::QL::Resolvers::TypeResolver), not `%s`', $_ )
+        throw('The types in `types` must all be of type(Graph::QL::Resolvers::TypeResolver), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::Resolvers::TypeResolver');
     }
 }

@@ -29,7 +29,7 @@ sub BUILD ($self, $params) {
         unless assert_arrayref( $self->{directives} );
     
     foreach ( $self->{directives}->@* ) {
-         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
+        throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
     }
     
@@ -37,7 +37,7 @@ sub BUILD ($self, $params) {
         unless assert_arrayref( $self->{operation_types} );
     
     foreach ( $self->{operation_types}->@* ) {
-         throw('The values in `operation_types` must all be of type(Graph::QL::AST::Node::OperationTypeDefinition), not `%s`', $_ )
+        throw('The values in `operation_types` must all be of type(Graph::QL::AST::Node::OperationTypeDefinition), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::AST::Node::OperationTypeDefinition');
     }
     

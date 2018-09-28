@@ -31,7 +31,7 @@ sub BUILD ($self, $params) {
         unless assert_arrayref( $self->{arguments} );
     
     foreach ( $self->{arguments}->@* ) {
-         throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::Argument), not `%s`', $_ )
+        throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::Argument), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::AST::Node::Argument');
     }
     

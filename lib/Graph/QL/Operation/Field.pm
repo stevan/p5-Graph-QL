@@ -36,24 +36,24 @@ sub BUILD ($self, $params) {
             unless defined $params->{name};
 
         if ( exists $params->{alias} ) {
-            throw('You must pass a defined value to `alias`')
+           throw('You must pass a defined value to `alias`')
                 unless defined $params->{alias};
         }
 
         if ( exists $params->{selections} ) {
 
-            throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
+           throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
                 unless assert_non_empty( $params->{selections} );
 
             foreach my $selection ( $params->{selections}->@* ) {
-                throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
+               throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
                     unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
             }
         }
 
         if ( exists $params->{args} ) {
             foreach my $arg ( $params->{args}->@* ) {
-                throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $arg)
+               throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $arg)
                     unless assert_isa( $arg, 'Graph::QL::Operation::Field::Argument' );
             }
         }

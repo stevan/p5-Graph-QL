@@ -27,12 +27,12 @@ sub BUILD ($self, $) {
 
 	throw('You must pass a defined value to `name`')
         unless defined $self->{name};
-	
+
     throw('The `fields` value must be an ARRAY ref')
         unless assert_arrayref( $self->{fields} );
 
     foreach ( $self->{fields}->@* ) {
-         throw('The fields in `fields` must all be of type(Graph::QL::Resolvers::FieldResolver), not `%s`', $_ )
+        throw('The fields in `fields` must all be of type(Graph::QL::Resolvers::FieldResolver), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::Resolvers::FieldResolver');
     }
 }

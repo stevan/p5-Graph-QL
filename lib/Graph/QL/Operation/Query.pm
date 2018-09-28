@@ -43,7 +43,7 @@ sub BUILD ($self, $params) {
             unless assert_non_empty( $params->{selections} );
 
         foreach my $selection ( $params->{selections}->@* ) {
-            throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
+           throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
                 unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
         }
 

@@ -34,7 +34,7 @@ sub BUILD ($self, $params) {
         unless assert_arrayref( $self->{arguments} );
     
     foreach ( $self->{arguments}->@* ) {
-         throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::InputValueDefinition), not `%s`', $_ )
+        throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::InputValueDefinition), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::AST::Node::InputValueDefinition');
     }
     
@@ -42,7 +42,7 @@ sub BUILD ($self, $params) {
         unless assert_arrayref( $self->{locations} );
     
     foreach ( $self->{locations}->@* ) {
-         throw('The values in `locations` must all be of type(Graph::QL::AST::Node::Name), not `%s`', $_ )
+        throw('The values in `locations` must all be of type(Graph::QL::AST::Node::Name), not `%s`', $_ )
             unless assert_isa( $_, 'Graph::QL::AST::Node::Name');
     }
     

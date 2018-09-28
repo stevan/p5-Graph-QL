@@ -173,7 +173,7 @@ sub generate_class ($name, $definition) {
                 (sprintf '    unless assert_arrayref( $self->{%s} );' => $field->{name}),
                 (''),
                 (sprintf 'foreach ( $self->{%s}->@* ) {', $field->{name}),
-                (sprintf '     throw(\'The values in `%s` must all be of type(%s), not `%%s`\', $_ )' => $field->{name}, $type ),
+                (sprintf '    throw(\'The values in `%s` must all be of type(%s), not `%%s`\', $_ )' => $field->{name}, $type ),
                 (is_blessed( $field->{type} )
                     ? (sprintf '        unless assert_%s( $_, \'%s\');' => $validator, $type)
                     : (        '        unless defined $_;')),

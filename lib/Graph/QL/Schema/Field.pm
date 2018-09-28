@@ -39,11 +39,11 @@ sub BUILD ($self, $params) {
             unless assert_does( $params->{type}, 'Graph::QL::Schema::Type' );
 
         if ( exists $params->{args} ) {
-            throw('The `args` value must be an ARRAY ref')
+           throw('The `args` value must be an ARRAY ref')
                 unless assert_arrayref( $params->{args} );
 
             foreach ( $params->{args}->@* ) {
-                 throw('The values in `args` must all be of type(Graph::QL::Schema::InputObject::InputValue), not `%s`', $_ )
+                throw('The values in `args` must all be of type(Graph::QL::Schema::InputObject::InputValue), not `%s`', $_ )
                     unless assert_isa( $_, 'Graph::QL::Schema::InputObject::InputValue');
             }
         }

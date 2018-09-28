@@ -37,16 +37,16 @@ sub BUILD ($self, $params) {
             unless assert_arrayref( $params->{fields} );
 
         foreach ( $params->{fields}->@* ) {
-             throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
+            throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
                 unless assert_isa( $_, 'Graph::QL::Schema::Field');
         }
 
         if ( exists $params->{interfaces} ) {
-            throw('The `interfaces` value must be an ARRAY ref')
+           throw('The `interfaces` value must be an ARRAY ref')
                 unless assert_arrayref( $params->{interfaces} );
 
             foreach ( $params->{interfaces}->@* ) {
-                 throw('The values in `interfaces` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
+                throw('The values in `interfaces` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
                     unless assert_isa( $_, 'Graph::QL::Schema::Type::Named');
             }
         }

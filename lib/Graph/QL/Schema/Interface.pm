@@ -35,7 +35,7 @@ sub BUILD ($self, $params) {
             unless assert_arrayref( $params->{fields} );
 
         foreach ( $params->{fields}->@* ) {
-             throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
+            throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
                 unless assert_isa( $_, 'Graph::QL::Schema::Field');
         }
 

@@ -151,7 +151,7 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         }
         else {
             if ( $schema_field->type->isa('Graph::QL::Schema::Type::List') ) {
-                throw('Expected ARRAY ref from the resolver for type(%s)', $schema_field->name)
+               throw('Expected ARRAY ref from the resolver for type(%s)', $schema_field->name)
                     unless assert_arrayref( $resolved );
 
                 $resolved = $self->_resolve_list_type( $schema_field->type, $selections, $resolved );
@@ -160,7 +160,7 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
                 $resolved = $self->_resolve_non_null_type( $schema_field->type, $selections, $resolved );
             }
             else {
-                throw('This should never happen, unable to determine type of schema.field, got `%s`', $schema_field->type);
+               throw('This should never happen, unable to determine type of schema.field, got `%s`', $schema_field->type);
             }
         }
     }
