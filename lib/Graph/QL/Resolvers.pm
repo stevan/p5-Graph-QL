@@ -11,6 +11,8 @@ use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 use Graph::QL::Resolvers::TypeResolver;
 use Graph::QL::Resolvers::FieldResolver;
 
+use constant DEBUG => $ENV{GRAPHQL_RESOLVERS_DEBUG} // 0;
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
@@ -20,11 +22,18 @@ sub new_from_namespace ($class, $root_namespace) {
 
 	$root_namespace = $root_namespace.'::' unless $root_namespace =~ /\:\:$/;
 
+    DEBUG and $class->_debug_log('ROOT NAMESPACE - %s' => $root_namespace);
+
 	my @namespaces;
 	{
 		no strict 'refs';
 		@namespaces = map s/\:\:$//r => grep /\:\:$/ => keys %{ $root_namespace };
 	}
+
+    throw('Cannot find any types within the namespace (%s), perhaps you forgot to load them', $root_namespace)
+        unless @namespaces;
+
+    DEBUG and $class->_debug_log('NAMESPACES - [ %s ]', join ', ' => @namespaces);
 
 	my @types;
 	foreach my $namespace ( @namespaces ) {
@@ -63,6 +72,14 @@ sub BUILD ($self, $) {
 
 sub get_type ($self, $name) {
     (grep $_->name eq $name, $self->{types}->@*)[0] // undef
+}
+
+## ...
+
+sub _debug_log ($self, $depth, $msg, @args) {
+    my $indent = '    ' x $depth;
+    $msg = sprintf $msg => @args if @args;
+    warn "${indent}${msg}\n";
 }
 
 1;

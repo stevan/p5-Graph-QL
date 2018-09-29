@@ -8,6 +8,8 @@ use decorators ':accessors', ':constructor';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 
+use constant DEBUG => $ENV{GRAPHQL_RESOLVERS_DEBUG} // 0;
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
@@ -42,7 +44,7 @@ sub BUILD ($self, $) {
 sub name : ro;
 
 sub get_field ($self, $name) {
-    (grep $_->name eq $name, $self->{fields}->@*)[0]
+    (grep $_->name eq $name, $self->{fields}->@*)[0] // undef
 }
 
 1;
