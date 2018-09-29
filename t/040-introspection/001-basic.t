@@ -19,6 +19,8 @@ BEGIN {
     use_ok('Graph::QL::Resolvers::TypeResolver');
     use_ok('Graph::QL::Resolvers::FieldResolver');
     use_ok('Graph::QL::Schema::TypeKind');
+
+    use_ok('Graph::QL::Introspection::Resolvers');
 }
 
 my $schema = Graph::QL::Schema->new_from_source(q[
@@ -112,78 +114,19 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
     }
 ]);
 
+my $resolvers = Graph::QL::Resolvers->new_from_namespace('Graph::QL::Introspection::Resolvers');
+
+unshift $resolvers->{types}->@* => Graph::QL::Resolvers::TypeResolver->new(
+    name   => 'Query',
+    fields => [
+        Graph::QL::Resolvers::FieldResolver->new( name => '__schema', code => sub ($, $, $, $) { $schema } )
+    ]
+);
+
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => $schema,
     query     => $query,
-    resolvers => Graph::QL::Resolvers->new(
-        types => [
-            Graph::QL::Resolvers::TypeResolver->new(
-                name   => 'Query',
-                fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => '__schema', code => sub ($, $, $, $) { $schema } )
-                ]
-            ),
-            Graph::QL::Resolvers::TypeResolver->new(
-                name   => '__Schema',
-                fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'types', code => sub ($schema, $, $, $) { $schema->all_types } )
-                ]
-            ),
-            Graph::QL::Resolvers::TypeResolver->new(
-                name   => '__Type',
-                fields => [
-                    Graph::QL::Resolvers::FieldResolver->new(
-                        name => 'kind',
-                        code => sub ($type, $, $, $) {
-                            if ( $type->isa('Graph::QL::Schema::Type::Named') ) {
-                                $type = $schema->lookup_type( $type->name );
-                            }
-
-                            Graph::QL::Schema::TypeKind->get_type_kind_for_schema_type( $type )
-                        }
-                    ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($type, $, $, $) { $type->name } ),
-                    Graph::QL::Resolvers::FieldResolver->new(
-                        name => 'fields',
-                        code => sub ($type, $args, $, $) {
-                            # ignore the includeDeprecated arg for now ...
-                            if ( $type->can('all_fields') ) {
-                                return $type->all_fields;
-                            }
-                            else {
-                                return [];
-                            }
-                        }
-                    ),
-                    Graph::QL::Resolvers::FieldResolver->new(
-                        name => 'enumValues',
-                        code => sub ($type, $args, $, $) {
-                            # ignore the includeDeprecated arg for now ...
-                            if ( $type->isa('Graph::QL::Schema::Enum') ) {
-                                return $type->values;
-                            }
-                            else {
-                                return [];
-                            }
-                        }
-                    ),
-                ]
-            ),
-            Graph::QL::Resolvers::TypeResolver->new(
-                name   => '__Field',
-                fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($field, $, $, $) { $field->name } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'type', code => sub ($field, $, $, $) { $field->type } ),
-                ]
-            ),
-            Graph::QL::Resolvers::TypeResolver->new(
-                name   => '__EnumValue',
-                fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name', code => sub ($value, $, $, $) { $value->name } ),
-                ]
-            )
-        ]
-    )
+    resolvers => $resolvers,
 );
 isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
