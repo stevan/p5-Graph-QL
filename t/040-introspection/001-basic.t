@@ -81,6 +81,8 @@ enum TypeKind {
     NON_NULL
 }
 
+# this becomes
+# extends type Query { ...
 type Query {
     __schema    : __Schema!
     __typename  : String!
