@@ -138,6 +138,8 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         },
     );
 
+    return unless $resolved;
+
     # TODO
     # we need to test the resolved value
     # and be sure it matches the type we
