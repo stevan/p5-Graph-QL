@@ -26,7 +26,7 @@ BEGIN {
 my $schema = Graph::QL::Schema->new_from_source(q[
 
 scalar String
-scalar Boolean
+scalar Bool
 
 type __Schema {
     types            : [__Type!]!
@@ -70,7 +70,7 @@ type __EnumValue {
     deprecationReason : String
 }
 
-enum TypeKind {
+enum __TypeKind {
     SCALAR
     OBJECT
     INTERFACE
