@@ -6,12 +6,23 @@ use experimental 'signatures', 'postderef';
 
 our $VERSION = '0.01';
 
-sub name ($value, $, $, $) { $value->name }
+sub name        ($value, $, $, $) { $value->name }
+sub description ($value, $, $, $) { return } # TODO
+
+sub isDeprecated      ($field, $, $, $) { return } # TODO
+sub deprecationReason ($field, $, $, $) { return } # TODO
 
 1;
 
 __END__
 
 =pod
+
+type __EnumValue {
+    name              : String!
+    description       : String
+    isDeprecated      : Bool!
+    deprecationReason : String
+}
 
 =cut

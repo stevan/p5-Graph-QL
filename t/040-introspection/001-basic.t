@@ -101,11 +101,44 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
             types {
                 kind
                 name
+                description
+                interfaces {
+                    name
+                }
+                possibleTypes {
+                    name
+                }
+                inputFields {
+                    name
+                }
                 fields(includeDeprecated : true) {
                     name
+                    args {
+                        name
+                        type {
+                            kind
+                            name
+                        }
+                    }
                     type {
                         kind
                         name
+                        ofType {
+                            kind
+                            name
+                            ofType {
+                                kind
+                                name
+                                ofType {
+                                    kind
+                                    name
+                                    ofType {
+                                        kind
+                                        name
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 enumValues(includeDeprecated : true) {
