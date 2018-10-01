@@ -192,7 +192,7 @@ sub _validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
             $query_field->name, $query_arg->name,
             $schema_arg_type->name, $query_arg_type->name,
         ), next
-            unless $schema_arg_type->name eq $query_arg_type->name;
+            unless $self->_find_base_type( $schema_arg_type )->name eq $query_arg_type->name;
     }
 
     return;
