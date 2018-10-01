@@ -48,14 +48,6 @@ sub enable_for_schema ($class, $schema, %opts) {
     );
 }
 
-sub enable_for_query ($class, $query, %opts) {
-
-    throw('The query provided must be an instance of `Graph::QL::Schema::Object`, not `%s`', $query)
-        unless assert_isa( $query, 'Graph::QL::Schema::Object' );
-
-    return _add_introspection_fields_to_query( $query )
-}
-
 sub enable_for_resolvers ($class, $resolvers, %opts) {
 
     my $query_type_name = $opts{query_type} || 'Query';
