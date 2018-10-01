@@ -34,10 +34,6 @@ subtest '... testing it all together' => sub {
 ## specify the schema and query in the type language ...
 
     my $schema_as_type_lang = q[
-scalar Int
-
-scalar String
-
 type BirthEvent {
     year : Int
     place : String
@@ -79,9 +75,6 @@ q[query findAllBobs {
 }];
 
 ## Construct the object versions ...
-
-    my $Int    = Graph::QL::Schema::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
 
     my $BirthEvent = Graph::QL::Schema::Object->new(
         name   => 'BirthEvent',
@@ -133,8 +126,6 @@ q[query findAllBobs {
     my $schema_as_object = Graph::QL::Schema->new(
         query_type => Graph::QL::Schema::Type::Named->new( name => 'Query' ),
         types => [
-            $Int,
-            $String,
             $BirthEvent,
             $DeathEvent,
             $Person,

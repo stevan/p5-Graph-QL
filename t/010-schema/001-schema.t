@@ -26,10 +26,6 @@ BEGIN {
 subtest '... testing my schema' => sub {
 
     my $expected_type_language = q[
-scalar Int
-
-scalar String
-
 type BirthEvent {
     year : Int
     place : String
@@ -56,9 +52,6 @@ schema {
     query : Query
 }
 ];
-
-    my $Int    = Graph::QL::Schema::Scalar->new( name => 'Int' );
-    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
 
     my $BirthEvent = Graph::QL::Schema::Object->new(
         name   => 'BirthEvent',
@@ -110,8 +103,6 @@ schema {
     my $schema = Graph::QL::Schema->new(
         query_type => Graph::QL::Schema::Type::Named->new( name => 'Query' ),
         types => [
-            $Int,
-            $String,
             $BirthEvent,
             $DeathEvent,
             $Person,
@@ -140,9 +131,7 @@ schema {
         ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
-        my ($int_def,
-            $string_def,
-            $birth_event_def,
+        my ($birth_event_def,
             $death_event_def,
             $person_def,
             $query_def,
@@ -150,8 +139,6 @@ schema {
 
         eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
         eq_or_diff($schema->_schema_definition->TO_JSON, $schema_def, '... got the expected AST');
-        eq_or_diff($Int->ast->TO_JSON, $int_def, '... got the expected AST');
-        eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
         eq_or_diff($BirthEvent->ast->TO_JSON, $birth_event_def, '... got the expected AST');
         eq_or_diff($DeathEvent->ast->TO_JSON, $death_event_def, '... got the expected AST');
         eq_or_diff($Person->ast->TO_JSON, $person_def, '... got the expected AST');
@@ -164,8 +151,6 @@ subtest '... testing another schema' => sub {
 
     # http://facebook.github.io/graphql/June2018/#example-e2969
     my $expected_type_language = q[
-scalar String
-
 type MyQueryRootType {
     someField : String
 }
@@ -179,8 +164,6 @@ schema {
     mutation : MyMutationRootType
 }
 ];
-
-    my $String = Graph::QL::Schema::Scalar->new( name => 'String' );
 
     my $MyQueryRootType = Graph::QL::Schema::Object->new(
         name   => 'MyQueryRootType',
@@ -209,7 +192,6 @@ schema {
         query_type    => Graph::QL::Schema::Type::Named->new( name => 'MyQueryRootType' ),
         mutation_type => Graph::QL::Schema::Type::Named->new( name => 'MyMutationRootType' ),
         types => [
-            $String,
             $MyQueryRootType,
             $MyMutationRootType,
         ]
@@ -235,11 +217,10 @@ schema {
         ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
-        my ($string_def, $my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
+        my ($my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
 
         eq_or_diff($schema->ast->TO_JSON, $expected_ast, '... got the expected ast');
         eq_or_diff($schema->_schema_definition->TO_JSON, $schema_def, '... got the expected AST');
-        eq_or_diff($String->ast->TO_JSON, $string_def, '... got the expected AST');
         eq_or_diff($MyQueryRootType->ast->TO_JSON, $my_query_root_type_def, '... got the expected AST');
         eq_or_diff($MyMutationRootType->ast->TO_JSON, $my_mutation_root_type_def, '... got the expected AST');
     };

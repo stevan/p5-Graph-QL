@@ -7,7 +7,8 @@ use experimental 'signatures', 'postderef';
 use Ref::Util ();
 
 use Graph::QL::Util::Errors 'throw';
-use Graph::QL::Util::Types;
+
+use Graph::QL::Util::Types::Scalars;
 
 our $VERSION = '0.01';
 
@@ -67,19 +68,19 @@ sub literal_to_ast_node ($literal, $type) {
         require Graph::QL::AST::Node::NullValue;
         return Graph::QL::AST::Node::NullValue->new;
     }
-    elsif ( $type->name eq Graph::QL::Util::Types->BOOLEAN ) {
+    elsif ( $type->name eq Graph::QL::Util::Types::Scalars->BOOLEAN ) {
         require Graph::QL::AST::Node::BooleanValue;
         return Graph::QL::AST::Node::BooleanValue->new( value => $literal );
     }
-    elsif ( $type->name eq Graph::QL::Util::Types->FLOAT ) {
+    elsif ( $type->name eq Graph::QL::Util::Types::Scalars->FLOAT ) {
         require Graph::QL::AST::Node::FloatValue;
         return Graph::QL::AST::Node::FloatValue->new( value => $literal );
     }
-    elsif ( $type->name eq Graph::QL::Util::Types->INT ) {
+    elsif ( $type->name eq Graph::QL::Util::Types::Scalars->INT ) {
         require Graph::QL::AST::Node::IntValue;
         return Graph::QL::AST::Node::IntValue->new( value => $literal );
     }
-    elsif ( $type->name eq Graph::QL::Util::Types->STRING ) {
+    elsif ( $type->name eq Graph::QL::Util::Types::Scalars->STRING ) {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
@@ -183,19 +184,19 @@ sub ast_type_def_to_schema_type_def ($ast_type_def) {
 
 sub ast_value_to_schema_type ($ast_value) {
     if ( $ast_value->isa('Graph::QL::AST::Node::NullValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->NULL );
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types::Scalars->NULL );
     }
     elsif ( $ast_value->isa('Graph::QL::AST::Node::BooleanValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->BOOLEAN );
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types::Scalars->BOOLEAN );
     }
     elsif ( $ast_value->isa('Graph::QL::AST::Node::FloatValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->FLOAT );
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types::Scalars->FLOAT );
     }
     elsif ( $ast_value->isa('Graph::QL::AST::Node::IntValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->INT );
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types::Scalars->INT );
     }
     elsif ( $ast_value->isa('Graph::QL::AST::Node::StringValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types->STRING );
+        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Util::Types::Scalars->STRING );
     }
     else {
         throw('Do not recognize the ast-value(%s), unable to convert to schema type', $ast_value);

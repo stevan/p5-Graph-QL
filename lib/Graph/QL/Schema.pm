@@ -28,7 +28,13 @@ use Graph::QL::Schema::Scalar;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots ( _ast => sub {} );
+use slots (
+    _ast => sub {},
+    ## ...
+    _built_in_scalar_type_defs => sub {
+        +[ Graph::QL::Util::Types::Scalars->schema_type_definitions ]
+    }
+);
 
 sub new_from_source ($class, $source) {
     require Graph::QL::Parser;
@@ -47,7 +53,7 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-       throw('The `query_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{query_type})
+        throw('The `query_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{query_type})
             unless assert_isa( $params->{query_type}, 'Graph::QL::Schema::Type::Named' );
 
         if ( exists $params->{mutation_type} ) {
@@ -60,14 +66,16 @@ sub BUILD ($self, $params) {
                 unless assert_isa( $params->{subscription_type}, 'Graph::QL::Schema::Type::Named' );
         }
 
-        # TODO:
-        # - check for `query` (and `mutation`, `subscription`) types being defined
+
+        # start with the base scalar types ...
         my @definitions;
 
         # So converting these is simple, just
         # as for the ast, ... getting them back
         # happens in the `types` method below
         foreach my $type ( $params->{types}->@* ) {
+            # TODO:
+            # - check for `query` (and `mutation`, `subscription`) types being defined
             push @definitions => $type->ast;
         }
 
@@ -93,8 +101,8 @@ sub BUILD ($self, $params) {
         $self->{_ast} = Graph::QL::AST::Node::Document->new(
             definitions => \@definitions
         );
-    }
 
+    }
 }
 
 sub ast : ro(_);
@@ -132,7 +140,13 @@ sub lookup_type ($self, $name) {
     $name = $name->name->value if assert_isa( $name, 'Graph::QL::AST::Node::NamedType' );
 
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
-    return undef unless defined $type_def;
+
+    unless ( defined $type_def ) {
+        # look up in the built-in types ...
+        ($type_def) = grep $_->name->value eq $name, $self->{_built_in_scalar_type_defs}->@*;
+        # and return undef if we still fail to find it ...
+        return undef unless defined $type_def;
+    }
 
     return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
 }
