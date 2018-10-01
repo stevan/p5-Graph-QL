@@ -103,6 +103,26 @@ sub ast : ro(_);
 
 ## ...
 
+sub get_query_type ($self) {
+    my $ast = $self->_get_query_type;
+    return unless $ast;
+    return Graph::QL::Schema::Type::Named->new( ast => $ast )
+}
+
+sub get_mutation_type ($self) {
+    my $ast = $self->_get_mutation_type;
+    return unless $ast;
+    return Graph::QL::Schema::Type::Named->new( ast => $ast )
+}
+
+sub get_subscription_type ($self) {
+    my $ast = $self->_get_subscription_type;
+    return unless $ast;
+    return Graph::QL::Schema::Type::Named->new( ast => $ast )
+}
+
+## ...
+
 sub all_types ($self) {
     return [ map Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $_ ), $self->_type_definitions->@* ]
 }
