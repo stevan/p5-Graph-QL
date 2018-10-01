@@ -43,6 +43,8 @@ sub BUILD ($self, $) {
 
 sub name : ro;
 
+sub all_fields : ro(fields);
+
 sub get_field ($self, $name) {
     (grep $_->name eq $name, $self->{fields}->@*)[0] // undef
 }

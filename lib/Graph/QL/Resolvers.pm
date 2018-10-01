@@ -70,6 +70,8 @@ sub BUILD ($self, $) {
 
 ## ...
 
+sub all_types : ro(types);
+
 sub get_type ($self, $name) {
     (grep $_->name eq $name, $self->{types}->@*)[0] // undef
 }

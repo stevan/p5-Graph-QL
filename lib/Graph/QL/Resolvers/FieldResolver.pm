@@ -38,6 +38,7 @@ sub BUILD ($self, $) {
 ## ...
 
 sub name : ro;
+sub code : ro;
 
 sub resolve ($self, $source, $args, $context, $info) {
     # source  => any source data, either it is root_value (from Context) or a decendant
