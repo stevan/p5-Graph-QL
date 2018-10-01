@@ -94,6 +94,8 @@ sub lookup_field ($self, $name) {
 
 ## ...
 
+sub has_interfaces ($self) { !! scalar $self->ast->interfaces->@* }
+
 sub interfaces ($self) {
     [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->interfaces->@* ]
 }
