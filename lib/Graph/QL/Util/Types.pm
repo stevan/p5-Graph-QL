@@ -12,7 +12,7 @@ our $VERSION = '0.01';
 
 use constant OBJECT  => 'Object';
 use constant ENUM    => 'Enum';
-use constant BOOLEAN => 'Bool';
+use constant BOOLEAN => 'Boolean';
 use constant FLOAT   => 'Float';
 use constant INT     => 'Int';
 use constant STRING  => 'String';

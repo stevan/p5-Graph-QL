@@ -21,7 +21,7 @@ __END__
 type __EnumValue {
     name              : String!
     description       : String
-    isDeprecated      : Bool!
+    isDeprecated      : Boolean!
     deprecationReason : String
 }
 

@@ -30,7 +30,7 @@ type __Field {
     description       : String
     args              : [__InputValue!]!
     type              : __Type!
-    isDeprecated      : Bool!
+    isDeprecated      : Boolean!
     deprecationReason : String
 }
 
