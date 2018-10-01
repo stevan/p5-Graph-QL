@@ -133,8 +133,10 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         $self->{context},
         {
             $self->{info}->%*,
-            schema => $self->{schema},
-            query  => $self->{query},
+            schema    => $self->{schema},
+            query     => $self->{query},
+            field     => $schema_field,
+            selection => $selection,
         },
     );
 
