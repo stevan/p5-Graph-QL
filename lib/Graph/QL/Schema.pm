@@ -32,7 +32,7 @@ use slots (
     _ast => sub {},
     ## ...
     _built_in_scalar_type_defs => sub {
-        +[ Graph::QL::Util::Types::Scalars->schema_type_definitions ]
+        +[ Graph::QL::Util::Types::ScalarType->schema_type_definitions ]
     }
 );
 

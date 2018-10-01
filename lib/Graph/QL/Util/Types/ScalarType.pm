@@ -1,4 +1,4 @@
-package Graph::QL::Util::Types::Scalars;
+package Graph::QL::Util::Types::ScalarType;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
