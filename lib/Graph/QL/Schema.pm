@@ -47,10 +47,8 @@ sub BUILD ($self, $params) {
 
     if ( not exists $params->{_ast} ) {
 
-        if ( exists $params->{query_type} ) {
-           throw('The `query_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{query_type})
-                unless assert_isa( $params->{query_type}, 'Graph::QL::Schema::Type::Named' );
-        }
+       throw('The `query_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{query_type})
+            unless assert_isa( $params->{query_type}, 'Graph::QL::Schema::Type::Named' );
 
         if ( exists $params->{mutation_type} ) {
            throw('The `mutation_type` must be an instance that does the role(Graph::QL::Schema::Type::Named), not %s', $params->{mutation_type})
