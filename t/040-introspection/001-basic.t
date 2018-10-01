@@ -20,83 +20,37 @@ BEGIN {
     use_ok('Graph::QL::Resolvers::FieldResolver');
     use_ok('Graph::QL::Schema::TypeKind');
 
-    use_ok('Graph::QL::Introspection::Resolvers');
+    use_ok('Graph::QL::Introspection');
 }
 
 my $schema = Graph::QL::Schema->new_from_source(q[
+    scalar Boolean
+    scalar String
 
-scalar String
-scalar Bool
+    type Query {
+        hello : String
+    }
 
-type __Schema {
-    types            : [__Type!]!
-    queryType        : __Type!
-    mutationType     : __Type!
-    subscriptionType : __Type!
-}
-
-type __Type {
-    kind          : __TypeKind!
-    name          : String
-    description   : String
-    interfaces    : [__Type!]
-    possibleTypes : [__Type!]
-    inputFields   : [__InputValue!]
-    ofType        : __Type
-    fields     (includeDeprecated : Boolean = false) : [__Field!]
-    enumValues (includeDeprecated : Boolean = false) : [__EnumValue!]
-}
-
-type __Field {
-    name              : String!
-    description       : String
-    args              : [__InputValue!]!
-    type              : __Type!
-    isDeprecated      : Bool!
-    deprecationReason : String
-}
-
-type __InputValue {
-    name         : String!
-    description  : String
-    type         : __Type!
-    defaultValue : String
-}
-
-type __EnumValue {
-    name              : String!
-    description       : String
-    isDeprecated      : Bool!
-    deprecationReason : String
-}
-
-enum __TypeKind {
-    SCALAR
-    OBJECT
-    INTERFACE
-    UNION
-    ENUM
-    INPUT_OBJECT
-    LIST
-    NON_NULL
-}
-
-# this becomes
-# extends type Query { ...
-type Query {
-    __schema    : __Schema!
-    __typename  : String!
-    __type (name : String!) : __Type
-}
-
-schema {
-    query : Query
-}
-
+    schema { query : Query }
 ]);
+
+my $resolvers = Graph::QL::Resolvers->new(
+    types => [
+        Graph::QL::Resolvers::TypeResolver->new(
+            name   => 'Query',
+            fields => [
+                Graph::QL::Resolvers::FieldResolver->new( name => 'hello', code => sub ($, $, $, $) { 'Hello World' } )
+            ]
+        )
+    ]
+);
 
 my $query = Graph::QL::Operation::Query->new_from_source(q[
     query TestQuery {
+        hello
+        __type( name : "Query" ) {
+            name
+        }
         __schema {
             types {
                 kind
@@ -149,19 +103,10 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
     }
 ]);
 
-my $resolvers = Graph::QL::Resolvers->new_from_namespace('Graph::QL::Introspection::Resolvers');
-
-unshift $resolvers->{types}->@* => Graph::QL::Resolvers::TypeResolver->new(
-    name   => 'Query',
-    fields => [
-        Graph::QL::Resolvers::FieldResolver->new( name => '__schema', code => sub ($, $, $, $) { $schema } )
-    ]
-);
-
 my $e = Graph::QL::Execution::ExecuteQuery->new(
-    schema    => $schema,
+    schema    => Graph::QL::Introspection->enable_for_schema( $schema ),
+    resolvers => Graph::QL::Introspection->enable_for_resolvers( $resolvers ),
     query     => $query,
-    resolvers => $resolvers,
 );
 isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
@@ -172,6 +117,6 @@ my $result = $e->execute;
 
 ok($result, '... we got a defined result');
 
-#warn Dumper $result;
+warn Dumper $result;
 
 done_testing;
