@@ -25,16 +25,12 @@ use Graph::QL::Schema::Interface;
 use Graph::QL::Schema::Object;
 use Graph::QL::Schema::Scalar;
 
+use Graph::QL::Schema::BuiltIn::Scalars;
+
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots (
-    _ast => sub {},
-    ## ...
-    _built_in_scalar_type_defs => sub {
-        +[ Graph::QL::Util::Types::ScalarType->schema_type_definitions ]
-    }
-);
+use slots ( _ast => sub {} );
 
 sub new_from_source ($class, $source) {
     require Graph::QL::Parser;
@@ -141,13 +137,12 @@ sub lookup_type ($self, $name) {
 
     my ($type_def) = grep $_->name->value eq $name, $self->_type_definitions->@*;
 
-    unless ( defined $type_def ) {
-        # look up in the built-in types ...
-        ($type_def) = grep $_->name->value eq $name, $self->{_built_in_scalar_type_defs}->@*;
-        # and return undef if we still fail to find it ...
-        return undef unless defined $type_def;
+    # look up in the built-in types ...
+    if ( (not defined $type_def) && Graph::QL::Schema::BuiltIn::Scalars->has_scalar( $name ) ) {
+        $type_def = Graph::QL::Schema::BuiltIn::Scalars->get_scalar( $name );
     }
 
+    return undef unless $type_def;
     return Graph::QL::Util::AST::ast_type_def_to_schema_type_def( $type_def );
 }
 
