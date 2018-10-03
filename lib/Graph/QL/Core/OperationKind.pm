@@ -20,7 +20,9 @@ our %OPERATION_KINDS; BEGIN {
     }
 }
 
-sub is_operation_kind ($class, $kind) { !! exists $OPERATION_KINDS{ uc $kind } }
+sub operation_kinds ($) { sort values %OPERATION_KINDS }
+
+sub is_operation_kind ($, $kind) { !! exists $OPERATION_KINDS{ uc $kind } }
 
 1;
 

@@ -4,9 +4,6 @@ use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
-use Graph::QL::AST::Node::ScalarTypeDefinition;
-use Graph::QL::AST::Node::Name;
-
 our $VERSION = '0.01';
 
 ## scalar types
@@ -26,16 +23,9 @@ our %SCALAR_TYPES; BEGIN {
     }
 }
 
-sub schema_type_definitions {
-    state $schema_type_defs = [
-        map Graph::QL::AST::Node::ScalarTypeDefinition->new(
-            name => Graph::QL::AST::Node::Name->new(
-                value => $_
-            )
-        ), sort values %SCALAR_TYPES
-    ];
-    return $schema_type_defs->@*;
-}
+sub scalar_types ($) { sort values %SCALAR_TYPES }
+
+sub is_scalar_type ($, $type) { !! exists $SCALAR_TYPES{ uc $type } }
 
 1;
 

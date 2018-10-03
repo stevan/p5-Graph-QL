@@ -25,6 +25,8 @@ our %TYPE_KINDS; BEGIN {
     }
 }
 
+sub type_kinds ($) { sort values %TYPE_KINDS }
+
 sub is_type_kind ($, $kind) { !! exists $TYPE_KINDS{ uc $kind } }
 
 sub get_type_kind_for_schema_type ($, $schema_type) {
