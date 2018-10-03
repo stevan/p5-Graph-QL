@@ -31,28 +31,28 @@ sub is_type_kind ($, $kind) { !! exists $TYPE_KINDS{ uc $kind } }
 
 sub get_type_kind_for_schema_type ($, $schema_type) {
     if ( $schema_type->isa('Graph::QL::Schema::Scalar') ) {
-        return 'SCALAR';
+        return SCALAR;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Object') ) {
-        return 'OBJECT';
+        return OBJECT;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Interface') ) {
-        return 'INTERFACE';
+        return INTERFACE;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Union') ) {
-        return 'UNION';
+        return UNION;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Enum') ) {
-        return 'ENUM';
+        return ENUM;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::InputObject') ) {
-        return 'INPUT_OBJECT';
+        return INPUT_OBJECT;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Type::List') ) {
-        return 'LIST';
+        return LIST;
     }
     elsif ( $schema_type->isa('Graph::QL::Schema::Type::NonNull') ) {
-        return 'NON_NULL';
+        return NON_NULL;
     }
 }
 
