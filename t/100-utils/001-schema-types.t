@@ -16,7 +16,7 @@ my               $NON_NULL_FOO = 'Foo!';
 my          $LIST_NON_NULL_FOO = '[Foo!]';
 my $NON_NULL_LIST_NON_NULL_FOO = '[Foo!]!';
 
-my $non_null_list_non_null_Foo = Graph::QL::Util::Types::SchemaType->parse_type_name($NON_NULL_LIST_NON_NULL_FOO);
+my $non_null_list_non_null_Foo = Graph::QL::Util::Types::SchemaType->construct_type_from_name($NON_NULL_LIST_NON_NULL_FOO);
 isa_ok($non_null_list_non_null_Foo, 'Graph::QL::Schema::Type::NonNull');
 is($non_null_list_non_null_Foo->name, $NON_NULL_LIST_NON_NULL_FOO, '... got the name we expected');
 
