@@ -7,19 +7,19 @@ use experimental 'signatures', 'postderef';
 use Graph::QL::Util::Errors 'throw';
 
 use Graph::QL::Schema::Scalar;
-use Graph::QL::Util::Types::ScalarType;
+use Graph::QL::Core::ScalarType;
 
 our $VERSION = '0.01';
 
-sub has_scalar ($, $scalar_type) { !! Graph::QL::Util::Types::ScalarType->is_scalar_type( $scalar_type ) }
+sub has_scalar ($, $scalar_type) { !! Graph::QL::Core::ScalarType->is_scalar_type( $scalar_type ) }
 sub get_scalar ($, $scalar_type) {
     state $scalars = {};
 
-    throw('Expected one of built in scalar types [%s], not `%s`', 
-        (join ', ' => Graph::QL::Util::Types::ScalarType->scalar_types),
+    throw('Expected one of built in scalar types [%s], not `%s`',
+        (join ', ' => Graph::QL::Core::ScalarType->scalar_types),
         $scalar_type
-    ) unless Graph::QL::Util::Types::ScalarType->is_scalar_type( $scalar_type );
-    
+    ) unless Graph::QL::Core::ScalarType->is_scalar_type( $scalar_type );
+
     return $scalars->{ $scalar_type } //= Graph::QL::Schema::Scalar->new( name => $scalar_type );
 }
 
