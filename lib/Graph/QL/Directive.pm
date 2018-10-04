@@ -8,6 +8,13 @@ use decorators ':accessors', ':constructor';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 
+# TO THINK ABOUT:
+# consider moving this class to
+# be `Graph::QL::Operation::Argument`
+# or `Graph::QL::Core::Argument`
+# so that we aren't reaching into
+# a namespace we don't own
+# - SL
 use Graph::QL::Operation::Field::Argument;
 
 use Graph::QL::AST::Node::Directive;
