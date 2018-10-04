@@ -7,6 +7,8 @@ use experimental 'signatures', 'postderef';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions 'assert_isa';
 
+use Graph::QL::Util::Schemas;
+
 use Graph::QL::Introspection::Resolvers;
 
 use Graph::QL::Schema::Object;
@@ -38,7 +40,7 @@ sub enable_for_schema ($class, $schema, %opts) {
         # ...
         query_type => $query_type,
         types => [
-            _get_introspection_schema_objects(),
+            _get_introspection_object_for_schema(),
             (map {
                 $_->name eq $query_type->name
                     ? _add_introspection_fields_to_query( $_ )
@@ -67,38 +69,20 @@ sub enable_for_resolvers ($class, $resolvers, %opts) {
     return Graph::QL::Resolvers->new( types => \@types );
 }
 
-## -------------------------------
-## Setup simple type library
-## -------------------------------
-## these will be initialized in a
-## BEGIN block below, but can be
-## used in the subs without worry.
-my (
-                              $String_t, # String
-                      $nonNull_String_t, # String!
-                             $Boolean_t, # Boolean
-                     $nonNull_Boolean_t, # Boolean!
-                            $__Schema_t, # __Schema
-                     $nonNull__Schema_t, # __Schema!
-                              $__Type_t, # __Type
-                       $nonNull__Type_t, # __Type!
-                  $List_nonNull__Type_t, # [__Type!]
-          $nonNull_List_nonNull__Type_t, # [__Type!]!
-                          $__TypeKind_t, # __TypeKind
-                   $nonNull__TypeKind_t, # __TypeKind!
-                        $__InputValue_t, # __InputValue
-                 $nonNull__InputValue_t, # __InputValue!
-            $List_nonNull__InputValue_t, # [__InputValue!]
-    $nonNull_List_nonNull__InputValue_t, # [__InputValue!]!
-                             $__Field_t, # __Field
-                      $nonNull__Field_t, # __Field!
-                 $List_nonNull__Field_t, # [__Field!]
-                         $__EnumValue_t, # __EnumValue
-                  $nonNull__EnumValue_t, # __EnumValue!
-             $List_nonNull__EnumValue_t, # [__EnumValue!]
-);
-
 ## ...
+
+sub _add_introspection_fields_to_query ($query) {
+
+    return Graph::QL::Schema::Object->new(
+        name   => $query->name,
+        fields => [
+            $query->all_fields->@*,
+            _get_introspection_fields_for_query()
+        ],
+        ($query->has_interfaces ? (interfaces => $query->interfaces) : ()),
+    );
+}
+
 
 sub _add_introspection_field_resolvers_to_query_resolver ( $type_resolver ) {
 
@@ -106,44 +90,61 @@ sub _add_introspection_field_resolvers_to_query_resolver ( $type_resolver ) {
         name => $type_resolver->name,
         fields => [
             $type_resolver->all_fields->@*,
-            # __schema    : __Schema!
-            Graph::QL::Resolvers::FieldResolver->new( name => '__schema',  code => sub ($, $, $, $info) { $info->{schema} } ),
-            # __type (name : String!) : __Type
-            Graph::QL::Resolvers::FieldResolver->new(
-                name => '__type',
-                code => sub ($, $args, $, $info) { $info->{schema}->lookup_type( $args->{name} ) }
-            ),
+            _get_introspection_field_resolvers_for_query()
         ]
     )
 }
 
 ## ...
 
-sub _add_introspection_fields_to_query ($query) {
+sub _get_introspection_field_resolvers_for_query () {
+
+    # __schema    : __Schema!
+    # __type (name : String!) : __Type
+
+    state $__schema = Graph::QL::Resolvers::FieldResolver->new( 
+        name => '__schema',  
+        code => sub ($, $, $, $info) { $info->{schema} } 
+    );
+
+    
+    my $__type = Graph::QL::Resolvers::FieldResolver->new(
+        name => '__type',
+        code => sub ($, $args, $, $info) { $info->{schema}->lookup_type( $args->{name} ) }
+    );
+
+    return ($__schema, $__type)
+}
+
+sub _get_introspection_fields_for_query () {
 
     ## ...
     # extend type Query {
     #     __schema    : __Schema!
     #     __type (name : String!) : __Type
     # }
-    return Graph::QL::Schema::Object->new(
-        name   => $query->name,
-        fields => [
-            $query->all_fields->@*,
-            Graph::QL::Schema::Field->new( name => '__schema', type => $nonNull__Schema_t ),
-            Graph::QL::Schema::Field->new(
-                name => '__type',
-                type => $__Type_t,
-                args => [ Graph::QL::Schema::InputObject::InputValue->new( name => 'name', type => $nonNull_String_t ) ]
-            )
-        ],
-        # carry over the interfaces if needed
-        ($query->has_interfaces ? (interfaces => $query->interfaces) : ()),
+
+    state $__schema = Graph::QL::Schema::Field->new( 
+        name => '__schema', 
+        type => Graph::QL::Util::Schemas::construct_type_from_name('__Schema!') 
     );
+    
+    state $__type = Graph::QL::Schema::Field->new(
+        name => '__type',
+        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type'),
+        args => [ 
+            Graph::QL::Schema::InputObject::InputValue->new( 
+                name => 'name', 
+                type => Graph::QL::Util::Schemas::construct_type_from_name('String!') 
+            ) 
+        ]
+    );
+
+    return ($__schema, $__type);
 }
 
 
-sub _get_introspection_schema_objects () {
+sub _get_introspection_object_for_schema () {
     ## ...
     # type __Schema {
     #     types            : [__Type!]!
@@ -154,10 +155,10 @@ sub _get_introspection_schema_objects () {
     state $__Schema = Graph::QL::Schema::Object->new(
         name => '__Schema',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'types',            type => $nonNull_List_nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'queryType',        type => $nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'mutationType',     type => $nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'subscriptionType', type => $nonNull__Type_t ),
+            Graph::QL::Schema::Field->new( name => 'types',            type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]!') ),
+            Graph::QL::Schema::Field->new( name => 'queryType',        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
+            Graph::QL::Schema::Field->new( name => 'mutationType',     type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
+            Graph::QL::Schema::Field->new( name => 'subscriptionType', type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
         ]
     );
 
@@ -177,22 +178,34 @@ sub _get_introspection_schema_objects () {
     state $__Type = Graph::QL::Schema::Object->new(
         name => '__Type',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'kind',          type => $nonNull__TypeKind_t ),
-            Graph::QL::Schema::Field->new( name => 'name',          type => $String_t ),
-            Graph::QL::Schema::Field->new( name => 'description',   type => $String_t ),
-            Graph::QL::Schema::Field->new( name => 'interfaces',    type => $List_nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'possibleTypes', type => $List_nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'inputFields',   type => $List_nonNull__InputValue_t ),
-            Graph::QL::Schema::Field->new( name => 'ofType',        type => $__Type_t ),
+            Graph::QL::Schema::Field->new( name => 'kind',          type => Graph::QL::Util::Schemas::construct_type_from_name('__TypeKind!') ),
+            Graph::QL::Schema::Field->new( name => 'name',          type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'description',   type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'interfaces',    type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
+            Graph::QL::Schema::Field->new( name => 'possibleTypes', type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
+            Graph::QL::Schema::Field->new( name => 'inputFields',   type => Graph::QL::Util::Schemas::construct_type_from_name('[__InputValue!]') ),
+            Graph::QL::Schema::Field->new( name => 'ofType',        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type') ),
             Graph::QL::Schema::Field->new(
                 name => 'fields',
-                type => $List_nonNull__Field_t,
-             args => [ Graph::QL::Schema::InputObject::InputValue->new( name => 'includeDeprecated', type => $Boolean_t, default_value => \0 ) ],
+                type => Graph::QL::Util::Schemas::construct_type_from_name('[__Field!]'),
+                args => [ 
+                    Graph::QL::Schema::InputObject::InputValue->new( 
+                        name => 'includeDeprecated', 
+                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'), 
+                        default_value => \0 
+                    ) 
+                ],
             ),
             Graph::QL::Schema::Field->new(
                 name => 'enumValues',
-                type => $List_nonNull__EnumValue_t,
-             args => [ Graph::QL::Schema::InputObject::InputValue->new( name => 'includeDeprecated', type => $Boolean_t, default_value => \0 ) ],
+                type => Graph::QL::Util::Schemas::construct_type_from_name('[__EnumValue!]'),
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new( 
+                        name => 'includeDeprecated', 
+                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'), 
+                        default_value => \0 
+                    ) 
+                ],
             ),
         ]
     );
@@ -210,12 +223,12 @@ sub _get_introspection_schema_objects () {
     state $__Field = Graph::QL::Schema::Object->new(
         name => '__Field',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'name',              type => $nonNull_String_t ),
-            Graph::QL::Schema::Field->new( name => 'description',       type => $String_t ),
-            Graph::QL::Schema::Field->new( name => 'args',              type => $nonNull_List_nonNull__InputValue_t ),
-            Graph::QL::Schema::Field->new( name => 'type',              type => $nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'isDeprecated',      type => $nonNull_Boolean_t ),
-            Graph::QL::Schema::Field->new( name => 'deprecationReason', type => $String_t ),
+            Graph::QL::Schema::Field->new( name => 'name',              type => Graph::QL::Util::Schemas::construct_type_from_name('String!') ),
+            Graph::QL::Schema::Field->new( name => 'description',       type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'args',              type => Graph::QL::Util::Schemas::construct_type_from_name('[__InputValue!]!') ),
+            Graph::QL::Schema::Field->new( name => 'type',              type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
+            Graph::QL::Schema::Field->new( name => 'isDeprecated',      type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean!') ),
+            Graph::QL::Schema::Field->new( name => 'deprecationReason', type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
         ]
     );
 
@@ -230,10 +243,10 @@ sub _get_introspection_schema_objects () {
     state $__InputValue = Graph::QL::Schema::Object->new(
         name => '__InputValue',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'name',         type => $nonNull_String_t ),
-            Graph::QL::Schema::Field->new( name => 'description',  type => $String_t ),
-            Graph::QL::Schema::Field->new( name => 'type',         type => $nonNull__Type_t ),
-            Graph::QL::Schema::Field->new( name => 'defaultValue', type => $String_t ),
+            Graph::QL::Schema::Field->new( name => 'name',         type => Graph::QL::Util::Schemas::construct_type_from_name('String!') ),
+            Graph::QL::Schema::Field->new( name => 'description',  type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'type',         type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
+            Graph::QL::Schema::Field->new( name => 'defaultValue', type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
         ]
     );
 
@@ -248,10 +261,10 @@ sub _get_introspection_schema_objects () {
     state $__EnumValue = Graph::QL::Schema::Object->new(
         name => '__EnumValue',
         fields => [
-            Graph::QL::Schema::Field->new( name => 'name',              type => $nonNull_String_t ),
-            Graph::QL::Schema::Field->new( name => 'description',       type => $String_t ),
-            Graph::QL::Schema::Field->new( name => 'isDeprecated',      type => $nonNull_Boolean_t ),
-            Graph::QL::Schema::Field->new( name => 'deprecationReason', type => $String_t ),
+            Graph::QL::Schema::Field->new( name => 'name',              type => Graph::QL::Util::Schemas::construct_type_from_name('String!') ),
+            Graph::QL::Schema::Field->new( name => 'description',       type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'isDeprecated',      type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean!') ),
+            Graph::QL::Schema::Field->new( name => 'deprecationReason', type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
         ]
     );
 
@@ -288,44 +301,6 @@ sub _get_introspection_schema_objects () {
         $__EnumValue,
         $__TypeKind
     );
-}
-
-
-## -------------------------------
-## Initialize the type library
-## -------------------------------
-## We are just initializing these
-## objects here, see above
-BEGIN {
-## ...
-                              $String_t = Graph::QL::Schema::Type::Named->new( name => 'String' );
-                      $nonNull_String_t = Graph::QL::Schema::Type::NonNull->new( of_type => $String_t );
-                             $Boolean_t = Graph::QL::Schema::Type::Named->new( name => 'Boolean' );
-                     $nonNull_Boolean_t = Graph::QL::Schema::Type::NonNull->new( of_type => $Boolean_t );
-## ...
-                            $__Schema_t = Graph::QL::Schema::Type::Named->new( name => '__Schema' );
-                     $nonNull__Schema_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__Schema_t );
-## ...
-                              $__Type_t = Graph::QL::Schema::Type::Named->new( name => '__Type' );
-                       $nonNull__Type_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__Type_t );
-                  $List_nonNull__Type_t = Graph::QL::Schema::Type::List->new( of_type => $nonNull__Type_t );
-          $nonNull_List_nonNull__Type_t = Graph::QL::Schema::Type::NonNull->new( of_type => $List_nonNull__Type_t );
-## ...
-                          $__TypeKind_t = Graph::QL::Schema::Type::Named->new( name => '__TypeKind' );
-                   $nonNull__TypeKind_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__TypeKind_t );
-## ...
-                        $__InputValue_t = Graph::QL::Schema::Type::Named->new( name => '__InputValue' );
-                 $nonNull__InputValue_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__InputValue_t );
-            $List_nonNull__InputValue_t = Graph::QL::Schema::Type::List->new( of_type => $nonNull__InputValue_t );
-    $nonNull_List_nonNull__InputValue_t = Graph::QL::Schema::Type::NonNull->new( of_type => $List_nonNull__InputValue_t );
-## ...
-                             $__Field_t = Graph::QL::Schema::Type::Named->new( name => '__Field' );
-                      $nonNull__Field_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__Field_t );
-                 $List_nonNull__Field_t = Graph::QL::Schema::Type::List->new( of_type => $nonNull__Field_t );
-## ...
-                         $__EnumValue_t = Graph::QL::Schema::Type::Named->new( name => '__EnumValue' );
-                  $nonNull__EnumValue_t = Graph::QL::Schema::Type::NonNull->new( of_type => $__EnumValue_t );
-             $List_nonNull__EnumValue_t = Graph::QL::Schema::Type::List->new( of_type => $nonNull__EnumValue_t );
 }
 
 1;
