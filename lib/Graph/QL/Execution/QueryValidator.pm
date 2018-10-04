@@ -232,7 +232,7 @@ sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0
                 'The `query.field(%s)` has selections, but the `schema.type(%s)` is not an object type, it is `%s`',
                 $query_field->name,
                 $schema_field_type->name,
-                $schema_object->name
+                ($schema_object // 'undef')
             );
         }
         # else, ... no selections to find
