@@ -20,17 +20,19 @@ our $VERSION = '0.01';
 use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Core::Field';
 use slots (
-    _ast  => sub {},
-    _name => sub {},
-    _type => sub {},
-    _args => sub {},
+    _ast        => sub {},
+    _name       => sub {},
+    _type       => sub {},
+    _args       => sub {},
+    _directives => sub {},
 );
 
 sub BUILDARGS : strict(
-    ast?  => _ast,
-    name? => _name,
-    type? => _type,
-    args? => _args,
+    ast?        => _ast,
+    name?       => _name,
+    type?       => _type,
+    args?       => _args,
+    directives? => _directives,
 );
 
 sub BUILD ($self, $params) {
@@ -46,6 +48,12 @@ sub BUILD ($self, $params) {
                 map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->{_ast}->arguments->@*
             ];
         }
+
+        if ( $self->{_ast}->directives->@* ) {
+            $self->{_directives} = [
+                map Graph::QL::Directive->new( ast => $_ ), $self->{_ast}->directives->@*
+            ];
+        }
     }
     else {
 
@@ -56,7 +64,7 @@ sub BUILD ($self, $params) {
             unless assert_does( $self->{_type}, 'Graph::QL::Schema::Type' );
 
         if ( exists $params->{_args} ) {
-           throw('The `args` value must be an ARRAY ref')
+            throw('The `args` value must be an ARRAY ref')
                 unless assert_arrayref( $self->{_args} );
 
             foreach ( $self->{_args}->@* ) {
@@ -65,11 +73,24 @@ sub BUILD ($self, $params) {
             }
         }
 
+        if ( exists $params->{_directives} ) {
+            throw('The `directives` value must be an ARRAY ref')
+                unless assert_arrayref( $self->{_directives} );
+
+            foreach ( $self->{_directives}->@* ) {
+                throw('The values in `directives` must all be of type(Graph::QL::Directive), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Directive');
+            }
+        }
+
         $self->{_ast} = Graph::QL::AST::Node::FieldDefinition->new(
             name      => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
             type      => $self->{_type}->ast,
             (exists $params->{_args}
                 ? (arguments => [ map $_->ast, $self->{_args}->@* ])
+                : ()),
+            (exists $params->{_directives}
+                ? (directives => [ map $_->ast, $self->{_directives}->@* ])
                 : ()),
         );
     }
@@ -83,18 +104,27 @@ sub args     : ro(_);
 sub has_args ($self) { $self->{_args} && scalar $self->{_args}->@* }
 sub arity    ($self) {                   scalar $self->{_args}->@* }
 
+sub has_directives : predicate(_);
+sub directives     : ro(_);
+
 ## ...
 
 sub to_type_language ($self) {
-    # TODO:
-    # handle the `description`
+    my $out;
     if ( $self->has_args ) {
-        return $self->name.'('.(join ', ' => map $_->to_type_language, $self->args->@*).') : '.$self->type->name;
+        $out = $self->name.'('.(join ', ' => map $_->to_type_language, $self->args->@*).') : '.$self->type->name;
     }
     else {
-        return $self->name.' : '.$self->type->name;
+        $out = $self->name.' : '.$self->type->name;
     }
+
+    if ($self->has_directives) {
+        $out .= ' '.(join ' ' => map $_->to_type_language, $self->directives->@*);
+    }
+
+    return $out;
 }
+
 
 1;
 

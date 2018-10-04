@@ -22,6 +22,7 @@ use slots (
     _name       => sub {},
     _fields     => sub {},
     _interfaces => sub {},
+    _directives => sub {},
 );
 
 sub BUILDARGS : strict(
@@ -29,6 +30,7 @@ sub BUILDARGS : strict(
     name?        => _name,
     fields?      => _fields,
     interfaces?  => _interfaces,
+    directives?  => _directives,
 );
 
 sub BUILD ($self, $params) {
@@ -43,6 +45,11 @@ sub BUILD ($self, $params) {
         if ( $self->{_ast}->interfaces->@* ) {
             $self->{_interfaces} = [
                 map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->{_ast}->interfaces->@*
+            ];
+        }
+        if ( $self->{_ast}->directives->@* ) {
+            $self->{_directives} = [
+                map Graph::QL::Directive->new( ast => $_ ), $self->{_ast}->directives->@*
             ];
         }
     }
@@ -60,7 +67,7 @@ sub BUILD ($self, $params) {
         }
 
         if ( exists $params->{_interfaces} ) {
-           throw('The `interfaces` value must be an ARRAY ref')
+            throw('The `interfaces` value must be an ARRAY ref')
                 unless assert_arrayref( $self->{_interfaces} );
 
             foreach ( $self->{_interfaces}->@* ) {
@@ -69,11 +76,24 @@ sub BUILD ($self, $params) {
             }
         }
 
+        if ( exists $params->{_directives} ) {
+            throw('The `directives` value must be an ARRAY ref')
+                unless assert_arrayref( $self->{_directives} );
+
+            foreach ( $self->{_directives}->@* ) {
+                throw('The values in `directives` must all be of type(Graph::QL::Directive), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Directive');
+            }
+        }
+
         $self->{_ast} = Graph::QL::AST::Node::ObjectTypeDefinition->new(
             name       => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
             fields     => [ map $_->ast, $self->{_fields}->@* ],
             (exists $params->{_interfaces}
                 ? (interfaces => [ map $_->ast, $self->{_interfaces}->@* ])
+                : ()),
+            (exists $params->{_directives}
+                ? (directives => [ map $_->ast, $self->{_directives}->@* ])
                 : ()),
         );
     }
@@ -112,14 +132,23 @@ sub lookup_field ($self, $name) {
 sub has_interfaces : predicate(_);
 sub interfaces     : ro(_);
 
+sub has_directives : predicate(_);
+sub directives     : ro(_);
+
 ## ...
 
 sub to_type_language ($self) {
+    my $directives = '';
+    if ( $self->has_directives ) {
+        $directives = ' '.(join ' ' => map $_->to_type_language, $self->directives->@*);
+    }
+
     my $interfaces = '';
     if ( $self->has_interfaces ) {
         $interfaces = ' implements '.(join ' & ' => map $_->name, $self->interfaces->@*);
     }
-    return 'type '.$self->name.$interfaces.' {'."\n    ".
+
+    return 'type '.$self->name.$directives.$interfaces.' {'."\n    ".
         (join "\n    " => map $_->to_type_language, $self->all_fields->@*)."\n".
     '}';
 }

@@ -6,7 +6,7 @@ use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
 use Graph::QL::Util::Errors     'throw';
-use Graph::QL::Util::Assertions 'assert_does', 'assert_isa';
+use Graph::QL::Util::Assertions 'assert_does', 'assert_isa', 'assert_arrayref';
 
 use Graph::QL::Util::AST;
 use Graph::QL::AST::Node::InputValueDefinition;
@@ -15,9 +15,10 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    _ast  => sub {},
-    _name => sub {},
-    _type => sub {},
+    _ast        => sub {},
+    _name       => sub {},
+    _type       => sub {},
+    _directives => sub {},
 );
 
 sub BUILDARGS : strict(
@@ -25,6 +26,8 @@ sub BUILDARGS : strict(
     name?          => _name,
     type?          => _type,
     default_value? => _default_value,
+    directives?    => _directives,
+
 );
 
 sub BUILD ($self, $params) {
@@ -36,6 +39,12 @@ sub BUILD ($self, $params) {
 
         $self->{_name} = $self->{_ast}->name->value;
         $self->{_type} = Graph::QL::Util::AST::ast_type_to_schema_type( $self->{_ast}->type );
+
+        if ( $self->{_ast}->directives->@* ) {
+            $self->{_directives} = [
+                map Graph::QL::Directive->new( ast => $_ ), $self->{_ast}->directives->@*
+            ];
+        }
     }
     else {
 
@@ -44,6 +53,16 @@ sub BUILD ($self, $params) {
 
         throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $self->{_type})
             unless assert_does( $self->{_type}, 'Graph::QL::Schema::Type' );
+
+        if ( exists $params->{_directives} ) {
+            throw('The `directives` value must be an ARRAY ref')
+                unless assert_arrayref( $self->{_directives} );
+
+            foreach ( $self->{_directives}->@* ) {
+                throw('The values in `directives` must all be of type(Graph::QL::Directive), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Directive');
+            }
+        }
 
         # NOTE:
         # no need to test default_value,
@@ -56,7 +75,10 @@ sub BUILD ($self, $params) {
             type          => $self->{_type}->ast,
             (exists $params->{_default_value}
                 ? (default_value => Graph::QL::Util::AST::literal_to_ast_node( $params->{_default_value}, $self->{_type} ))
-                : ())
+                : ()),
+            (exists $params->{_directives}
+                ? (directives => [ map $_->ast, $self->{_directives}->@* ])
+                : ()),
         );
     }
 }
@@ -73,6 +95,9 @@ sub default_value ($self) {
     return;
 }
 
+sub has_directives : predicate(_);
+sub directives     : ro(_);
+
 ## ...
 
 sub to_type_language ($self) {
@@ -81,6 +106,9 @@ sub to_type_language ($self) {
           .$self->type->name
           .($self->has_default_value
                 ? (' = '.Graph::QL::Util::AST::ast_node_to_type_language( $self->ast->default_value ))
+                : '')
+          .($self->has_directives
+                ? (' '.(join ' ' => map $_->to_type_language, $self->directives->@*))
                 : '');
 }
 
