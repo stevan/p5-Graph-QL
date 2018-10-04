@@ -78,14 +78,10 @@ sub BUILD ($self, $params) {
 sub ast  : ro(_);
 sub name : ro(_);
 sub type : ro(_);
-sub args : ro(_);
 
-sub has_args : predicate(_);
-
-sub arity ($self) {
-    return 0 unless $self->has_args;
-    scalar scalar $self->args->@*
-}
+sub args     : ro(_);
+sub has_args ($self) { $self->{_args} && scalar $self->{_args}->@* }
+sub arity    ($self) {                   scalar $self->{_args}->@* }
 
 ## ...
 

@@ -18,78 +18,98 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Core::Field';
-use slots ( _ast => sub {} );
+use slots ( 
+    _ast        => sub {},
+    _name       => sub {},
+    _alias      => sub {},
+    _args       => sub {},
+    _selections => sub {},
+);
 
 sub BUILDARGS : strict(
     ast?        => _ast,
-    name?       => name,
-    alias?      => alias,
-    args?       => args,
-    selections? => selections
+    name?       => _name,
+    alias?      => _alias,
+    args?       => _args,
+    selections? => _selections
 );
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::Field`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::Field' );
 
-        throw('You must pass a defined value to `name`')
-            unless defined $params->{name};
+        $self->{_name} = $self->{_ast}->name->value;
 
-        if ( exists $params->{alias} ) {
-           throw('You must pass a defined value to `alias`')
-                unless defined $params->{alias};
+        if ( my $alias = $self->ast->alias ) {
+            $self->{_alias} = $alias->value;
         }
 
-        if ( exists $params->{selections} ) {
+        $self->{_args} = [ 
+            map Graph::QL::Operation::Field::Argument->new( ast => $_ ), $self->{_ast}->arguments->@* 
+        ];
 
-           throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
-                unless assert_non_empty( $params->{selections} );
+        if ( $self->{_ast}->selection_set ) {
+            $self->{_selections} = [ 
+                map Graph::QL::Operation::Field->new( ast => $_ ), $self->{_ast}->selection_set->selections->@* 
+            ];
+        }
 
-            foreach my $selection ( $params->{selections}->@* ) {
-               throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
-                    unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
+    }
+    else {
+
+        throw('You must pass a defined value to `name`')
+            unless defined $self->{_name};
+
+        if ( exists $params->{_alias} ) {
+           throw('You must pass a defined value to `alias`')
+                unless defined $self->{_alias};
+        }
+
+        if ( exists $params->{_selections} ) {
+
+           throw('There must be at least one `selection`, not `%s`', scalar $self->{_selections}->@* )
+                unless assert_non_empty( $self->{_selections} );
+
+            foreach ( $self->{_selections}->@* ) {
+               throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $_)
+                    unless assert_isa( $_, 'Graph::QL::Operation::Field' );
             }
         }
 
-        if ( exists $params->{args} ) {
-            foreach my $arg ( $params->{args}->@* ) {
-               throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $arg)
-                    unless assert_isa( $arg, 'Graph::QL::Operation::Field::Argument' );
+        if ( exists $params->{_args} ) {
+            foreach ( $self->{_args}->@* ) {
+               throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $_)
+                    unless assert_isa( $_, 'Graph::QL::Operation::Field::Argument' );
             }
         }
 
         $self->{_ast} = Graph::QL::AST::Node::Field->new(
-            name => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            ($params->{alias} ? (alias => Graph::QL::AST::Node::Name->new( value => $params->{alias} )) : ()),
-            ($params->{selections}
-                ? (selection_set => Graph::QL::AST::Node::SelectionSet->new( selections => [ map $_->ast, $params->{selections}->@* ] ))
+            name => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
+            ($params->{_alias} ? (alias => Graph::QL::AST::Node::Name->new( value => $self->{_alias} )) : ()),
+            ($params->{_selections}
+                ? (selection_set => Graph::QL::AST::Node::SelectionSet->new( selections => [ map $_->ast, $self->{_selections}->@* ] ))
                 : ()),
-            ($params->{args}
-                ? (arguments => [ map $_->ast, $params->{args}->@* ])
+            ($params->{_args}
+                ? (arguments => [ map $_->ast, $self->{_args}->@* ])
                 : ()),
         );
     }
 }
 
-sub ast : ro(_);
+sub ast  : ro(_);
+sub name : ro(_);
 
-sub name ($self) { $self->ast->name->value }
+sub has_alias : predicate(_);
+sub alias     : ro(_);
 
-sub has_alias ($self) { !! $self->ast->alias        }
-sub alias     ($self) {    $self->ast->alias->value }
+sub args     : ro(_);
+sub has_args ($self) { $self->{_args} && scalar $self->{_args}->@* }
+sub arity    ($self) {                   scalar $self->{_args}->@* }
 
-sub arity ($self) { scalar $self->ast->arguments->@* }
-
-sub has_args ($self) { !! scalar $self->ast->arguments->@* }
-sub args ($self) {
-    [ map Graph::QL::Operation::Field::Argument->new( ast => $_ ), $self->ast->arguments->@* ]
-}
-
-sub has_selections ($self) { !! $self->ast->selection_set && scalar $self->ast->selection_set->selections->@* }
-sub selections ($self) {
-    return [] unless $self->has_selections;
-    return [ map Graph::QL::Operation::Field->new( ast => $_ ), $self->ast->selection_set->selections->@* ];
-}
+sub selections : ro(_);
+sub has_selections ($self) { $self->{_selections} && scalar $self->{_selections}->@* }
 
 ## ...
 

@@ -21,7 +21,11 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Operation';
-use slots ( _ast => sub {} );
+use slots ( 
+    _ast        => sub {},
+    _name       => sub {},
+    _selections => sub {},
+);
 
 sub new_from_source ($class, $source) {
     require Graph::QL::Parser;
@@ -30,21 +34,34 @@ sub new_from_source ($class, $source) {
 
 sub BUILDARGS : strict(
     ast?        => _ast,
-    name?       => name,
-    selections? => selections,
+    name?       => _name,
+    selections? => _selections,
 );
 #   fragments?  => fragments, # TODO
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::Document`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::Document' );
 
-        throw('There must be at least one `selection`, not `%s`', scalar $params->{selections}->@* )
-            unless assert_non_empty( $params->{selections} );
+        if ( $self->_operation_definition->name ) {
+            $self->{_name} = $self->_operation_definition->name->value;
+        }
 
-        foreach my $selection ( $params->{selections}->@* ) {
-           throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $selection)
-                unless assert_isa( $selection, 'Graph::QL::Operation::Field' );
+        $self->{_selections} = [ 
+            map Graph::QL::Operation::Field->new( ast => $_ ), 
+                $self->_operation_definition->selection_set->selections->@* 
+        ];
+    }
+    else {
+
+        throw('There must be at least one `selection`, not `%s`', scalar $self->{_selections}->@* )
+            unless assert_non_empty( $self->{_selections} );
+
+        foreach ( $self->{_selections}->@* ) {
+           throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $_)
+                unless assert_isa( $_, 'Graph::QL::Operation::Field' );
         }
 
         # TODO:
@@ -56,10 +73,10 @@ sub BUILD ($self, $params) {
                 Graph::QL::AST::Node::OperationDefinition->new(
                     operation     => Graph::QL::Core::OperationKind->QUERY,
                     selection_set => Graph::QL::AST::Node::SelectionSet->new(
-                        selections => [ map $_->ast, $params->{selections}->@* ]
+                        selections => [ map $_->ast, $self->{_selections}->@* ]
                     ),
-                    ($params->{name}
-                        ? (name => Graph::QL::AST::Node::Name->new( value => $params->{name} ))
+                    ($params->{_name}
+                        ? (name => Graph::QL::AST::Node::Name->new( value => $self->{_name} ))
                         : ()),
                 ),
                 # TODO;
@@ -69,16 +86,12 @@ sub BUILD ($self, $params) {
     }
 }
 
-sub ast : ro(_);
+sub ast        : ro(_);
+sub has_name   : predicate(_);
+sub name       : ro(_);
+sub selections : ro(_);
 
 sub operation_kind ($self) { $self->_operation_definition->operation }
-
-sub has_name ($self) { !! $self->_operation_definition->name }
-sub name     ($self) { $self->_operation_definition->name->value }
-
-sub selections ($self) {
-    [ map Graph::QL::Operation::Field->new( ast => $_ ), $self->_operation_definition->selection_set->selections->@* ]
-}
 
 ## ...
 

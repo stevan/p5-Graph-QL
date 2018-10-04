@@ -126,7 +126,7 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
 
     DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s)', $self->{query}->name, $selection->name, $schema_field->name);
 
-    my %field_args = map { $_->name => $_->value } $selection->args->@*;
+    my %field_args = $selection->has_args ? (map { $_->name => $_->value } $selection->args->@*) : ();
     my $resolved   = $field_resolver->resolve(
         $initial_value,
         \%field_args,
