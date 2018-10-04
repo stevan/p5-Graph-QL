@@ -9,13 +9,13 @@ our $VERSION = '0.01';
 ## scalar types
 
 our %SCALAR_TYPES; BEGIN {
-    %SCALAR_TYPES = (
-        BOOLEAN => 'Boolean',
-        FLOAT   => 'Float',
-        INT     => 'Int',
-        STRING  => 'String',
-        NULL    => 'Null',
-    );
+    %SCALAR_TYPES = map { uc($_) => $_ } qw[
+        Boolean
+        Float
+        Int
+        String
+        ID
+    ];
 
     use constant ();
     foreach my $type ( keys %SCALAR_TYPES ) {

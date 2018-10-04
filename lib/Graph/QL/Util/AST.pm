@@ -84,11 +84,6 @@ sub literal_to_ast_node ($literal, $type) {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
-    # TODO:
-    # we are going to want to handle some other types:
-    # - INPUT_OBJECT
-    # - LIST
-    # - Enum Value
     else {
         throw('Do not recognize the expected type(%s), unable to convert to ast-node', $type->name);
     }
@@ -184,7 +179,7 @@ sub ast_type_def_to_schema_type_def ($ast_type_def) {
 
 sub ast_value_to_schema_type ($ast_value) {
     if ( $ast_value->isa('Graph::QL::AST::Node::NullValue') ) {
-        return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Core::ScalarType->NULL );
+        return Graph::QL::Schema::Type::Named->new( name => 'Null' );
     }
     elsif ( $ast_value->isa('Graph::QL::AST::Node::BooleanValue') ) {
         return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Core::ScalarType->BOOLEAN );

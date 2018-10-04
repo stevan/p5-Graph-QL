@@ -8,11 +8,11 @@ our $VERSION = '0.01';
 
 # create the Enum so we can introspect it ...
 our %OPERATION_KINDS; BEGIN {
-    %OPERATION_KINDS = (
-        QUERY        => 'query',
-        MUTATION     => 'mutation',
-        SUBSCRIPTION => 'subscription',
-    );
+    %OPERATION_KINDS = map { $_ => lc($_) } qw[
+        QUERY
+        MUTATION
+        SUBSCRIPTION
+    ];
 
     use constant ();
     foreach my $kind ( keys %OPERATION_KINDS ) {
