@@ -17,43 +17,51 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots ( _ast => sub {} );
+use slots (
+    _ast   => sub {},
+    _name  => sub {},
+    _types => sub {},
+);
 
 sub BUILDARGS : strict(
     ast?   => _ast,
-    name?  => name,
-    types? => types,
+    name?  => _name,
+    types? => _types,
 );
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::UnionTypeDefinition`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::UnionTypeDefinition' );
+
+        # inflate the objects if we only got an AST ...
+        $self->{_types} = [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->{_ast}->types->@* ];
+    }
+    else {
 
         throw('You must pass a defined value to `name`')
-            unless defined $params->{name};
+            unless defined $self->{_name};
 
         throw('The `types` value must be an ARRAY ref')
-            unless assert_arrayref( $params->{types} );
+            unless assert_arrayref( $self->{_types} );
 
-        foreach ( $params->{types}->@* ) {
+        foreach ( $self->{_types}->@* ) {
             throw('The values in `types` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
                 unless assert_isa( $_, 'Graph::QL::Schema::Type::Named');
         }
 
         $self->{_ast} = Graph::QL::AST::Node::UnionTypeDefinition->new(
-            name  => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            types => [ map $_->ast, $params->{types}->@* ]
+            name  => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
+            types => [ map $_->ast, $self->{_types}->@* ]
         );
     }
 }
 
-sub ast : ro(_);
-
-sub name  ($self) { $self->ast->name->value }
-
-sub all_types ($self) {
-    [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->types->@* ]
-}
+sub ast       : ro(_);
+sub name      : ro(_);
+sub all_types : ro(_types);
 
 ## ...
 

@@ -16,42 +16,51 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots ( _ast => sub {} );
+use slots (
+    _ast    => sub {},
+    _name   => sub {},
+    _values => sub {},
+);
 
 sub BUILDARGS : strict(
     ast?    => _ast,
-    name?   => name,
-    values? => values,
+    name?   => _name,
+    values? => _values,
 );
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::EnumTypeDefinition`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::EnumTypeDefinition' );
+
+        $self->{_name}   = $self->{_ast}->name->value;
+        $self->{_values} = [ map Graph::QL::Schema::Enum::EnumValue->new( ast => $_ ), $self->{_ast}->values->@* ];
+    }
+    else {
 
         throw('You must pass a defined value to `name`')
-            unless defined $params->{name};
+            unless defined $self->{_name};
 
         throw('The `values` value must be an ARRAY ref')
-            unless assert_arrayref( $params->{values} );
+            unless assert_arrayref( $self->{_values} );
 
-        foreach ( $params->{values}->@* ) {
+        foreach ( $self->{_values}->@* ) {
             throw('The values in `values` must all be of type(Graph::QL::Schema::Enum::EnumValue), not `%s`', $_ )
                 unless assert_isa( $_, 'Graph::QL::Schema::Enum::EnumValue');
         }
 
         $self->{_ast} = Graph::QL::AST::Node::EnumTypeDefinition->new(
-            name   => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            values => [ map $_->ast, $params->{values}->@* ]
+            name   => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
+            values => [ map $_->ast, $self->{_values}->@* ]
         );
     }
 }
 
-sub ast : ro(_);
-
-sub name   ($self) { $self->ast->name->value }
-sub values ($self) {
-    [ map Graph::QL::Schema::Enum::EnumValue->new( ast => $_ ), $self->ast->values->@* ]
-}
+sub ast    : ro(_);
+sub name   : ro(_);
+sub values : ro(_);
 
 ## ...
 

@@ -19,57 +19,72 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Core::Field';
-use slots ( _ast => sub {} );
+use slots (
+    _ast  => sub {},
+    _name => sub {},
+    _type => sub {},
+    _args => sub {},
+);
 
 sub BUILDARGS : strict(
     ast?  => _ast,
-    name? => name,
-    type? => type,
-    args? => args,
+    name? => _name,
+    type? => _type,
+    args? => _args,
 );
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::FieldDefinition`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::FieldDefinition' );
+
+        $self->{_name} = $self->{_ast}->name->value;
+        $self->{_type} = Graph::QL::Util::AST::ast_type_to_schema_type( $self->{_ast}->type );
+        if ( $self->{_ast}->arguments->@* ) {
+            $self->{_args} = [
+                map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->{_ast}->arguments->@*
+            ];
+        }
+    }
+    else {
 
         throw('You must pass a defined value to `name`')
-            unless defined $params->{name};
+            unless defined $self->{_name};
 
-        throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $params->{type})
-            unless assert_does( $params->{type}, 'Graph::QL::Schema::Type' );
+        throw('The `type` must be an instance that does the role(Graph::QL::Schema::Type), not %s', $self->{_type})
+            unless assert_does( $self->{_type}, 'Graph::QL::Schema::Type' );
 
-        if ( exists $params->{args} ) {
+        if ( exists $params->{_args} ) {
            throw('The `args` value must be an ARRAY ref')
-                unless assert_arrayref( $params->{args} );
+                unless assert_arrayref( $self->{_args} );
 
-            foreach ( $params->{args}->@* ) {
+            foreach ( $self->{_args}->@* ) {
                 throw('The values in `args` must all be of type(Graph::QL::Schema::InputObject::InputValue), not `%s`', $_ )
                     unless assert_isa( $_, 'Graph::QL::Schema::InputObject::InputValue');
             }
         }
 
         $self->{_ast} = Graph::QL::AST::Node::FieldDefinition->new(
-            name      => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            type      => $params->{type}->ast,
-            (exists $params->{args}
-                ? (arguments => [ map $_->ast, $params->{args}->@* ])
+            name      => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
+            type      => $self->{_type}->ast,
+            (exists $params->{_args}
+                ? (arguments => [ map $_->ast, $self->{_args}->@* ])
                 : ()),
         );
     }
 }
 
-sub ast : ro(_);
+sub ast  : ro(_);
+sub name : ro(_);
+sub type : ro(_);
+sub args : ro(_);
 
-sub name ($self) { $self->ast->name->value }
-sub type ($self) {
-    return Graph::QL::Util::AST::ast_type_to_schema_type( $self->ast->type );
-}
+sub has_args : predicate(_);
 
-sub arity ($self) { scalar $self->ast->arguments->@* }
-
-sub has_args ($self) { !! scalar $self->ast->arguments->@* }
-sub args ($self) {
-    [ map Graph::QL::Schema::InputObject::InputValue->new( ast => $_ ), $self->ast->arguments->@* ]
+sub arity ($self) {
+    return 0 unless $self->has_args;
+    scalar scalar $self->args->@*
 }
 
 ## ...

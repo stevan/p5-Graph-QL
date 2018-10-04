@@ -17,45 +17,63 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use slots ( _ast => sub {} );
+use slots (
+    _ast        => sub {},
+    _name       => sub {},
+    _fields     => sub {},
+    _interfaces => sub {},
+);
 
 sub BUILDARGS : strict(
     ast?         => _ast,
-    name?        => name,
-    fields?      => fields,
-    interfaces?  => interfaces,
+    name?        => _name,
+    fields?      => _fields,
+    interfaces?  => _interfaces,
 );
 
 sub BUILD ($self, $params) {
 
-    if ( not exists $params->{_ast} ) {
+    if ( exists $params->{_ast} ) {
+
+        throw('The `ast` must be an instance of `Graph::QL::AST::Node::ObjectTypeDefinition`, not `%s`', $self->{_ast})
+            unless assert_isa( $self->{_ast}, 'Graph::QL::AST::Node::ObjectTypeDefinition' );
+
+        $self->{_name}   = $self->{_ast}->name->value;
+        $self->{_fields} = [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->{_ast}->fields->@* ];
+        if ( $self->{_ast}->interfaces->@* ) {
+            $self->{_interfaces} = [
+                map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->{_ast}->interfaces->@*
+            ];
+        }
+    }
+    else {
 
         throw('You must pass a defined value to `name`')
-            unless defined $params->{name};
+            unless defined $self->{_name};
 
         throw('The `fields` value must be an ARRAY ref')
-            unless assert_arrayref( $params->{fields} );
+            unless assert_arrayref( $self->{_fields} );
 
-        foreach ( $params->{fields}->@* ) {
+        foreach ( $self->{_fields}->@* ) {
             throw('The values in `fields` must all be of type(Graph::QL::Schema::Field), not `%s`', $_ )
                 unless assert_isa( $_, 'Graph::QL::Schema::Field');
         }
 
-        if ( exists $params->{interfaces} ) {
+        if ( exists $params->{_interfaces} ) {
            throw('The `interfaces` value must be an ARRAY ref')
-                unless assert_arrayref( $params->{interfaces} );
+                unless assert_arrayref( $self->{_interfaces} );
 
-            foreach ( $params->{interfaces}->@* ) {
+            foreach ( $self->{_interfaces}->@* ) {
                 throw('The values in `interfaces` must all be of type(Graph::QL::Schema::Type::Named), not `%s`', $_ )
                     unless assert_isa( $_, 'Graph::QL::Schema::Type::Named');
             }
         }
 
         $self->{_ast} = Graph::QL::AST::Node::ObjectTypeDefinition->new(
-            name       => Graph::QL::AST::Node::Name->new( value => $params->{name} ),
-            fields     => [ map $_->ast, $params->{fields}->@* ],
-            (exists $params->{interfaces}
-                ? (interfaces => [ map $_->ast, $params->{interfaces}->@* ])
+            name       => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
+            fields     => [ map $_->ast, $self->{_fields}->@* ],
+            (exists $params->{_interfaces}
+                ? (interfaces => [ map $_->ast, $self->{_interfaces}->@* ])
                 : ()),
         );
     }
@@ -73,38 +91,32 @@ sub BUILD ($self, $params) {
     #     The object field may include additional arguments not defined in the interface field, but any additional argument must not be required, e.g. must not be of a non‐nullable type.
 }
 
-sub ast : ro(_);
-
-sub name   ($self) { $self->ast->name->value }
+sub ast  : ro(_);
+sub name : ro(_);
 
 ## ...
 
-sub all_fields ($self) {
-    return [ map Graph::QL::Schema::Field->new( ast => $_ ), $self->ast->fields->@* ]
-}
+sub all_fields : ro(_fields);
 
 sub lookup_field ($self, $name) {
     # coerce query fields into strings ...
     $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Field' );
 
-    my ($field_ast) = grep $_->name->value eq $name, $self->ast->fields->@*;
-    return undef unless defined $field_ast;
-    return Graph::QL::Schema::Field->new( ast => $field_ast );
+    my ($field_ast) = grep $_->name eq $name, $self->all_fields->@*;
+
+    return $field_ast;
 }
 
 ## ...
 
-sub has_interfaces ($self) { !! scalar $self->ast->interfaces->@* }
-
-sub interfaces ($self) {
-    [ map Graph::QL::Schema::Type::Named->new( ast => $_ ), $self->ast->interfaces->@* ]
-}
+sub has_interfaces : predicate(_);
+sub interfaces     : ro(_);
 
 ## ...
 
 sub to_type_language ($self) {
     my $interfaces = '';
-    if ( $self->interfaces->@* ) {
+    if ( $self->has_interfaces ) {
         $interfaces = ' implements '.(join ' & ' => map $_->name, $self->interfaces->@*);
     }
     return 'type '.$self->name.$interfaces.' {'."\n    ".
