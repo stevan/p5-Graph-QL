@@ -14,7 +14,7 @@ use overload   '""' => 'to_string';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     _message     => sub { 'An error has occurred:' },
-    _skip_frames => sub { 6 },
+    _skip_frames => sub { 5 },
     _stack_trace => sub {},
 );
 
