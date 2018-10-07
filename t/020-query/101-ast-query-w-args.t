@@ -45,44 +45,40 @@ eq_or_diff($node->TO_JSON, $ast, '... round-tripped the ast');
 
 Graph::QL::Util::AST::null_out_source_locations( $ast );
 
-my $node_2 = Graph::QL::AST::Node::Document->new(
-    definitions => [
-        Graph::QL::AST::Node::OperationDefinition->new(
-            operation     => 'query',
-            name          => Graph::QL::AST::Node::Name->new( value => 'queryName' ),
-            selection_set => Graph::QL::AST::Node::SelectionSet->new(
-                selections => [
-                    Graph::QL::AST::Node::Field->new(
-                        name      => Graph::QL::AST::Node::Name->new( value => 'find' ),
-                        arguments => [
-                            Graph::QL::AST::Node::Argument->new(
-                                name => Graph::QL::AST::Node::Name->new( value => 'id' ),
-                                value => Graph::QL::AST::Node::IntValue->new( value => 4 ),
-                            )
-                        ],
-                        selection_set => Graph::QL::AST::Node::SelectionSet->new(
-                            selections => [
-                                Graph::QL::AST::Node::Field->new( name => Graph::QL::AST::Node::Name->new( value => 'id' ) ),
-                                Graph::QL::AST::Node::Field->new( name => Graph::QL::AST::Node::Name->new( value => 'name' ) ),
-                                Graph::QL::AST::Node::Field->new(
-                                    name => Graph::QL::AST::Node::Name->new( value => 'desc' ),
-                                    arguments => [
-                                        Graph::QL::AST::Node::Argument->new(
-                                            name => Graph::QL::AST::Node::Name->new( value => 'length' ),
-                                            value => Graph::QL::AST::Node::IntValue->new( value => 255 ),
-                                        )
-                                    ],
-                                ),
-                            ]
-                        )
+my $node_2 = Graph::QL::AST::Node::OperationDefinition->new(
+    operation     => 'query',
+    name          => Graph::QL::AST::Node::Name->new( value => 'queryName' ),
+    selection_set => Graph::QL::AST::Node::SelectionSet->new(
+        selections => [
+            Graph::QL::AST::Node::Field->new(
+                name      => Graph::QL::AST::Node::Name->new( value => 'find' ),
+                arguments => [
+                    Graph::QL::AST::Node::Argument->new(
+                        name => Graph::QL::AST::Node::Name->new( value => 'id' ),
+                        value => Graph::QL::AST::Node::IntValue->new( value => 4 ),
                     )
-                ]
+                ],
+                selection_set => Graph::QL::AST::Node::SelectionSet->new(
+                    selections => [
+                        Graph::QL::AST::Node::Field->new( name => Graph::QL::AST::Node::Name->new( value => 'id' ) ),
+                        Graph::QL::AST::Node::Field->new( name => Graph::QL::AST::Node::Name->new( value => 'name' ) ),
+                        Graph::QL::AST::Node::Field->new(
+                            name => Graph::QL::AST::Node::Name->new( value => 'desc' ),
+                            arguments => [
+                                Graph::QL::AST::Node::Argument->new(
+                                    name => Graph::QL::AST::Node::Name->new( value => 'length' ),
+                                    value => Graph::QL::AST::Node::IntValue->new( value => 255 ),
+                                )
+                            ],
+                        ),
+                    ]
+                )
             )
-        )
-    ]
+        ]
+    )
 );
 
-eq_or_diff($node_2->TO_JSON, $ast, '... round-tripped the ast');
+eq_or_diff($node_2->TO_JSON, $ast->{definitions}->[0], '... round-tripped the ast');
 
 my $query = Graph::QL::Operation::Query->new(
     name       => 'queryName',
@@ -102,6 +98,6 @@ my $query = Graph::QL::Operation::Query->new(
     ]
 );
 
-eq_or_diff($query->ast->TO_JSON, $ast, '... round-tripped the ast');
+eq_or_diff($query->ast->TO_JSON, $ast->{definitions}->[0], '... round-tripped the ast');
 
 done_testing;

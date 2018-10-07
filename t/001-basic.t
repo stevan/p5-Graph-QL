@@ -13,7 +13,7 @@ use Time::Piece;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
-    use_ok('Graph::QL::Operation::Query');
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
     use_ok('Graph::QL::Resolvers');
@@ -64,8 +64,8 @@ package My::Graph::QL::Resolvers::Query {
     use warnings;
     use experimental 'signatures', 'postderef';
 
-    sub getAllPeople ($, $, $context, $) { 
-        $context->{people} 
+    sub getAllPeople ($, $, $context, $) {
+        $context->{people}
     }
 
     sub findPerson ($, $args, $context, $) {
@@ -89,7 +89,7 @@ package My::Graph::QL::Resolvers::Person {
 package My::Graph::QL::Resolvers::BirthEvent {
     use v5.24;
     use warnings;
-    use experimental 'signatures', 'postderef';    
+    use experimental 'signatures', 'postderef';
 
     sub date  ($data, $, $, $) { Time::Piece->strptime( $data->{datebegin}, '%B %d, %Y' ) }
     sub place ($data, $, $, $) { $data->{birthplace} }
@@ -98,7 +98,7 @@ package My::Graph::QL::Resolvers::BirthEvent {
 package My::Graph::QL::Resolvers::DeathEvent {
     use v5.24;
     use warnings;
-    use experimental 'signatures', 'postderef';    
+    use experimental 'signatures', 'postderef';
 
     sub date  ($data, $, $, $) { Time::Piece->strptime( $data->{dateend}, '%B %d, %Y' ) }
     sub place ($data, $, $, $) { $data->{deathplace} }
@@ -107,14 +107,14 @@ package My::Graph::QL::Resolvers::DeathEvent {
 package My::Graph::QL::Resolvers::Date {
     use v5.24;
     use warnings;
-    use experimental 'signatures', 'postderef';    
+    use experimental 'signatures', 'postderef';
 
     sub day   ($data, $, $, $) { $data->mday      }
     sub month ($data, $, $, $) { $data->fullmonth }
     sub year  ($data, $, $, $) { $data->year      }
 }
 
-my $query = Graph::QL::Operation::Query->new_from_source(q[
+my $operation = Graph::QL::Operation->new_from_source(q[
     query TestQuery {
         findPerson( name : "Will" ) {
             name
@@ -145,7 +145,7 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
 
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => $schema,
-    query     => $query,
+    operation => $operation,
     resolvers => Graph::QL::Resolvers->new_from_namespace('My::Graph::QL::Resolvers'),
     context   => {
         people => [

@@ -162,7 +162,7 @@ sub lookup_type ($self, $name) {
 sub lookup_root_type ($self, $op_kind) {
 
     # coerce operation objects into strings ...
-    $op_kind = $op_kind->operation_kind if assert_does( $op_kind, 'Graph::QL::Operation' );
+    $op_kind = $op_kind->operation_kind if assert_isa( $op_kind, 'Graph::QL::Operation::Query' );
     $op_kind = $op_kind->operation      if assert_isa( $op_kind, 'Graph::QL::AST::Node::OperationDefinition' );
 
     throw('The kind(%s) is not a valid Operation::Kind', $op_kind)

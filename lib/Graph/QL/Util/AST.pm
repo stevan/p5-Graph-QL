@@ -140,6 +140,34 @@ sub ast_type_to_schema_type ($ast) {
     }
 }
 
+sub ast_def_to_operation_def ($ast_def) {
+    if ( $ast_def->isa('Graph::QL::AST::Node::FragmentDefinition') ) {
+        require Graph::QL::Operation::Fragment;
+        return Graph::QL::Operation::Fragment->new( ast => $ast_def )
+    }
+    elsif ( $ast_def->isa('Graph::QL::AST::Node::OperationDefinition') ) {
+        my $op = $ast_def->operation;
+        if ( $op eq Graph::QL::Core::OperationKind->QUERY ) {
+            require Graph::QL::Operation::Query;
+            return Graph::QL::Operation::Query->new( ast => $ast_def );
+        }
+        elsif ( $op eq Graph::QL::Core::OperationKind->MUTATION ) {
+            require Graph::QL::Operation::Mutation;
+            return Graph::QL::Operation::Mutation->new( ast => $ast_def );
+        }
+        elsif ( $op eq Graph::QL::Core::OperationKind->SUBSCRIPTION ) {
+            require Graph::QL::Operation::Subscription;
+            return Graph::QL::Operation::Subscription->new( ast => $ast_def );
+        }
+        else {
+            throw('This should be impossible, got ast operation of kind', $op);
+        }
+    }
+    else {
+        throw('Do not recognize the ast type def(%s), unable to convert to an operation def', $ast_def);
+    }
+}
+
 sub ast_type_def_to_schema_type_def ($ast_type_def) {
     if ( $ast_type_def->isa('Graph::QL::AST::Node::EnumTypeDefinition') ) {
         require Graph::QL::Schema::Enum;
@@ -169,9 +197,7 @@ sub ast_type_def_to_schema_type_def ($ast_type_def) {
         # NOTE:
         # Not going to support these yet
         # (most cause I am not sure enough what they are)
-            # Graph::QL::AST::Node::OperationDefinition
             # Graph::QL::AST::Node::TypeExtensionDefinition
-            # Graph::QL::AST::Node::FragmentDefinition
 
         throw('Do not recognize the ast type def(%s), unable to convert to schema type def', $ast_type_def);
     }

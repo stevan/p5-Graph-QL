@@ -29,7 +29,7 @@ sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 
-    throw('The `query` must be of an instance that does the `Graph::QL::Operation::Query` role, not `%s`', $self->{query})
+    throw('The `query` must be of an instance of `Graph::QL::Operation::Query` role, not `%s`', $self->{query})
         unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
 }
 

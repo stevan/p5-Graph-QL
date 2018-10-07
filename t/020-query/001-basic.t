@@ -55,7 +55,7 @@ q[query queryName {
     eq_or_diff($query->to_type_language, $source, '... got the expected type language');
 
     subtest '... now parse the expected string and strip the location from the AST' => sub {
-        my $expected_ast = Graph::QL::Parser->parse_raw( $source );
+        my $expected_ast = Graph::QL::Parser->parse_raw( $source )->{definitions}->[0];
 
         Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 

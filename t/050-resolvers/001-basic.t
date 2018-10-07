@@ -13,7 +13,7 @@ use Time::Piece;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
-    use_ok('Graph::QL::Operation::Query');
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
     use_ok('Graph::QL::Resolvers');
@@ -59,7 +59,7 @@ my $schema = Graph::QL::Schema->new_from_source(q[
     }
 ]);
 
-my $query = Graph::QL::Operation::Query->new_from_source(q[
+my $operation = Graph::QL::Operation->new_from_source(q[
     query TestQuery {
         findPerson( name : "Will" ) {
             name
@@ -90,7 +90,7 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
 
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => $schema,
-    query     => $query,
+    operation => $operation,
     context   => {
         people => [
             {

@@ -20,6 +20,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Field');
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Operation::Query');
     use_ok('Graph::QL::Operation::Field');
     use_ok('Graph::QL::Operation::Field::Argument');
@@ -148,56 +149,60 @@ my $schema = Graph::QL::Schema->new(
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
-        name       => 'findPersonNamedWill',
-        selections => [
-            Graph::QL::Operation::Field->new(
-                name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Will' ) ],
+    my $operation = Graph::QL::Operation->new(
+        definitions => [
+            Graph::QL::Operation::Query->new(
+                name       => 'findPersonNamedWill',
                 selections => [
-                    Graph::QL::Operation::Field->new( name => 'name' ),
                     Graph::QL::Operation::Field->new(
-                        name       => 'birth',
+                        name       => 'findPerson',
+                        args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Will' ) ],
                         selections => [
+                            Graph::QL::Operation::Field->new( name => 'name' ),
                             Graph::QL::Operation::Field->new(
-                                name       => 'date',
+                                name       => 'birth',
                                 selections => [
-                                    Graph::QL::Operation::Field->new( name => 'day' ),
-                                    Graph::QL::Operation::Field->new( name => 'month' ),
-                                    Graph::QL::Operation::Field->new( name => 'year' ),
+                                    Graph::QL::Operation::Field->new(
+                                        name       => 'date',
+                                        selections => [
+                                            Graph::QL::Operation::Field->new( name => 'day' ),
+                                            Graph::QL::Operation::Field->new( name => 'month' ),
+                                            Graph::QL::Operation::Field->new( name => 'year' ),
+                                        ]
+                                    ),
+                                ]
+                            ),
+                            Graph::QL::Operation::Field->new(
+                                name       => 'death',
+                                selections => [
+                                    Graph::QL::Operation::Field->new(
+                                        name       => 'date',
+                                        selections => [
+                                            Graph::QL::Operation::Field->new( name => 'year' ),
+                                        ]
+                                    ),
                                 ]
                             ),
                         ]
                     ),
                     Graph::QL::Operation::Field->new(
-                        name       => 'death',
+                        name       => 'getAllPeople',
                         selections => [
+                            Graph::QL::Operation::Field->new( name => 'name' ),
+                            Graph::QL::Operation::Field->new( name => 'gender' ),
                             Graph::QL::Operation::Field->new(
-                                name       => 'date',
+                                name       => 'death',
                                 selections => [
-                                    Graph::QL::Operation::Field->new( name => 'year' ),
+                                    Graph::QL::Operation::Field->new(
+                                        name       => 'date',
+                                        selections => [
+                                            Graph::QL::Operation::Field->new( name => 'year' ),
+                                        ]
+                                    ),
                                 ]
                             ),
                         ]
-                    ),
-                ]
-            ),
-            Graph::QL::Operation::Field->new(
-                name       => 'getAllPeople',
-                selections => [
-                    Graph::QL::Operation::Field->new( name => 'name' ),
-                    Graph::QL::Operation::Field->new( name => 'gender' ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'death',
-                        selections => [
-                            Graph::QL::Operation::Field->new(
-                                name       => 'date',
-                                selections => [
-                                    Graph::QL::Operation::Field->new( name => 'year' ),
-                                ]
-                            ),
-                        ]
-                    ),
+                    )
                 ]
             )
         ]
@@ -205,7 +210,7 @@ subtest '... validating the query against the schema' => sub {
 
     my $e = Graph::QL::Execution::ExecuteQuery->new(
         schema    => $schema,
-        query     => $query,
+        operation => $operation,
         resolvers => $resolvers,
         context   => {
             people => [

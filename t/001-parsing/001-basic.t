@@ -19,6 +19,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Field');
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Operation::Query');
     use_ok('Graph::QL::Operation::Field');
     use_ok('Graph::QL::Operation::Field::Argument');
@@ -133,26 +134,30 @@ q[query findAllBobs {
         ]
     );
 
-    my $query_as_object = Graph::QL::Operation::Query->new(
-        name       => 'findAllBobs',
-        selections => [
-            Graph::QL::Operation::Field->new(
-                name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
+    my $query_as_object = Graph::QL::Operation->new(
+        definitions => [
+            Graph::QL::Operation::Query->new(
+                name       => 'findAllBobs',
                 selections => [
-                    Graph::QL::Operation::Field->new( name => 'name' ),
                     Graph::QL::Operation::Field->new(
-                        name       => 'birth',
+                        name       => 'findPerson',
+                        args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                         selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
+                            Graph::QL::Operation::Field->new( name => 'name' ),
+                            Graph::QL::Operation::Field->new(
+                                name       => 'birth',
+                                selections => [
+                                    Graph::QL::Operation::Field->new( name => 'year' ),
+                                ]
+                            ),
+                            Graph::QL::Operation::Field->new(
+                                name       => 'death',
+                                selections => [
+                                    Graph::QL::Operation::Field->new( name => 'year' ),
+                                ]
+                            ),
                         ]
-                    ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'death',
-                        selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
-                        ]
-                    ),
+                    )
                 ]
             )
         ]

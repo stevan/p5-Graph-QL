@@ -17,7 +17,7 @@ our $VERSION = '0.01';
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
     schema    => sub {}, # Graph::QL::Schema
-    query     => sub {}, # Graph::QL::Operation::Query
+    operation => sub {}, # Graph::QL::Operation
     resolvers => sub {}, # a mapping of TypeName to Resolver instance
     validator => sub {}, # Graph::QL::Execution::QueryValidator
     context   => sub { +{} }, # HashRef[Any]
@@ -26,7 +26,7 @@ use slots (
 
 sub BUILDARGS : strict(
     schema     => schema,
-    query      => query,
+    operation  => operation,
     resolvers  => resolvers,
     context?   => context,
     validator? => validator,
@@ -37,8 +37,8 @@ sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 
-    throw('The `query` must be of an instance that does the `Graph::QL::Operation` role, not `%s`', $self->{query})
-        unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
+    throw('The `operation` must be of an instance of `Graph::QL::Operation` role, not `%s`', $self->{operation})
+        unless assert_isa( $self->{operation}, 'Graph::QL::Operation' );
 
     # TODO:
     # - handle `initial-value`
@@ -60,14 +60,16 @@ sub BUILD ($self, $params) {
     else {
         $self->{validator} = Graph::QL::Execution::QueryValidator->new(
             schema => $self->{schema},
-            query  => $self->{query},
+            query  => $self->{operation}->get_query,
         );
     }
 }
 
 sub schema    : ro;
-sub query     : ro;
+sub operation : ro;
 sub resolvers : ro;
+
+sub get_query ($self) { $self->{operation}->get_query }
 
 ## ...
 
@@ -80,27 +82,29 @@ sub execute ($self) {
     throw("You cannot execute a query that has errors:\n%s" => join "\n" => $self->get_errors)
         if $self->has_errors;
 
-    DEBUG && $self->__log(0, 'Starting to execute query(%s)', $self->{query}->name );
+    my $query = $self->get_query;
 
-    my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
+    DEBUG && $self->__log(0, 'Starting to execute query(%s)', $query->name );
 
-    DEBUG && $self->__log(0, 'Found root-type(%s) for query(%s)', $root_type->name, $self->{query}->name );
+    my $root_type = $self->{schema}->lookup_root_type( $query );
+
+    DEBUG && $self->__log(0, 'Found root-type(%s) for query(%s)', $root_type->name, $query->name );
 
     my $data = $self->execute_selections(
         $root_type,
-        $self->{query}->selections,
+        $query->selections,
         $self->{resolvers}->get_type( $root_type->name ),
         {},
     );
 
-    DEBUG && $self->__log(0, 'Finished executing selections for query(%s)', $self->{query}->name );
+    DEBUG && $self->__log(0, 'Finished executing selections for query(%s)', $query->name );
 
     return $data;
 }
 
 sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initial_value) {
 
-    DEBUG && $self->__log(1, 'Executing selections for query(%s) for type(%s)', $self->{query}->name, $schema_type->name);
+    DEBUG && $self->__log(1, 'Executing selections for query(%s) for type(%s)', $self->get_query->name, $schema_type->name);
 
     my %results;
     foreach my $selection ( $selections->@* ) {
@@ -124,7 +128,7 @@ sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initi
 
 sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_value) {
 
-    DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s)', $self->{query}->name, $selection->name, $schema_field->name);
+    DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s)', $self->get_query->name, $selection->name, $schema_field->name);
 
     my %field_args = $selection->has_args ? (map { $_->name => $_->value } $selection->args->@*) : ();
     my $resolved   = $field_resolver->resolve(
@@ -134,7 +138,7 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         {
             $self->{info}->%*,
             schema    => $self->{schema},
-            query     => $self->{query},
+            operation => $self->{operation},
             field     => $schema_field,
             selection => $selection,
         },

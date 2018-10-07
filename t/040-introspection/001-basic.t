@@ -12,7 +12,7 @@ use Data::Dumper;
 
 BEGIN {
     use_ok('Graph::QL::Schema');
-    use_ok('Graph::QL::Operation::Query');
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
     use_ok('Graph::QL::Resolvers');
@@ -45,7 +45,7 @@ my $resolvers = Graph::QL::Resolvers->new(
     ]
 );
 
-my $query = Graph::QL::Operation::Query->new_from_source(q[
+my $operation = Graph::QL::Operation->new_from_source(q[
     query TestQuery {
         hello
         __type( name : "Query" ) {
@@ -106,7 +106,7 @@ my $query = Graph::QL::Operation::Query->new_from_source(q[
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => Graph::QL::Introspection->enable_for_schema( $schema ),
     resolvers => Graph::QL::Introspection->enable_for_resolvers( $resolvers ),
-    query     => $query,
+    operation => $operation,
 );
 isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
