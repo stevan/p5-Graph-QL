@@ -14,6 +14,7 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
+use roles  'Graph::QL::Core::Selection';
 use slots (
     _ast        => sub {},
     _name       => sub {},
@@ -42,6 +43,7 @@ sub BUILD ($self, $params) {
         $self->{_ast} = Graph::QL::AST::Node::FragmentSpread->new(
             name => Graph::QL::AST::Node::Name->new( value => $self->{_name} ),
             # ...
+            # directives?      => directives,     Graph::QL::AST::Node::Directive
         );
     }
 }
@@ -51,9 +53,7 @@ sub name : ro(_);
 
 ## ...
 
-sub to_type_language ($self) {
-
-}
+sub to_type_language ($self) { '...'.$self->name }
 
 
 1;

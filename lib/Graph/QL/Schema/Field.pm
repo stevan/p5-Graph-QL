@@ -18,7 +18,6 @@ use Graph::QL::AST::Node::Name;
 our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
-use roles  'Graph::QL::Core::Field';
 use slots (
     _ast        => sub {},
     _name       => sub {},

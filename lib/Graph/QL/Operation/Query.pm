@@ -6,7 +6,7 @@ use experimental 'signatures', 'postderef';
 use decorators ':accessors', ':constructor';
 
 use Graph::QL::Util::Errors     'throw';
-use Graph::QL::Util::Assertions 'assert_isa', 'assert_non_empty';
+use Graph::QL::Util::Assertions 'assert_isa', 'assert_does', 'assert_non_empty';
 
 use Graph::QL::AST::Node::Document;
 use Graph::QL::AST::Node::OperationDefinition;
@@ -14,6 +14,7 @@ use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::SelectionSet;
 
 use Graph::QL::Operation::Field;
+use Graph::QL::Operation::Fragment::Spread;
 
 use Graph::QL::Core::OperationKind;
 
@@ -21,7 +22,7 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use roles  'Graph::QL::Operation';
-use slots ( 
+use slots (
     _ast        => sub {},
     _name       => sub {},
     _selections => sub {},
@@ -49,9 +50,12 @@ sub BUILD ($self, $params) {
             $self->{_name} = $self->_operation_definition->name->value;
         }
 
-        $self->{_selections} = [ 
-            map Graph::QL::Operation::Field->new( ast => $_ ), 
-                $self->_operation_definition->selection_set->selections->@* 
+        $self->{_selections} = [
+            map {
+                $_->isa('Graph::QL::AST::Node::FragmentSpread')
+                    ? Graph::QL::Operation::Fragment::Spread->new( ast => $_ )
+                    : Graph::QL::Operation::Field->new( ast => $_ )
+            } $self->_operation_definition->selection_set->selections->@*
         ];
     }
     else {
@@ -60,8 +64,8 @@ sub BUILD ($self, $params) {
             unless assert_non_empty( $self->{_selections} );
 
         foreach ( $self->{_selections}->@* ) {
-           throw('Every member of `selections` must be an instance of `Graph::QL::Operation::Field`, not `%s`', $_)
-                unless assert_isa( $_, 'Graph::QL::Operation::Field' );
+           throw('Every member of `selections` must be an instance that does `Graph::QL::Core::Selection`, not `%s`', $_)
+                unless assert_does( $_, 'Graph::QL::Core::Selection' );
         }
 
         # TODO:
@@ -97,7 +101,11 @@ sub operation_kind ($self) { $self->_operation_definition->operation }
 
 sub to_type_language ($self) {
 
-    my $selections = join "\n    " => map { join "\n    " => split /\n/ => $_ } map $_->to_type_language, $self->selections->@*;
+    my $selections = join "\n    " => (
+        map { join "\n    " => split /\n/ => $_  }
+        map $_->to_type_language,
+            $self->selections->@*
+    );
 
     return $self->operation_kind.' '.($self->has_name ? $self->name.' ' : '')."{\n    ".$selections."\n}";
 }
