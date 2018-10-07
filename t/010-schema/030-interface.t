@@ -66,10 +66,7 @@ q[interface NamedEntity {
 
         #warn Dumper $expected_ast;
 
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_ast,
-            'fields.type',
-        );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 
         #warn Dumper $expected_ast;
 

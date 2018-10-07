@@ -43,12 +43,7 @@ my $ast  = JSON::MaybeXS->new->decode( Parser::GraphQL::XS->new->parse_string( $
 
 eq_or_diff($node->TO_JSON, $ast, '... round-tripped the ast');
 
-Graph::QL::Util::AST::null_out_source_locations(
-    $ast,
-    # just clean it all out ... :P
-    'definitions.selectionSet.selections.arguments.value',
-    'definitions.selectionSet.selections.selectionSet.selections.arguments.value',
-);
+Graph::QL::Util::AST::null_out_source_locations( $ast );
 
 my $node_2 = Graph::QL::AST::Node::Document->new(
     definitions => [

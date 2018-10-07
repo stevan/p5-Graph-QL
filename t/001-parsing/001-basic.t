@@ -169,24 +169,8 @@ q[query findAllBobs {
         my $expected_schema_ast = Graph::QL::Parser->parse_raw( $schema_as_type_lang );
         my $expected_query_ast  = Graph::QL::Parser->parse_raw( $query_as_type_lang );
 
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_schema_ast,
-            # just clean it all out ... :P
-            'definitions.types',
-            'definitions.operationTypes.type',
-            'definitions.fields.type',
-            'definitions.fields.type.type',
-            'definitions.fields.arguments.type',
-            'definitions.fields.arguments.defaultValue'
-        );
-
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_query_ast,
-            # just clean it all out ... :P
-            'definitions.selectionSet.selections.arguments.value',
-            'definitions.selectionSet.selections.selectionSet.selections.arguments.value',
-            'definitions.selectionSet.selections.selectionSet.selections.selectionSet.selections.arguments.value',
-        );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_schema_ast );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_query_ast );
 
         eq_or_diff($schema_as_object->ast->TO_JSON, $expected_schema_ast, '... got the expected schema ast');
         eq_or_diff($query_as_object->ast->TO_JSON, $expected_query_ast, '... got the expected query ast');

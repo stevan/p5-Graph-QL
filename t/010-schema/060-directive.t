@@ -40,12 +40,7 @@ subtest '... testing my schema' => sub {
 
         #warn Dumper $expected_ast;
 
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_ast,
-            'arguments.type',
-            'arguments.defaultValue',
-            'locations'
-        );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 
         #warn Dumper $expected_ast;
 

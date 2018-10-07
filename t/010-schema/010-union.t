@@ -44,7 +44,7 @@ subtest '... testing my schema' => sub {
         my $expected_ast = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->[0];
 
         #warn Dumper $expected_ast;
-        Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'types' );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 
         eq_or_diff($SearchResult->ast->TO_JSON, $expected_ast, '... got the expected AST');
     };

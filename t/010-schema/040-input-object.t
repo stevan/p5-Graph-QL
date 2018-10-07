@@ -44,7 +44,7 @@ subtest '... testing my schema' => sub {
     subtest '... now parse the expected string and strip the location from the AST' => sub {
         my $expected_ast = Graph::QL::Parser->parse_raw( $expected_type_language )->{definitions}->[0];
 
-        Graph::QL::Util::AST::null_out_source_locations( $expected_ast, 'fields.type' );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
         #warn Dumper $expected_ast;
 
         eq_or_diff($Point2D->ast->TO_JSON, $expected_ast, '... got the expected AST');

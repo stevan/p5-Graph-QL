@@ -80,12 +80,7 @@ q[type Person {
 
         #warn Dumper $expected_ast;
 
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_ast,
-            'fields.type',
-            'fields.arguments.type',
-            'fields.arguments.defaultValue',
-        );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 
         #warn Dumper $expected_ast;
 

@@ -71,30 +71,7 @@ q[type AnnotatedObject @onObject(arg : "value") {
 
         #warn Dumper $expected_ast;
 
-        Graph::QL::Util::AST::null_out_source_locations(
-            $expected_ast,
-            'directives.arguments',
-            'directives.arguments.value',
-
-            'fields.type',
-
-            'fields.directives',
-            'fields.directives.arguments',
-            'fields.directives.arguments.value',
-            'fields.directives.arguments.type',
-            'fields.directives.arguments.defaultValue',
-
-            'fields.arguments',
-            'fields.arguments.value',
-            'fields.arguments.type',
-            'fields.arguments.defaultValue',
-
-            'fields.arguments.directives',
-            'fields.arguments.directives.arguments',
-            'fields.arguments.directives.arguments.value',
-            'fields.arguments.directives.arguments.type',
-            'fields.arguments.directives.arguments.defaultValue',
-        );
+        Graph::QL::Util::AST::null_out_source_locations( $expected_ast );
 
         #warn Dumper $expected_ast;
 

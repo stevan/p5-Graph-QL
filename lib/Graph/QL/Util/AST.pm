@@ -202,34 +202,23 @@ sub ast_value_to_schema_type ($ast_value) {
 ## General utils for AST data structures
 ## ----------------------------------------------
 
-use constant NULL_LOCATION => +{
-    start => { line => 0, column => 0 },
-    end   => { line => 0, column => 0 },
-};
+sub null_out_source_locations ( $ast ) {
+    state $NULL_LOCATION = {
+        start => { line => 0, column => 0 },
+        end   => { line => 0, column => 0 },
+    };
 
-sub null_out_source_locations ( $ast, @paths ) {
+    $ast->{loc}         = $NULL_LOCATION if $ast->{loc};
+    $ast->{name}->{loc} = $NULL_LOCATION if $ast->{name};
 
-    $ast->{loc}         = NULL_LOCATION if $ast->{loc};
-    $ast->{name}->{loc} = NULL_LOCATION if $ast->{name};
+    foreach my $k ( keys $ast->%* ) {
+        my $v = $ast->{ $k };
 
-    foreach my $path ( @paths ) {
-        my ($start, @rest) = split /\./ => $path;
-
-        #warn "PATH: $path";
-        #warn "START: $start";
-        #warn "REST: ". (join ', ' => @rest);
-
-        #use Data::Dumper;
-        #use Carp;
-        #Carp::confess(Dumper [ $ast, \@paths ]) unless defined $start;
-
-        if ( Ref::Util::is_arrayref( $ast->{ $start } ) ) {
-            foreach my $sub_ast ( $ast->{ $start }->@* ) {
-                null_out_source_locations( $sub_ast, @rest ? (join '.' => @rest) : () );
-            }
+        if ( Ref::Util::is_arrayref( $v ) ) {
+            null_out_source_locations( $_ ) foreach $v->@*;
         }
-        else {
-            null_out_source_locations( $ast->{ $start }, @rest ? (join '.' => @rest) : () );
+        elsif ( Ref::Util::is_ref( $v ) ) {
+            null_out_source_locations( $v );
         }
     }
 }

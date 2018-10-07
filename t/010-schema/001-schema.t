@@ -119,16 +119,7 @@ schema {
         my @definitions  = $expected_ast->{definitions}->@*;
 
         #warn Dumper $expected_ast;
-        Graph::QL::Util::AST::null_out_source_locations(
-            $_,
-            # just clean it all out ... :P
-            'types',
-            'operationTypes.type',
-            'fields.type',
-            'fields.type.type',
-            'fields.arguments.type',
-            'fields.arguments.defaultValue'
-        ) foreach @definitions, $expected_ast;
+        Graph::QL::Util::AST::null_out_source_locations( $_ ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
         my ($birth_event_def,
@@ -206,15 +197,7 @@ schema {
         my @definitions  = $expected_ast->{definitions}->@*;
 
         #warn Dumper $expected_ast;
-        Graph::QL::Util::AST::null_out_source_locations(
-                $_,
-                # just clean it all out ... :P
-                'types',
-                'operationTypes.type',
-                'fields.type',
-                'fields.arguments.type',
-                'fields.arguments.defaultValue'
-        ) foreach @definitions, $expected_ast;
+        Graph::QL::Util::AST::null_out_source_locations( $_ ) foreach @definitions, $expected_ast;
 
         my $schema_def = pop @definitions;
         my ($my_query_root_type_def, $my_mutation_root_type_def) = @definitions;
