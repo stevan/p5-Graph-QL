@@ -1,5 +1,5 @@
 package Graph::QL::Core::Selection;
-# ABSTRACT: Enumeration for the OperationKind
+# ABSTRACT: Abtraction around Selections
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
