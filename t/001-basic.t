@@ -126,21 +126,23 @@ my $operation = Graph::QL::Operation->new_from_source(q[
                 }
             }
             death {
-                date {
-                    year
-                }
+                #...YearOfDeath
+                date { year }
             }
         }
         getAllPeople {
             name
             gender
             death {
-                date {
-                    year
-                }
+                #...YearOfDeath
+                date { year }
             }
         }
     }
+
+    #fragment YearOfDeath on DeathEvent {
+    #    date { year }
+    #}
 ]);
 
 my $e = Graph::QL::Execution::ExecuteQuery->new(

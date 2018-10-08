@@ -64,11 +64,25 @@ sub BUILD ($self, $params) {
 sub ast         : ro(_);
 sub definitions : ro(_);
 
-sub get_query ($self) { (grep $_->isa('Graph::QL::Operation::Query'), $self->definitions->@*)[0] }
+sub has_fragments ($self) { !! scalar grep $_->isa('Graph::QL::Operation::Fragment'), $self->{_definitions}->@* }
+sub get_fragments ($self) {           grep $_->isa('Graph::QL::Operation::Fragment'), $self->{_definitions}->@* }
+
+sub has_query ($self) { !! scalar grep $_->isa('Graph::QL::Operation::Query'), $self->{_definitions}->@*     }
+sub get_query ($self) {          (grep $_->isa('Graph::QL::Operation::Query'), $self->{_definitions}->@*)[0] }
 
 # TODO:
 # sub get_mutation     ($self) { grep !$_->isa('Graph::QL::Operation::Mutation'),     $self->definitions->@* }
 # sub get_subscription ($self) { grep !$_->isa('Graph::QL::Operation::Subscription'), $self->definitions->@* }
+
+sub lookup_fragment ($self, $name) {
+
+    # coerce named types into strings ...
+    $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Selection::FragmentSpread' );
+
+    my ($fragment) = grep $_->name eq $name, $self->get_fragments->@*;
+
+    return $fragment;
+}
 
 ## ...
 

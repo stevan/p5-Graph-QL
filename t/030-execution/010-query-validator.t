@@ -19,6 +19,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::Field');
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
+    use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Operation::Query');
     use_ok('Graph::QL::Operation::Selection::Field');
     use_ok('Graph::QL::Operation::Selection::Field::Argument');
@@ -99,11 +100,10 @@ my $schema = Graph::QL::Schema->new(
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
-        name       => 'findAllBobs',
-        selections => [
-            Graph::QL::Operation::Field->new(
-                name       => 'findPerson',
+    my $operation = Graph::QL::Operation->new(
+        definitions => [
+            Graph::QL::Operation::Query->new(
+                name       => 'findAllBobs',
                 selections => [
                     Graph::QL::Operation::Selection::Field->new(
                         name       => 'findPerson',
@@ -129,7 +129,7 @@ subtest '... validating the query against the schema' => sub {
         ]
     );
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -139,15 +139,15 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'locatePerson',
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -164,16 +164,16 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
                 args => [],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -191,16 +191,16 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
                 args => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'id', value => 'Bob' ) ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -218,7 +218,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
@@ -228,9 +228,9 @@ subtest '... validating the query against the schema' => sub {
                 ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -248,16 +248,16 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
                 args => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'id', value => 10 ) ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -275,7 +275,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
@@ -286,9 +286,9 @@ subtest '... validating the query against the schema' => sub {
                 ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -308,7 +308,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
@@ -319,9 +319,9 @@ subtest '... validating the query against the schema' => sub {
                 ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -339,7 +339,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
@@ -350,9 +350,9 @@ subtest '... validating the query against the schema' => sub {
                 ],
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -371,7 +371,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         name       => 'findAllBobs',
         selections => [
             Graph::QL::Operation::Selection::Field->new(
@@ -382,9 +382,9 @@ subtest '... validating the query against the schema' => sub {
                 ]
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -401,7 +401,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         name       => 'findAllBobs',
         selections => [
             Graph::QL::Operation::Selection::Field->new(
@@ -417,9 +417,9 @@ subtest '... validating the query against the schema' => sub {
                 ]
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');
@@ -438,7 +438,7 @@ subtest '... validating the query against the schema' => sub {
 
 subtest '... validating the query against the schema' => sub {
 
-    my $query = Graph::QL::Operation::Query->new(
+    my $operation = Graph::QL::Operation->new( definitions => [ Graph::QL::Operation::Query->new(
         selections => [
             Graph::QL::Operation::Selection::Field->new(
                 name => 'findAllBobs',
@@ -447,9 +447,9 @@ subtest '... validating the query against the schema' => sub {
                 name => 'findOneAlice',
             )
         ]
-    );
+    )]);
 
-    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, query => $query );
+    my $v = Graph::QL::Execution::QueryValidator->new( schema => $schema, operation => $operation );
     isa_ok($v, 'Graph::QL::Execution::QueryValidator');
 
     is(exception { $v->validate }, undef, '... validation happened without incident');

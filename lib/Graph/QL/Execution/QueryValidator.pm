@@ -14,23 +14,23 @@ our $VERSION = '0.01';
 
 use parent 'UNIVERSAL::Object::Immutable';
 use slots (
-    schema  => sub {}, # Graph::QL::Schema
-    query   => sub {}, # Graph::QL::Operation::Query
+    schema    => sub {}, # Graph::QL::Schema
+    operation => sub {}, # Graph::QL::Operation
     # internals ...
     _errors => sub { +[] }
 );
 
 sub BUILDARGS : strict(
-    schema => schema,
-    query  => query,
+    schema    => schema,
+    operation => operation,
 );
 
 sub BUILD ($self, $params) {
     throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{schema})
         unless assert_isa( $self->{schema}, 'Graph::QL::Schema' );
 
-    throw('The `query` must be of an instance of `Graph::QL::Operation::Query` role, not `%s`', $self->{query})
-        unless assert_isa( $self->{query}, 'Graph::QL::Operation::Query' );
+    throw('The `query` must be of an instance of `Graph::QL::Operation` role, not `%s`', $self->{operation})
+        unless assert_isa( $self->{operation}, 'Graph::QL::Operation' );
 }
 
 sub has_errors ($self) { !! scalar $self->{_errors}->@* }
@@ -41,17 +41,23 @@ sub validate ($self) {
     # make sure we have a clean slate ...
     $self->_clear_errors;
 
+    my $query = $self->{operation}->get_query;
+
+    return $self->_add_error(
+        'Unable to find a query within the operation, `%s`', $self->{operation}
+    ) unless defined $query;
+
     # find the Query type within the schema ...
-    my $root_type = $self->{schema}->lookup_root_type( $self->{query} );
+    my $root_type = $self->{schema}->lookup_root_type( $query );
 
     # if not, return and mark the error
     return $self->_add_error(
         'The `schema.type(%s) type must be present in the schema',
-        $self->{query}->operation_kind
+        $query->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
 
-    foreach my $query_field ( $self->{query}->selections->@* ) {
+    foreach my $query_field ( $query->selections->@* ) {
         # and use it to find the field in the (schema) Query object ...
         if ( my $schema_field = $root_type->lookup_field( $query_field ) ) {
             $self->_validate_field( $schema_field, $query_field );

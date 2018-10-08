@@ -59,8 +59,8 @@ sub BUILD ($self, $params) {
     }
     else {
         $self->{validator} = Graph::QL::Execution::QueryValidator->new(
-            schema => $self->{schema},
-            query  => $self->{operation}->get_query,
+            schema    => $self->{schema},
+            operation => $self->{operation},
         );
     }
 }
