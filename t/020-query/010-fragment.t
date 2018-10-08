@@ -13,8 +13,8 @@ BEGIN {
 
     use_ok('Graph::QL::Operation::Fragment');
     use_ok('Graph::QL::Util::Schemas');
-    use_ok('Graph::QL::Operation::Field');
-    use_ok('Graph::QL::Operation::Field::Argument');
+    use_ok('Graph::QL::Operation::Selection::Field');
+    use_ok('Graph::QL::Operation::Selection::Field::Argument');
 }
 
 subtest '... single root query' => sub {
@@ -29,8 +29,8 @@ q[fragment nameAndIdFromUser on User {
         name           => 'nameAndIdFromUser',
         type_condition => Graph::QL::Util::Schemas::construct_type_from_name('User'),
         selections     => [
-            Graph::QL::Operation::Field->new( name => 'id' ),
-            Graph::QL::Operation::Field->new( name => 'name' ),
+            Graph::QL::Operation::Selection::Field->new( name => 'id' ),
+            Graph::QL::Operation::Selection::Field->new( name => 'name' ),
         ]
     );
     isa_ok($fragment, 'Graph::QL::Operation::Fragment');

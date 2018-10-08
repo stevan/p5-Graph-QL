@@ -120,7 +120,7 @@ sub all_fields : ro(_fields);
 
 sub lookup_field ($self, $name) {
     # coerce query fields into strings ...
-    $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Field' );
+    $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Selection::Field' );
 
     my ($field_ast) = grep $_->name eq $name, $self->all_fields->@*;
 

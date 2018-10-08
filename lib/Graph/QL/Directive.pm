@@ -15,7 +15,7 @@ use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 # so that we aren't reaching into
 # a namespace we don't own
 # - SL
-use Graph::QL::Operation::Field::Argument;
+use Graph::QL::Operation::Selection::Field::Argument;
 
 use Graph::QL::AST::Node::Directive;
 use Graph::QL::AST::Node::Name;
@@ -45,7 +45,7 @@ sub BUILD ($self, $params) {
         $self->{_name} = $self->{_ast}->name->value;
         if ( $self->{_ast}->arguments->@* ) {
             $self->{_args} = [
-                map Graph::QL::Operation::Field::Argument->new( ast => $_ ), $self->{_ast}->arguments->@*
+                map Graph::QL::Operation::Selection::Field::Argument->new( ast => $_ ), $self->{_ast}->arguments->@*
             ];
         }
 
@@ -60,8 +60,8 @@ sub BUILD ($self, $params) {
                 unless assert_arrayref( $self->{_args} );
 
             foreach ( $self->{_args}->@* ) {
-                throw('The values in `args` must all be of type(Graph::QL::Operation::Field::Argument), not `%s`', $_ )
-                    unless assert_isa( $_, 'Graph::QL::Operation::Field::Argument');
+                throw('The values in `args` must all be of type(Graph::QL::Operation::Selection::Field::Argument), not `%s`', $_ )
+                    unless assert_isa( $_, 'Graph::QL::Operation::Selection::Field::Argument');
             }
         }
 

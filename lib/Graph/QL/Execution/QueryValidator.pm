@@ -78,8 +78,8 @@ sub _validate_field ($self, $schema_field, $query_field, $recursion_depth=0) {
     ) unless assert_isa( $schema_field, 'Graph::QL::Schema::Field' );
 
     $self->_add_error(
-        'The `query.field` must be of type `Graph::QL::Operation::Field`, not `%s`', $query_field
-    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Field' );
+        'The `query.field` must be of type `Graph::QL::Operation::Selection::Field`, not `%s`', $query_field
+    ) unless assert_isa( $query_field, 'Graph::QL::Operation::Selection::Field' );
 
     # if we accumulated an error in
     # the last two statements, we
@@ -136,10 +136,10 @@ sub _validate_args ($self, $schema_field, $query_field, $recursion_depth=0) {
             unless assert_isa( $schema_arg, 'Graph::QL::Schema::InputObject::InputValue' );
 
         $self->_add_error(
-            'The `query.field(%s).arg` must be of type `Graph::QL::Operation::Field::Argument`, not `%s`',
+            'The `query.field(%s).arg` must be of type `Graph::QL::Operation::Selection::Field::Argument`, not `%s`',
             $query_field->name, $query_arg
         ), next
-            unless assert_isa( $query_arg, 'Graph::QL::Operation::Field::Argument' );
+            unless assert_isa( $query_arg, 'Graph::QL::Operation::Selection::Field::Argument' );
 
         $self->_debug_log(
             ($recursion_depth + 1),

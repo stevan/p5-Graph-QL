@@ -17,7 +17,7 @@ BEGIN {
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
     use_ok('Graph::QL::Directive');
-    use_ok('Graph::QL::Operation::Field::Argument');
+    use_ok('Graph::QL::Operation::Selection::Field::Argument');
 
     use_ok('Graph::QL::Util::AST');
     use_ok('Graph::QL::Parser');
@@ -52,7 +52,7 @@ q[type AnnotatedObject @onObject(arg : "value") {
             Graph::QL::Directive->new(
                 name => 'onObject',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new(
+                    Graph::QL::Operation::Selection::Field::Argument->new(
                         name  => 'arg',
                         value => 'value',
                     )

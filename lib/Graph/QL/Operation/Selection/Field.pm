@@ -1,4 +1,4 @@
-package Graph::QL::Operation::Field;
+package Graph::QL::Operation::Selection::Field;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
@@ -12,8 +12,8 @@ use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::Field;
 use Graph::QL::AST::Node::SelectionSet;
 
-use Graph::QL::Operation::Fragment::Spread;
-use Graph::QL::Operation::Field::Argument;
+use Graph::QL::Operation::Selection::FragmentSpread;
+use Graph::QL::Operation::Selection::Field::Argument;
 
 our $VERSION = '0.01';
 
@@ -48,15 +48,15 @@ sub BUILD ($self, $params) {
         }
 
         $self->{_args} = [
-            map Graph::QL::Operation::Field::Argument->new( ast => $_ ), $self->{_ast}->arguments->@*
+            map Graph::QL::Operation::Selection::Field::Argument->new( ast => $_ ), $self->{_ast}->arguments->@*
         ];
 
         if ( $self->{_ast}->selection_set ) {
             $self->{_selections} = [
                 map {
                     $_->isa('Graph::QL::AST::Node::FragmentSpread')
-                        ? Graph::QL::Operation::Fragment::Spread->new( ast => $_ )
-                        : Graph::QL::Operation::Field->new( ast => $_ )
+                        ? Graph::QL::Operation::Selection::FragmentSpread->new( ast => $_ )
+                        : Graph::QL::Operation::Selection::Field->new( ast => $_ )
                 } $self->{_ast}->selection_set->selections->@*
             ];
         }
@@ -85,8 +85,8 @@ sub BUILD ($self, $params) {
 
         if ( exists $params->{_args} ) {
             foreach ( $self->{_args}->@* ) {
-               throw('Every member of `args` must be an instance of `Graph::QL::Operation::Field::Argument`, not `%s`', $_)
-                    unless assert_isa( $_, 'Graph::QL::Operation::Field::Argument' );
+               throw('Every member of `args` must be an instance of `Graph::QL::Operation::Selection::Field::Argument`, not `%s`', $_)
+                    unless assert_isa( $_, 'Graph::QL::Operation::Selection::Field::Argument' );
             }
         }
 

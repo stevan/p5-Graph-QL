@@ -1,4 +1,4 @@
-package Graph::QL::Operation::Fragment::Spread;
+package Graph::QL::Operation::Selection::FragmentSpread;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;

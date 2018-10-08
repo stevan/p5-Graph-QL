@@ -20,8 +20,8 @@ BEGIN {
     use_ok('Graph::QL::Schema::InputObject::InputValue');
 
     use_ok('Graph::QL::Operation::Query');
-    use_ok('Graph::QL::Operation::Field');
-    use_ok('Graph::QL::Operation::Field::Argument');
+    use_ok('Graph::QL::Operation::Selection::Field');
+    use_ok('Graph::QL::Operation::Selection::Field::Argument');
 
     use_ok('Graph::QL::Execution::QueryValidator');
 }
@@ -104,21 +104,26 @@ subtest '... validating the query against the schema' => sub {
         selections => [
             Graph::QL::Operation::Field->new(
                 name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                 selections => [
-                    Graph::QL::Operation::Field->new( name => 'name' ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'birth',
+                    Graph::QL::Operation::Selection::Field->new(
+                        name       => 'findPerson',
+                        args       => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                         selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
+                            Graph::QL::Operation::Selection::Field->new( name => 'name' ),
+                            Graph::QL::Operation::Selection::Field->new(
+                                name       => 'birth',
+                                selections => [
+                                    Graph::QL::Operation::Selection::Field->new( name => 'year' ),
+                                ]
+                            ),
+                            Graph::QL::Operation::Selection::Field->new(
+                                name       => 'death',
+                                selections => [
+                                    Graph::QL::Operation::Selection::Field->new( name => 'year' ),
+                                ]
+                            ),
                         ]
-                    ),
-                    Graph::QL::Operation::Field->new(
-                        name       => 'death',
-                        selections => [
-                            Graph::QL::Operation::Field->new( name => 'year' ),
-                        ]
-                    ),
+                    )
                 ]
             )
         ]
@@ -136,7 +141,7 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'locatePerson',
             )
         ]
@@ -161,7 +166,7 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
                 args => [],
             )
@@ -188,9 +193,9 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
-                args => [ Graph::QL::Operation::Field::Argument->new( name => 'id', value => 'Bob' ) ],
+                args => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'id', value => 'Bob' ) ],
             )
         ]
     );
@@ -215,11 +220,11 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new( name => 'id',       value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'other_id', value => 20 )
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'id',       value => 10 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'other_id', value => 20 )
                 ],
             )
         ]
@@ -245,9 +250,9 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findPerson',
-                args => [ Graph::QL::Operation::Field::Argument->new( name => 'id', value => 10 ) ],
+                args => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'id', value => 10 ) ],
             )
         ]
     );
@@ -272,12 +277,12 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new( name => 'foo', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'bar', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'baz', value => 10.5 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'foo', value => 10 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'bar', value => 10 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'baz', value => 10.5 ),
                 ],
             )
         ]
@@ -305,12 +310,12 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new( name => 'name', value => "Bob" ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'gender', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'nationality', value => "Murican" ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'name', value => "Bob" ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'gender', value => 10 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'nationality', value => "Murican" ),
                 ],
             )
         ]
@@ -336,12 +341,12 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findExactPerson',
                 args => [
-                    Graph::QL::Operation::Field::Argument->new( name => 'name', value => "Bob" ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'gender', value => 10 ),
-                    Graph::QL::Operation::Field::Argument->new( name => 'honk', value => "Murican" ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'name', value => "Bob" ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'gender', value => 10 ),
+                    Graph::QL::Operation::Selection::Field::Argument->new( name => 'honk', value => "Murican" ),
                 ],
             )
         ]
@@ -369,11 +374,11 @@ subtest '... validating the query against the schema' => sub {
     my $query = Graph::QL::Operation::Query->new(
         name       => 'findAllBobs',
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
+                args       => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                 selections => [
-                    Graph::QL::Operation::Field->new( name => 'foo' ),
+                    Graph::QL::Operation::Selection::Field->new( name => 'foo' ),
                 ]
             )
         ]
@@ -399,14 +404,14 @@ subtest '... validating the query against the schema' => sub {
     my $query = Graph::QL::Operation::Query->new(
         name       => 'findAllBobs',
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name       => 'findPerson',
-                args       => [ Graph::QL::Operation::Field::Argument->new( name => 'name', value => 'Bob' ) ],
+                args       => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'name', value => 'Bob' ) ],
                 selections => [
-                    Graph::QL::Operation::Field->new(
+                    Graph::QL::Operation::Selection::Field->new(
                         name       => 'birth',
                         selections => [
-                            Graph::QL::Operation::Field->new( name => 'years' ),
+                            Graph::QL::Operation::Selection::Field->new( name => 'years' ),
                         ]
                     ),
                 ]
@@ -435,10 +440,10 @@ subtest '... validating the query against the schema' => sub {
 
     my $query = Graph::QL::Operation::Query->new(
         selections => [
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findAllBobs',
             ),
-            Graph::QL::Operation::Field->new(
+            Graph::QL::Operation::Selection::Field->new(
                 name => 'findOneAlice',
             )
         ]

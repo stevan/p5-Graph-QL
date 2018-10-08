@@ -12,8 +12,8 @@ use Graph::QL::AST::Node::OperationDefinition;
 use Graph::QL::AST::Node::Name;
 use Graph::QL::AST::Node::SelectionSet;
 
-use Graph::QL::Operation::Field;
-use Graph::QL::Operation::Fragment::Spread;
+use Graph::QL::Operation::Selection::Field;
+use Graph::QL::Operation::Selection::FragmentSpread;
 
 use Graph::QL::Core::OperationKind;
 
@@ -45,8 +45,8 @@ sub BUILD ($self, $params) {
         $self->{_selections} = [
             map {
                 $_->isa('Graph::QL::AST::Node::FragmentSpread')
-                    ? Graph::QL::Operation::Fragment::Spread->new( ast => $_ )
-                    : Graph::QL::Operation::Field->new( ast => $_ )
+                    ? Graph::QL::Operation::Selection::FragmentSpread->new( ast => $_ )
+                    : Graph::QL::Operation::Selection::Field->new( ast => $_ )
             } $self->{_ast}->selection_set->selections->@*
         ];
     }
@@ -76,12 +76,12 @@ sub BUILD ($self, $params) {
     }
 }
 
+sub operation_kind ($self) { $self->{_ast}->operation }
+
 sub ast        : ro(_);
 sub has_name   : predicate(_);
 sub name       : ro(_);
 sub selections : ro(_);
-
-sub operation_kind ($self) { $self->{_ast}->operation }
 
 ## ...
 

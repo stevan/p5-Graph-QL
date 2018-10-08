@@ -11,8 +11,8 @@ use Graph::QL::Util::Assertions 'assert_isa', 'assert_does', 'assert_non_empty';
 use Graph::QL::AST::Node::FragmentDefinition;
 use Graph::QL::AST::Node::Name;
 
-use Graph::QL::Operation::Field;
-use Graph::QL::Operation::Fragment::Spread;
+use Graph::QL::Operation::Selection::Field;
+use Graph::QL::Operation::Selection::FragmentSpread;
 
 our $VERSION = '0.01';
 
@@ -45,9 +45,9 @@ sub BUILD ($self, $params) {
         $self->{_selections} = [
             map {
                 $_->isa('Graph::QL::AST::Node::FragmentSpread')
-                    ? Graph::QL::Operation::Fragment::Spread->new( ast => $_ )
-                    : Graph::QL::Operation::Field->new( ast => $_ )
-            } $self->_operation_definition->selection_set->selections->@*
+                    ? Graph::QL::Operation::Selection::FragmentSpread->new( ast => $_ )
+                    : Graph::QL::Operation::Selection::Field->new( ast => $_ )
+            } $self->{_ast}->selection_set->selections->@*
         ];
     }
     else {

@@ -14,8 +14,8 @@ BEGIN {
     use_ok('Graph::QL::Parser');
 
     use_ok('Graph::QL::Operation::Query');
-    use_ok('Graph::QL::Operation::Field');
-    use_ok('Graph::QL::Operation::Field::Argument');
+    use_ok('Graph::QL::Operation::Selection::Field');
+    use_ok('Graph::QL::Operation::Selection::Field::Argument');
 
     use_ok('Graph::QL::AST::Node::Document');
     use_ok('Graph::QL::AST::Node::OperationDefinition');
@@ -83,15 +83,15 @@ eq_or_diff($node_2->TO_JSON, $ast->{definitions}->[0], '... round-tripped the as
 my $query = Graph::QL::Operation::Query->new(
     name       => 'queryName',
     selections => [
-        Graph::QL::Operation::Field->new(
+        Graph::QL::Operation::Selection::Field->new(
             name       => 'find',
-            args       => [ Graph::QL::Operation::Field::Argument->new( name => 'id', value => 4 ) ],
+            args       => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'id', value => 4 ) ],
             selections => [
-                Graph::QL::Operation::Field->new( name => 'id' ),
-                Graph::QL::Operation::Field->new( name => 'name' ),
-                Graph::QL::Operation::Field->new(
+                Graph::QL::Operation::Selection::Field->new( name => 'id' ),
+                Graph::QL::Operation::Selection::Field->new( name => 'name' ),
+                Graph::QL::Operation::Selection::Field->new(
                     name => 'desc',
-                    args => [ Graph::QL::Operation::Field::Argument->new( name => 'length', value => 255 ) ]
+                    args => [ Graph::QL::Operation::Selection::Field::Argument->new( name => 'length', value => 255 ) ]
                 ),
             ]
         )
