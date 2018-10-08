@@ -1,4 +1,4 @@
-package Graph::QL::Core::Selection;
+package Graph::QL::Operation::Selection;
 # ABSTRACT: Abtraction around Selections
 use v5.24;
 use warnings;

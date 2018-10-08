@@ -56,8 +56,8 @@ sub BUILD ($self, $params) {
             unless assert_non_empty( $self->{_selections} );
 
         foreach ( $self->{_selections}->@* ) {
-           throw('Every member of `selections` must be an instance that does `Graph::QL::Core::Selection`, not `%s`', $_)
-                unless assert_does( $_, 'Graph::QL::Core::Selection' );
+           throw('Every member of `selections` must be an instance that does `Graph::QL::Operation::Selection`, not `%s`', $_)
+                unless assert_does( $_, 'Graph::QL::Operation::Selection' );
         }
 
         # TODO:
