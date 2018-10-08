@@ -46,7 +46,17 @@ sub name : ro;
 sub all_fields : ro(fields);
 
 sub get_field ($self, $name) {
-    (grep $_->name eq $name, $self->{fields}->@*)[0] // undef
+    # coerce query fields into strings ...
+    $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Selection::Field' );
+
+    my ($field) = grep $_->name eq $name, $self->all_fields->@*;
+
+    unless ( $field ) {
+        require Graph::QL::Introspection;
+        ($field) = grep $_->name eq $name, Graph::QL::Introspection::get_introspection_field_resolvers_to_query_resolver();
+    }
+
+    return $field;
 }
 
 1;

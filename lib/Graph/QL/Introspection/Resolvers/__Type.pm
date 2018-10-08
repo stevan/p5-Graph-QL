@@ -18,11 +18,18 @@ sub kind ($type, $, $, $info) {
     return Graph::QL::Schema::TypeKind->get_type_kind_for_schema_type( $type )
 }
 
-sub name        ($type, $, $, $) { $type->name }
+sub name ($type, $, $, $) {
+    return # the introspection doesn't want these to print out names ...
+        if $type->isa('Graph::QL::Schema::Type::NonNull')
+        || $type->isa('Graph::QL::Schema::Type::List');
+
+    return $type->name;
+}
 sub description ($type, $, $, $) { return } # TODO
 
 sub interfaces ($type, $, $, $) {
-    return unless $type->can('interfaces');
+    return    unless $type->can('interfaces');
+    return [] unless $type->has_interfaces;
     return $type->interfaces;
 }
 

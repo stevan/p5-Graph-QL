@@ -165,7 +165,9 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
         },
     );
 
-    return unless $resolved;
+    DEBUG && $self->__log(2, 'Executing query(%s).field(%s) for type.field(%s) resulted in `%s`', $self->get_query->name, $selection->name, $schema_field->name, ref $resolved ? ref $resolved : $resolved );
+
+    return unless defined $resolved;
 
     # TODO
     # we need to test the resolved value
@@ -177,7 +179,7 @@ sub execute_field ($self, $schema_field, $selection, $field_resolver, $initial_v
 
         my $selections = $selection->selections;
 
-        DEBUG && $self->__log(2, 'Executing sub-selections(%s) for query(%s).field(%s) for type.field(%s)', (join ', ' => map $_->name, $selections->@*), $self->{query}->name, $selection->name, $schema_field->name);
+        DEBUG && $self->__log(2, 'Executing sub-selections(%s) for query(%s).field(%s) for type.field(%s)', (join ', ' => map $_->name, $selections->@*), $self->get_query->name, $selection->name, $schema_field->name);
 
         if ( $schema_field->type->isa('Graph::QL::Schema::Type::Named') ) {
             $resolved = $self->_resolve_named_type( $schema_field->type, $selections, $resolved );

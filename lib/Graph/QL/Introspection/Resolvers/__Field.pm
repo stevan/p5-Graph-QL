@@ -4,19 +4,21 @@ use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
+use Graph::QL::Util::JSON;
+
 our $VERSION = '0.01';
 
 sub name        ($field, $, $, $) { $field->name }
 sub description ($type, $, $, $) { return } # TODO
 
 sub args ($field, $, $, $) {
-    return unless $field->has_args;
+    return [] unless $field->has_args;
     return $field->args;
 }
 
 sub type ($field, $, $, $) { $field->type }
 
-sub isDeprecated      ($field, $, $, $) { return } # TODO
+sub isDeprecated      ($field, $, $, $) { Graph::QL::Util::JSON->FALSE } # TODO
 sub deprecationReason ($field, $, $, $) { return } # TODO
 
 1;

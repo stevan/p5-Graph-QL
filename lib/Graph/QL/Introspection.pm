@@ -40,25 +40,15 @@ sub enable_for_schema ($class, $schema, %opts) {
         # ...
         query_type => $query_type,
         types => [
-            _get_introspection_object_for_schema(),
-            (map {
-                $_->name eq $query_type->name
-                    ? _add_introspection_fields_to_query( $_ )
-                    : $_
-            } @types)
+            get_introspection_objects_for_schema(),
+            @types
         ]
     );
 }
 
 sub enable_for_resolvers ($class, $resolvers, %opts) {
 
-    my $query_type_name = $opts{query_type} || 'Query';
-
-    my @types = map {
-        $_->name eq $query_type_name
-            ? _add_introspection_field_resolvers_to_query_resolver( $_ )
-            : $_
-    } $resolvers->all_types->@*;
+    my @types = $resolvers->all_types->@*;
 
     # add the introspection types ...
     push @types => Graph::QL::Resolvers
@@ -69,54 +59,9 @@ sub enable_for_resolvers ($class, $resolvers, %opts) {
     return Graph::QL::Resolvers->new( types => \@types );
 }
 
-## ...
+## fetch the implicit things ...
 
-sub _add_introspection_fields_to_query ($query) {
-
-    return Graph::QL::Schema::Object->new(
-        name   => $query->name,
-        fields => [
-            $query->all_fields->@*,
-            _get_introspection_fields_for_query()
-        ],
-        ($query->has_interfaces ? (interfaces => $query->interfaces) : ()),
-    );
-}
-
-
-sub _add_introspection_field_resolvers_to_query_resolver ( $type_resolver ) {
-
-    return Graph::QL::Resolvers::TypeResolver->new(
-        name => $type_resolver->name,
-        fields => [
-            $type_resolver->all_fields->@*,
-            _get_introspection_field_resolvers_for_query()
-        ]
-    )
-}
-
-## ...
-
-sub _get_introspection_field_resolvers_for_query () {
-
-    # __schema    : __Schema!
-    # __type (name : String!) : __Type
-
-    state $__schema = Graph::QL::Resolvers::FieldResolver->new( 
-        name => '__schema',  
-        code => sub ($, $, $, $info) { $info->{schema} } 
-    );
-
-    
-    my $__type = Graph::QL::Resolvers::FieldResolver->new(
-        name => '__type',
-        code => sub ($, $args, $, $info) { $info->{schema}->lookup_type( $args->{name} ) }
-    );
-
-    return ($__schema, $__type)
-}
-
-sub _get_introspection_fields_for_query () {
+sub get_introspection_fields_for_query () {
 
     ## ...
     # extend type Query {
@@ -124,41 +69,57 @@ sub _get_introspection_fields_for_query () {
     #     __type (name : String!) : __Type
     # }
 
-    state $__schema = Graph::QL::Schema::Field->new( 
-        name => '__schema', 
-        type => Graph::QL::Util::Schemas::construct_type_from_name('__Schema!') 
+    state $__schema = Graph::QL::Schema::Field->new(
+        name => '__schema',
+        type => Graph::QL::Util::Schemas::construct_type_from_name('__Schema!')
     );
-    
+
     state $__type = Graph::QL::Schema::Field->new(
         name => '__type',
         type => Graph::QL::Util::Schemas::construct_type_from_name('__Type'),
-        args => [ 
-            Graph::QL::Schema::InputObject::InputValue->new( 
-                name => 'name', 
-                type => Graph::QL::Util::Schemas::construct_type_from_name('String!') 
-            ) 
+        args => [
+            Graph::QL::Schema::InputObject::InputValue->new(
+                name => 'name',
+                type => Graph::QL::Util::Schemas::construct_type_from_name('String!')
+            )
         ]
     );
 
     return ($__schema, $__type);
 }
 
+sub get_introspection_field_resolvers_to_query_resolver () {
 
-sub _get_introspection_object_for_schema () {
+    state $__schema = Graph::QL::Resolvers::FieldResolver->new(
+        name => '__schema',
+        code => sub ($, $, $, $info) { $info->{schema} }
+    );
+
+    my $__type = Graph::QL::Resolvers::FieldResolver->new(
+        name => '__type',
+        code => sub ($, $args, $, $info) { $info->{schema}->lookup_type( $args->{name} ) }
+    );
+
+    return ($__schema, $__type);
+}
+
+sub get_introspection_objects_for_schema () {
     ## ...
     # type __Schema {
     #     types            : [__Type!]!
     #     queryType        : __Type!
     #     mutationType     : __Type!
     #     subscriptionType : __Type!
+    #     directives       : [__Directive!]!
     # }
     state $__Schema = Graph::QL::Schema::Object->new(
         name => '__Schema',
         fields => [
             Graph::QL::Schema::Field->new( name => 'types',            type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]!') ),
             Graph::QL::Schema::Field->new( name => 'queryType',        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
-            Graph::QL::Schema::Field->new( name => 'mutationType',     type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
-            Graph::QL::Schema::Field->new( name => 'subscriptionType', type => Graph::QL::Util::Schemas::construct_type_from_name('__Type!') ),
+            Graph::QL::Schema::Field->new( name => 'mutationType',     type => Graph::QL::Util::Schemas::construct_type_from_name('__Type') ),
+            Graph::QL::Schema::Field->new( name => 'subscriptionType', type => Graph::QL::Util::Schemas::construct_type_from_name('__Type') ),
+            Graph::QL::Schema::Field->new( name => 'directives',       type => Graph::QL::Util::Schemas::construct_type_from_name('[__Directive!]!') ),
         ]
     );
 
@@ -181,32 +142,33 @@ sub _get_introspection_object_for_schema () {
             Graph::QL::Schema::Field->new( name => 'kind',          type => Graph::QL::Util::Schemas::construct_type_from_name('__TypeKind!') ),
             Graph::QL::Schema::Field->new( name => 'name',          type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
             Graph::QL::Schema::Field->new( name => 'description',   type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
-            Graph::QL::Schema::Field->new( name => 'interfaces',    type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
-            Graph::QL::Schema::Field->new( name => 'possibleTypes', type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
-            Graph::QL::Schema::Field->new( name => 'inputFields',   type => Graph::QL::Util::Schemas::construct_type_from_name('[__InputValue!]') ),
-            Graph::QL::Schema::Field->new( name => 'ofType',        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type') ),
             Graph::QL::Schema::Field->new(
                 name => 'fields',
                 type => Graph::QL::Util::Schemas::construct_type_from_name('[__Field!]'),
-                args => [ 
-                    Graph::QL::Schema::InputObject::InputValue->new( 
-                        name => 'includeDeprecated', 
-                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'), 
-                        default_value => \0 
-                    ) 
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name => 'includeDeprecated',
+                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'),
+                        default_value => 'false'
+                    )
                 ],
             ),
+            Graph::QL::Schema::Field->new( name => 'interfaces',    type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
+            Graph::QL::Schema::Field->new( name => 'possibleTypes', type => Graph::QL::Util::Schemas::construct_type_from_name('[__Type!]') ),
             Graph::QL::Schema::Field->new(
                 name => 'enumValues',
                 type => Graph::QL::Util::Schemas::construct_type_from_name('[__EnumValue!]'),
                 args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( 
-                        name => 'includeDeprecated', 
-                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'), 
-                        default_value => \0 
-                    ) 
+                    Graph::QL::Schema::InputObject::InputValue->new(
+                        name => 'includeDeprecated',
+                        type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'),
+                        default_value => 'false'
+                    )
                 ],
             ),
+            Graph::QL::Schema::Field->new( name => 'inputFields',   type => Graph::QL::Util::Schemas::construct_type_from_name('[__InputValue!]') ),
+            Graph::QL::Schema::Field->new( name => 'ofType',        type => Graph::QL::Util::Schemas::construct_type_from_name('__Type') ),
+
         ]
     );
 
@@ -293,13 +255,78 @@ sub _get_introspection_object_for_schema () {
         ]
     );
 
+    ## ...
+    # type __Directive {
+    #   name: String!
+    #   description: String
+    #   locations: [__DirectiveLocation!]!
+    #   args: [__InputValue!]!
+    # }
+    state $__Directive = Graph::QL::Schema::Object->new(
+        name => '__Directive',
+        fields => [
+            Graph::QL::Schema::Field->new( name => 'name',        type => Graph::QL::Util::Schemas::construct_type_from_name('String!') ),
+            Graph::QL::Schema::Field->new( name => 'description', type => Graph::QL::Util::Schemas::construct_type_from_name('String') ),
+            Graph::QL::Schema::Field->new( name => 'locations',   type => Graph::QL::Util::Schemas::construct_type_from_name('[__DirectiveLocation!]!') ),
+            Graph::QL::Schema::Field->new( name => 'args',        type => Graph::QL::Util::Schemas::construct_type_from_name('[__InputValue!]!') ),
+        ]
+    );
+
+    ## ...
+    # enum __DirectiveLocation {
+    #   QUERY
+    #   MUTATION
+    #   SUBSCRIPTION
+    #   FIELD
+    #   FRAGMENT_DEFINITION
+    #   FRAGMENT_SPREAD
+    #   INLINE_FRAGMENT
+    #   SCHEMA
+    #   SCALAR
+    #   OBJECT
+    #   FIELD_DEFINITION
+    #   ARGUMENT_DEFINITION
+    #   INTERFACE
+    #   UNION
+    #   ENUM
+    #   ENUM_VALUE
+    #   INPUT_OBJECT
+    #   INPUT_FIELD_DEFINITION
+    # }
+    state $__DirectiveLocation = Graph::QL::Schema::Enum->new(
+        name => '__DirectiveLocation',
+        values => [
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'QUERY' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'MUTATION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'SUBSCRIPTION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'FIELD' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'FRAGMENT_DEFINITION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'FRAGMENT_SPREAD' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'INLINE_FRAGMENT' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'SCHEMA' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'SCALAR' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'OBJECT' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'FIELD_DEFINITION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'ARGUMENT_DEFINITION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'INTERFACE' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'UNION' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'ENUM' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'ENUM_VALUE' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'INPUT_OBJECT' ),
+            Graph::QL::Schema::Enum::EnumValue->new( name => 'INPUT_FIELD_DEFINITION' ),
+        ]
+    );
+
+
     return (
         $__Schema,
         $__Type,
+        $__TypeKind,
         $__Field,
         $__InputValue,
         $__EnumValue,
-        $__TypeKind
+        $__Directive,
+        $__DirectiveLocation,
     );
 }
 

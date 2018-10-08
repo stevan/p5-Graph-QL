@@ -122,9 +122,14 @@ sub lookup_field ($self, $name) {
     # coerce query fields into strings ...
     $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Selection::Field' );
 
-    my ($field_ast) = grep $_->name eq $name, $self->all_fields->@*;
+    my ($field) = grep $_->name eq $name, $self->all_fields->@*;
 
-    return $field_ast;
+    unless ( $field ) {
+        require Graph::QL::Introspection;
+        ($field) = grep $_->name eq $name, Graph::QL::Introspection::get_introspection_fields_for_query();
+    }
+
+    return $field;
 }
 
 ## ...
