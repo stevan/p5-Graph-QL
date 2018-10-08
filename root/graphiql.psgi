@@ -72,7 +72,7 @@ builder {
 
         $e->validate;
         if ( $e->has_errors ) {
-            return [ 500, [], [ { errors => [ $e->get_errors ] } ] ];
+            return [ 500, [], [ Graph::QL::Util::JSON::encode( { errors => [ $e->get_errors ] } ) ]];
         }
         else {
             my $result = $e->execute;

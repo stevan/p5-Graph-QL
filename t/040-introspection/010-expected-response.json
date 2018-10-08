@@ -17,13 +17,13 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "[__Type!]!",
                             "ofType": {
                                 "kind": "LIST",
-                                "name": null,
+                                "name": "[__Type!]",
                                 "ofType": {
                                     "kind": "NON_NULL",
-                                    "name": null,
+                                    "name": "__Type!",
                                     "ofType": {
                                         "kind": "OBJECT",
                                         "name": "__Type",
@@ -41,7 +41,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "__Type!",
                             "ofType": {
                                 "kind": "OBJECT",
                                 "name": "__Type",
@@ -81,13 +81,13 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "[__Directive!]!",
                             "ofType": {
                                 "kind": "LIST",
-                                "name": null,
+                                "name": "[__Directive!]",
                                 "ofType": {
                                     "kind": "NON_NULL",
-                                    "name": null,
+                                    "name": "__Directive!",
                                     "ofType": {
                                         "kind": "OBJECT",
                                         "name": "__Directive",
@@ -116,7 +116,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "__TypeKind!",
                             "ofType": {
                                 "kind": "ENUM",
                                 "name": "__TypeKind",
@@ -167,10 +167,10 @@
                         ],
                         "type": {
                             "kind": "LIST",
-                            "name": null,
+                            "name": "[__Field!]",
                             "ofType": {
                                 "kind": "NON_NULL",
-                                "name": null,
+                                "name": "__Field!",
                                 "ofType": {
                                     "kind": "OBJECT",
                                     "name": "__Field",
@@ -187,10 +187,10 @@
                         "args": [],
                         "type": {
                             "kind": "LIST",
-                            "name": null,
+                            "name": "[__Type!]",
                             "ofType": {
                                 "kind": "NON_NULL",
-                                "name": null,
+                                "name": "__Type!",
                                 "ofType": {
                                     "kind": "OBJECT",
                                     "name": "__Type",
@@ -207,10 +207,10 @@
                         "args": [],
                         "type": {
                             "kind": "LIST",
-                            "name": null,
+                            "name": "[__Type!]",
                             "ofType": {
                                 "kind": "NON_NULL",
-                                "name": null,
+                                "name": "__Type!",
                                 "ofType": {
                                     "kind": "OBJECT",
                                     "name": "__Type",
@@ -238,10 +238,10 @@
                         ],
                         "type": {
                             "kind": "LIST",
-                            "name": null,
+                            "name": "[__EnumValue!]",
                             "ofType": {
                                 "kind": "NON_NULL",
-                                "name": null,
+                                "name": "__EnumValue!",
                                 "ofType": {
                                     "kind": "OBJECT",
                                     "name": "__EnumValue",
@@ -258,10 +258,10 @@
                         "args": [],
                         "type": {
                             "kind": "LIST",
-                            "name": null,
+                            "name": "[__InputValue!]",
                             "ofType": {
                                 "kind": "NON_NULL",
-                                "name": null,
+                                "name": "__InputValue!",
                                 "ofType": {
                                     "kind": "OBJECT",
                                     "name": "__InputValue",
@@ -360,7 +360,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "String!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "String",
@@ -388,13 +388,13 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "[__InputValue!]!",
                             "ofType": {
                                 "kind": "LIST",
-                                "name": null,
+                                "name": "[__InputValue!]",
                                 "ofType": {
                                     "kind": "NON_NULL",
-                                    "name": null,
+                                    "name": "__InputValue!",
                                     "ofType": {
                                         "kind": "OBJECT",
                                         "name": "__InputValue",
@@ -412,7 +412,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "__Type!",
                             "ofType": {
                                 "kind": "OBJECT",
                                 "name": "__Type",
@@ -428,7 +428,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "Boolean!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "Boolean",
@@ -467,7 +467,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "String!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "String",
@@ -495,7 +495,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "__Type!",
                             "ofType": {
                                 "kind": "OBJECT",
                                 "name": "__Type",
@@ -534,7 +534,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "String!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "String",
@@ -562,7 +562,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "Boolean!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "Boolean",
@@ -601,7 +601,7 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "String!",
                             "ofType": {
                                 "kind": "SCALAR",
                                 "name": "String",
@@ -629,13 +629,13 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "[__DirectiveLocation!]!",
                             "ofType": {
                                 "kind": "LIST",
-                                "name": null,
+                                "name": "[__DirectiveLocation!]",
                                 "ofType": {
                                     "kind": "NON_NULL",
-                                    "name": null,
+                                    "name": "__DirectiveLocation!",
                                     "ofType": {
                                         "kind": "ENUM",
                                         "name": "__DirectiveLocation",
@@ -653,13 +653,13 @@
                         "args": [],
                         "type": {
                             "kind": "NON_NULL",
-                            "name": null,
+                            "name": "[__InputValue!]!",
                             "ofType": {
                                 "kind": "LIST",
-                                "name": null,
+                                "name": "[__InputValue!]",
                                 "ofType": {
                                     "kind": "NON_NULL",
-                                    "name": null,
+                                    "name": "__InputValue!",
                                     "ofType": {
                                         "kind": "OBJECT",
                                         "name": "__InputValue",
