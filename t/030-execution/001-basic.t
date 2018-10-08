@@ -13,6 +13,8 @@ use Time::Piece;
 BEGIN {
     use_ok('Graph::QL::Schema');
 
+    use_ok('Graph::QL::Util::Schemas');
+
     use_ok('Graph::QL::Schema::Type::List');
     use_ok('Graph::QL::Schema::Object');
     use_ok('Graph::QL::Schema::Scalar');
@@ -22,8 +24,10 @@ BEGIN {
 
     use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Operation::Query');
+    use_ok('Graph::QL::Operation::Fragment');
     use_ok('Graph::QL::Operation::Selection::Field');
     use_ok('Graph::QL::Operation::Selection::Field::Argument');
+    use_ok('Graph::QL::Operation::Selection::FragmentSpread');
 
     use_ok('Graph::QL::Execution::QueryValidator');
     use_ok('Graph::QL::Execution::ExecuteQuery');
@@ -151,6 +155,32 @@ subtest '... validating the query against the schema' => sub {
 
     my $operation = Graph::QL::Operation->new(
         definitions => [
+            Graph::QL::Operation::Fragment->new(
+                name           => 'BirthDay',
+                type_condition => Graph::QL::Util::Schemas::construct_type_from_name('BirthEvent'),
+                selections     => [
+                    Graph::QL::Operation::Selection::Field->new(
+                        name       => 'date',
+                        selections => [
+                            Graph::QL::Operation::Selection::Field->new( name => 'day' ),
+                            Graph::QL::Operation::Selection::Field->new( name => 'month' ),
+                            Graph::QL::Operation::Selection::Field->new( name => 'year' ),
+                        ]
+                    ),
+                ]
+            ),
+            Graph::QL::Operation::Fragment->new(
+                name           => 'YearOfDeath',
+                type_condition => Graph::QL::Util::Schemas::construct_type_from_name('DeathEvent'),
+                selections     => [
+                    Graph::QL::Operation::Selection::Field->new(
+                        name       => 'date',
+                        selections => [
+                            Graph::QL::Operation::Selection::Field->new( name => 'year' ),
+                        ]
+                    ),
+                ]
+            ),
             Graph::QL::Operation::Query->new(
                 name       => 'findPersonNamedWill',
                 selections => [
@@ -162,25 +192,13 @@ subtest '... validating the query against the schema' => sub {
                             Graph::QL::Operation::Selection::Field->new(
                                 name       => 'birth',
                                 selections => [
-                                    Graph::QL::Operation::Selection::Field->new(
-                                        name       => 'date',
-                                        selections => [
-                                            Graph::QL::Operation::Selection::Field->new( name => 'day' ),
-                                            Graph::QL::Operation::Selection::Field->new( name => 'month' ),
-                                            Graph::QL::Operation::Selection::Field->new( name => 'year' ),
-                                        ]
-                                    ),
+                                    Graph::QL::Operation::Selection::FragmentSpread->new( name => 'BirthDay' ),
                                 ]
                             ),
                             Graph::QL::Operation::Selection::Field->new(
                                 name       => 'death',
                                 selections => [
-                                    Graph::QL::Operation::Selection::Field->new(
-                                        name       => 'date',
-                                        selections => [
-                                            Graph::QL::Operation::Selection::Field->new( name => 'year' ),
-                                        ]
-                                    ),
+                                    Graph::QL::Operation::Selection::FragmentSpread->new( name => 'YearOfDeath' ),
                                 ]
                             ),
                         ]
@@ -193,12 +211,7 @@ subtest '... validating the query against the schema' => sub {
                             Graph::QL::Operation::Selection::Field->new(
                                 name       => 'death',
                                 selections => [
-                                    Graph::QL::Operation::Selection::Field->new(
-                                        name       => 'date',
-                                        selections => [
-                                            Graph::QL::Operation::Selection::Field->new( name => 'year' ),
-                                        ]
-                                    ),
+                                    Graph::QL::Operation::Selection::FragmentSpread->new( name => 'YearOfDeath' ),
                                 ]
                             ),
                         ]

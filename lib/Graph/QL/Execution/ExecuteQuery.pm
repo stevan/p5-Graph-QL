@@ -106,8 +106,29 @@ sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initi
 
     DEBUG && $self->__log(1, 'Executing selections for query(%s) for type(%s)', $self->get_query->name, $schema_type->name);
 
+    # TODO:
+    # this code needs to be moved somewhere
+    # to be shared, just not sure how, there
+    # will be a similar version in ExecuteQuery
+    # make sure to refactor that as well.
+    # - SL
+    my @selections;
+    foreach my $s ( $selections->@* ) {
+        if ( $s->isa('Graph::QL::Operation::Selection::Field') ) {
+            push @selections => $s;
+        }
+        else {
+            # TODO:
+            # handle recursive fragments
+            # - SL
+            my $fragment = $self->{operation}->lookup_fragment( $s );
+            # just inline the fragments ...
+            push @selections => $fragment->selections->@*
+        }
+    }
+
     my %results;
-    foreach my $selection ( $selections->@* ) {
+    foreach my $selection ( @selections ) {
         my $response_key = $selection->has_alias ? $selection->alias : $selection->name;
         my $schema_field = $schema_type->lookup_field( $selection );
         my $resolver     = $type_resolver->get_field( $schema_field->name );

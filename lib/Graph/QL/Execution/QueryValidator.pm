@@ -56,7 +56,6 @@ sub validate ($self) {
         $query->operation_kind
     ) unless assert_isa( $root_type, 'Graph::QL::Schema::Object' );
 
-
     foreach my $query_field ( $query->selections->@* ) {
         # and use it to find the field in the (schema) Query object ...
         if ( my $schema_field = $root_type->lookup_field( $query_field ) ) {
@@ -251,9 +250,36 @@ sub _validate_selections ($self, $schema_field, $query_field, $recursion_depth=0
         'Validating schema.field(%s).selections and query.field(%s).selections' => $schema_field->name, $query_field->name
     ) if DEBUG;
 
+    # TODO:
+    # this code needs to be moved somewhere
+    # to be shared, just not sure how, there
+    # will be a similar version in ExecuteQuery
+    # make sure to refactor that as well.
+    # - SL
+    my @selections;
+    foreach my $s ( $query_field->selections->@* ) {
+        if ( $s->isa('Graph::QL::Operation::Selection::Field') ) {
+            push @selections => $s;
+        }
+        else {
+            # TODO:
+            # handle recursive fragments
+            # - SL
+            my $fragment = $self->{operation}->lookup_fragment( $s );
+
+            return $self->_add_error(
+                'Unable to find the `fragment(%s)` for `query.selection.field(%s)` for the `schema.object(%s)` type', $s->name, $s->name, $schema_object->name
+            ) unless defined $fragment;
+
+            # just inline the fragments ...
+            push @selections => $fragment->selections->@*
+        }
+    }
+
     # verify that the selection will work,
     # foreach of the selected fields, we must ...
-    foreach my $query_selection_field ( $query_field->selections->@* ) {
+    foreach my $query_selection_field ( @selections ) {
+
         # find the field from the schema object ...
         my $selected_schema_field = $schema_object->lookup_field( $query_selection_field );
 

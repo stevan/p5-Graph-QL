@@ -79,7 +79,7 @@ sub lookup_fragment ($self, $name) {
     # coerce named types into strings ...
     $name = $name->name if assert_isa( $name, 'Graph::QL::Operation::Selection::FragmentSpread' );
 
-    my ($fragment) = grep $_->name eq $name, $self->get_fragments->@*;
+    my ($fragment) = grep $_->name eq $name, $self->get_fragments;
 
     return $fragment;
 }
