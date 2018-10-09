@@ -89,6 +89,7 @@ my $operation = Graph::QL::Operation->new_from_source(qq[
                 ...DeathPlace
             }
         }
+    }
 
     fragment BirthYearAndPlace on BirthEvent {
         place
@@ -100,7 +101,7 @@ my $operation = Graph::QL::Operation->new_from_source(qq[
     }
 ]);
 
-warn $schema->to_type_language;
+#warn $schema->to_type_language;
 
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => $schema,
@@ -157,7 +158,7 @@ eq_or_diff(
     '... got the exected results'
 );
 
-warn Dumper $result;
+#warn Dumper $result;
 
 done_testing;
 
