@@ -8,6 +8,7 @@ use decorators ':accessors', ':constructor';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions 'assert_isa', 'assert_does', 'assert_arrayref';
 use Graph::QL::Util::AST;
+use Graph::QL::Util::Schemas;
 
 use Graph::QL::Core::OperationKind;
 
@@ -21,9 +22,11 @@ use Graph::QL::Schema::Type::Named;
 use Graph::QL::Schema::Enum;
 use Graph::QL::Schema::Union;
 use Graph::QL::Schema::InputObject;
+use Graph::QL::Schema::InputObject::InputValue;
 use Graph::QL::Schema::Interface;
 use Graph::QL::Schema::Object;
 use Graph::QL::Schema::Scalar;
+use Graph::QL::Schema::Field;
 
 use Graph::QL::Schema::BuiltIn::Scalars;
 
@@ -41,6 +44,63 @@ use slots (
 sub new_from_source ($class, $source) {
     require Graph::QL::Parser;
     $class->new( ast => Graph::QL::Parser->parse_schema( $source ) )
+}
+
+sub new_from_namespace ($class, $root_namespace) {
+
+    $root_namespace = $root_namespace.'::' unless $root_namespace =~ /\:\:$/;
+
+    my @namespaces;
+    {
+        no strict 'refs';
+        @namespaces = map s/\:\:$//r => grep /\:\:$/ => keys %{ $root_namespace };
+    }
+
+    throw('Cannot find any types within the namespace (%s), perhaps you forgot to load them', $root_namespace)
+        unless @namespaces;
+
+    my @types;
+    foreach my $namespace ( @namespaces ) {
+        my $r = MOP::Role->new( "${root_namespace}${namespace}" );
+
+        my @fields = 
+            map {
+                my ($field) = $_->get_code_attributes('Field');
+
+                my @args;
+                if ( $_->has_code_attributes('Arguments') ) {
+                    my ($arguments) = $_->get_code_attributes('Arguments');
+
+                    foreach my $arg ( $arguments->args->@* ) {
+                        my ($name, $type) = split /\s*\:\s*/ => $arg;
+                        push @args => Graph::QL::Schema::InputObject::InputValue->new(
+                            name => $name,
+                            type => Graph::QL::Util::Schemas::construct_type_from_name( $type ),
+                        );
+                    }
+                }
+
+                Graph::QL::Schema::Field->new(
+                    name => $_->name,
+                    type => Graph::QL::Util::Schemas::construct_type_from_name( $field->args->[0] ),
+                    (@args ? (args => \@args) : ())
+                );
+            } grep { 
+                $_->has_code_attributes('Field') 
+            } $r->methods;
+
+        push @types => Graph::QL::Schema::Object->new(
+            name   => $namespace,
+            fields => \@fields
+        );
+    }
+
+    my ($query_type) = grep $_->name eq 'Query', @types;
+
+    return $class->new( 
+        types      => \@types,
+        query_type => Graph::QL::Util::Schemas::construct_type_from_name( $query_type->name ),
+    );
 }
 
 sub BUILDARGS : strict(
