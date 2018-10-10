@@ -1,4 +1,4 @@
-package Graph::QL::Resolvers;
+package Graph::QL::Resolver::SchemaResolver;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
@@ -8,8 +8,8 @@ use decorators ':accessors', ':constructor';
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions 'assert_isa', 'assert_arrayref';
 
-use Graph::QL::Resolvers::TypeResolver;
-use Graph::QL::Resolvers::FieldResolver;
+use Graph::QL::Resolver::TypeResolver;
+use Graph::QL::Resolver::FieldResolver;
 
 use constant DEBUG => $ENV{GRAPHQL_RESOLVERS_DEBUG} // 0;
 
@@ -39,12 +39,12 @@ sub new_from_namespace ($class, $root_namespace) {
 	foreach my $namespace ( @namespaces ) {
 		my $r = MOP::Role->new( "${root_namespace}${namespace}" );
 
-		my @fields = map Graph::QL::Resolvers::FieldResolver->new(
+		my @fields = map Graph::QL::Resolver::FieldResolver->new(
 			name => $_->name,
 			code => $_->body,
 		) => $r->methods;
 
-		push @types => Graph::QL::Resolvers::TypeResolver->new(
+		push @types => Graph::QL::Resolver::TypeResolver->new(
 			name   => $namespace,
 			fields => \@fields
 		);
@@ -63,8 +63,8 @@ sub BUILD ($self, $) {
         unless assert_arrayref( $self->{types} );
 
     foreach ( $self->{types}->@* ) {
-        throw('The types in `types` must all be of type(Graph::QL::Resolvers::TypeResolver), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::Resolvers::TypeResolver');
+        throw('The types in `types` must all be of type(Graph::QL::Resolver::TypeResolver), not `%s`', $_ )
+            unless assert_isa( $_, 'Graph::QL::Resolver::TypeResolver');
     }
 }
 

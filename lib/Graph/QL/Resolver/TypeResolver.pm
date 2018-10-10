@@ -1,4 +1,4 @@
-package Graph::QL::Resolvers::TypeResolver;
+package Graph::QL::Resolver::TypeResolver;
 # ABSTRACT: GraphQL in Perl
 use v5.24;
 use warnings;
@@ -34,8 +34,8 @@ sub BUILD ($self, $) {
         unless assert_arrayref( $self->{fields} );
 
     foreach ( $self->{fields}->@* ) {
-        throw('The fields in `fields` must all be of type(Graph::QL::Resolvers::FieldResolver), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::Resolvers::FieldResolver');
+        throw('The fields in `fields` must all be of type(Graph::QL::Resolver::FieldResolver), not `%s`', $_ )
+            unless assert_isa( $_, 'Graph::QL::Resolver::FieldResolver');
     }
 }
 
