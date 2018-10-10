@@ -14,9 +14,9 @@ use Graph::QL::Operation;
 use Graph::QL::Introspection;
 use Graph::QL::Execution::ExecuteQuery;
 
-use Graph::QL::Resolvers;
-use Graph::QL::Resolvers::TypeResolver;
-use Graph::QL::Resolvers::FieldResolver;
+use Graph::QL::Resolver::SchemaResolver;
+use Graph::QL::Resolver::TypeResolver;
+use Graph::QL::Resolver::FieldResolver;
 
 use Graph::QL::Util::JSON;
 
@@ -31,12 +31,12 @@ my $schema = Graph::QL::Schema->new_from_source(q[
     schema { query : Query }
 ]);
 
-my $resolvers = Graph::QL::Resolvers->new(
+my $resolvers = Graph::QL::Resolver::SchemaResolver->new(
     types => [
-        Graph::QL::Resolvers::TypeResolver->new(
+        Graph::QL::Resolver::TypeResolver->new(
             name   => 'Query',
             fields => [
-                Graph::QL::Resolvers::FieldResolver->new( name => 'hello', code => sub ($, $, $, $) { 'Hello World' } )
+                Graph::QL::Resolver::FieldResolver->new( name => 'hello', code => sub ($, $, $, $) { 'Hello World' } )
             ]
         )
     ]

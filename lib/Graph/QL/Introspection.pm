@@ -51,12 +51,12 @@ sub enable_for_resolvers ($class, $resolvers, %opts) {
     my @types = $resolvers->all_types->@*;
 
     # add the introspection types ...
-    push @types => Graph::QL::Resolvers
+    push @types => Graph::QL::Resolver::SchemaResolver
                         ->new_from_namespace('Graph::QL::Introspection::Resolvers')
                         ->all_types
                         ->@*;
 
-    return Graph::QL::Resolvers->new( types => \@types );
+    return Graph::QL::Resolver::SchemaResolver->new( types => \@types );
 }
 
 ## fetch the implicit things ...
@@ -90,12 +90,12 @@ sub get_introspection_fields_for_query () {
 
 sub get_introspection_field_resolvers_to_query_resolver () {
 
-    state $__schema = Graph::QL::Resolvers::FieldResolver->new(
+    state $__schema = Graph::QL::Resolver::FieldResolver->new(
         name => '__schema',
         code => sub ($, $, $, $info) { $info->{schema} }
     );
 
-    my $__type = Graph::QL::Resolvers::FieldResolver->new(
+    my $__type = Graph::QL::Resolver::FieldResolver->new(
         name => '__type',
         code => sub ($, $args, $, $info) { $info->{schema}->lookup_type( $args->{name} ) }
     );

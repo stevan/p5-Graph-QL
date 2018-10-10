@@ -11,10 +11,10 @@ use Test::Fatal;
 use Data::Dumper;
 
 BEGIN {
-    use_ok('Graph::QL');    
+    use_ok('Graph::QL');
     use_ok('Graph::QL::Schema');
     use_ok('Graph::QL::Operation');
-    use_ok('Graph::QL::Resolvers');    
+    use_ok('Graph::QL::Resolver::SchemaResolver');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 }
 
@@ -75,7 +75,7 @@ package MyApp::Schema::Person {
 }
 
 my $schema    = Graph::QL::Schema->new_from_namespace( 'MyApp::Schema' );
-my $resolvers = Graph::QL::Resolvers->new_from_namespace( 'MyApp::Schema' );
+my $resolvers = Graph::QL::Resolver::SchemaResolver->new_from_namespace( 'MyApp::Schema' );
 my $operation = Graph::QL::Operation->new_from_source(qq[
     {
         findPerson(name:"Jackson Pollock") {
@@ -128,7 +128,7 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
                 deathplace  => 'Springs, New York, U.S.',
             }
         ]
-    },    
+    },
 );
 isa_ok($e, 'Graph::QL::Execution::ExecuteQuery');
 
@@ -138,15 +138,15 @@ ok(!$e->has_errors, '... no errors have been be found');
 my $result = $e->execute;
 
 eq_or_diff(
-    $result, 
+    $result,
     {
         findPerson => [
             {
                 name        => 'Jackson Pollock',
                 nationality => 'United States',
-                gender      => 'Male',                
+                gender      => 'Male',
                 birth => {
-                    date  => { year  => 1912 },                    
+                    date  => { year  => 1912 },
                     place => 'Cody, Wyoming, U.S.',
                 },
                 death => {

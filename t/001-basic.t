@@ -16,9 +16,9 @@ BEGIN {
     use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
-    use_ok('Graph::QL::Resolvers');
-    use_ok('Graph::QL::Resolvers::TypeResolver');
-    use_ok('Graph::QL::Resolvers::FieldResolver');
+    use_ok('Graph::QL::Resolver::SchemaResolver');
+    use_ok('Graph::QL::Resolver::TypeResolver');
+    use_ok('Graph::QL::Resolver::FieldResolver');
 }
 
 my $schema = Graph::QL::Schema->new_from_source(q[
@@ -59,7 +59,7 @@ my $schema = Graph::QL::Schema->new_from_source(q[
     }
 ]);
 
-package My::Graph::QL::Resolvers::Query {
+package My::Schema::Resolvers::Query {
     use v5.24;
     use warnings;
     use experimental 'signatures', 'postderef';
@@ -74,7 +74,7 @@ package My::Graph::QL::Resolvers::Query {
     }
 }
 
-package My::Graph::QL::Resolvers::Person {
+package My::Schema::Resolvers::Person {
     use v5.24;
     use warnings;
     use experimental 'signatures', 'postderef';
@@ -86,7 +86,7 @@ package My::Graph::QL::Resolvers::Person {
     sub death       ($data, $, $, $) { $data }
 }
 
-package My::Graph::QL::Resolvers::BirthEvent {
+package My::Schema::Resolvers::BirthEvent {
     use v5.24;
     use warnings;
     use experimental 'signatures', 'postderef';
@@ -95,7 +95,7 @@ package My::Graph::QL::Resolvers::BirthEvent {
     sub place ($data, $, $, $) { $data->{birthplace} }
 }
 
-package My::Graph::QL::Resolvers::DeathEvent {
+package My::Schema::Resolvers::DeathEvent {
     use v5.24;
     use warnings;
     use experimental 'signatures', 'postderef';
@@ -104,7 +104,7 @@ package My::Graph::QL::Resolvers::DeathEvent {
     sub place ($data, $, $, $) { $data->{deathplace} }
 }
 
-package My::Graph::QL::Resolvers::Date {
+package My::Schema::Resolvers::Date {
     use v5.24;
     use warnings;
     use experimental 'signatures', 'postderef';
@@ -146,7 +146,7 @@ my $operation = Graph::QL::Operation->new_from_source(q[
 my $e = Graph::QL::Execution::ExecuteQuery->new(
     schema    => $schema,
     operation => $operation,
-    resolvers => Graph::QL::Resolvers->new_from_namespace('My::Graph::QL::Resolvers'),
+    resolvers => Graph::QL::Resolver::SchemaResolver->new_from_namespace('My::Schema::Resolvers'),
     context   => {
         people => [
             {

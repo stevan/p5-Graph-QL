@@ -16,9 +16,9 @@ BEGIN {
     use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
-    use_ok('Graph::QL::Resolvers');
-    use_ok('Graph::QL::Resolvers::TypeResolver');
-    use_ok('Graph::QL::Resolvers::FieldResolver');
+    use_ok('Graph::QL::Resolver::SchemaResolver');
+    use_ok('Graph::QL::Resolver::TypeResolver');
+    use_ok('Graph::QL::Resolver::FieldResolver');
 }
 
 my $schema = Graph::QL::Schema->new_from_source(q[
@@ -113,48 +113,48 @@ my $e = Graph::QL::Execution::ExecuteQuery->new(
             }
         ]
     },
-    resolvers => Graph::QL::Resolvers->new(
+    resolvers => Graph::QL::Resolver::SchemaResolver->new(
         types => [
-            Graph::QL::Resolvers::TypeResolver->new(
+            Graph::QL::Resolver::TypeResolver->new(
                 name   => 'Query',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'getAllPeople', code => sub ($, $, $context, $) { $context->{people} } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'findPerson',   code => sub ($, $args, $context, $) {
+                    Graph::QL::Resolver::FieldResolver->new( name => 'getAllPeople', code => sub ($, $, $context, $) { $context->{people} } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'findPerson',   code => sub ($, $args, $context, $) {
                         my $name = $args->{name};
                         return [ grep { $_->{displayname} =~ /$name/ } $context->{people}->@* ]
                     }),
                 ]
             ),
-            Graph::QL::Resolvers::TypeResolver->new(
+            Graph::QL::Resolver::TypeResolver->new(
                 name   => 'Person',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'name',        code => sub ($data, $, $, $) { $data->{displayname} } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'nationality', code => sub ($data, $, $, $) { $data->{culture}     } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'gender',      code => sub ($data, $, $, $) { $data->{gender}      } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'birth',       code => sub ($data, $, $, $) { $data } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'death',       code => sub ($data, $, $, $) { $data } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'name',        code => sub ($data, $, $, $) { $data->{displayname} } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'nationality', code => sub ($data, $, $, $) { $data->{culture}     } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'gender',      code => sub ($data, $, $, $) { $data->{gender}      } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'birth',       code => sub ($data, $, $, $) { $data } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'death',       code => sub ($data, $, $, $) { $data } ),
                 ]
             ),
-            Graph::QL::Resolvers::TypeResolver->new(
+            Graph::QL::Resolver::TypeResolver->new(
                 name   => 'BirthEvent',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'date',  code => sub ($data, $, $, $) { Time::Piece->strptime( $data->{datebegin}, '%B %d, %Y' ) } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'place', code => sub ($data, $, $, $) { $data->{birthplace} } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'date',  code => sub ($data, $, $, $) { Time::Piece->strptime( $data->{datebegin}, '%B %d, %Y' ) } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'place', code => sub ($data, $, $, $) { $data->{birthplace} } ),
                 ]
             ),
-            Graph::QL::Resolvers::TypeResolver->new(
+            Graph::QL::Resolver::TypeResolver->new(
                 name   => 'DeathEvent',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'date',  code => sub ($data, $, $, $) { Time::Piece->strptime( $data->{dateend}, '%B %d, %Y' ) } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'place', code => sub ($data, $, $, $) { $data->{deathplace} } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'date',  code => sub ($data, $, $, $) { Time::Piece->strptime( $data->{dateend}, '%B %d, %Y' ) } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'place', code => sub ($data, $, $, $) { $data->{deathplace} } ),
                 ]
             ),
-            Graph::QL::Resolvers::TypeResolver->new(
+            Graph::QL::Resolver::TypeResolver->new(
                 name   => 'Date',
                 fields => [
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'day',   code => sub ($data, $, $, $) { $data->mday      } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'month', code => sub ($data, $, $, $) { $data->fullmonth } ),
-                    Graph::QL::Resolvers::FieldResolver->new( name => 'year',  code => sub ($data, $, $, $) { $data->year      } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'day',   code => sub ($data, $, $, $) { $data->mday      } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'month', code => sub ($data, $, $, $) { $data->fullmonth } ),
+                    Graph::QL::Resolver::FieldResolver->new( name => 'year',  code => sub ($data, $, $, $) { $data->year      } ),
                 ]
             )
         ]

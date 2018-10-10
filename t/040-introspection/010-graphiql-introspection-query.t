@@ -16,9 +16,9 @@ BEGIN {
     use_ok('Graph::QL::Operation');
     use_ok('Graph::QL::Execution::ExecuteQuery');
 
-    use_ok('Graph::QL::Resolvers');
-    use_ok('Graph::QL::Resolvers::TypeResolver');
-    use_ok('Graph::QL::Resolvers::FieldResolver');
+    use_ok('Graph::QL::Resolver::SchemaResolver');
+    use_ok('Graph::QL::Resolver::TypeResolver');
+    use_ok('Graph::QL::Resolver::FieldResolver');
     use_ok('Graph::QL::Schema::TypeKind');
 
     use_ok('Graph::QL::Introspection');
@@ -35,12 +35,12 @@ my $schema = Graph::QL::Schema->new_from_source(q[
     schema { query : Query }
 ]);
 
-my $resolvers = Graph::QL::Resolvers->new(
+my $resolvers = Graph::QL::Resolver::SchemaResolver->new(
     types => [
-        Graph::QL::Resolvers::TypeResolver->new(
+        Graph::QL::Resolver::TypeResolver->new(
             name   => 'Query',
             fields => [
-                Graph::QL::Resolvers::FieldResolver->new( name => 'hello', code => sub ($, $, $, $) { 'Hello World' } )
+                Graph::QL::Resolver::FieldResolver->new( name => 'hello', code => sub ($, $, $, $) { 'Hello World' } )
             ]
         )
     ]

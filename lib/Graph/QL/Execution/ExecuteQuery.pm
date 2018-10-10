@@ -45,8 +45,8 @@ sub BUILD ($self, $params) {
     # - handle `variables`
     # - handle `context-value`
 
-    throw('The `resolvers` must be a as instance of `Graph::QL::Resolvers`, not `%s`', $self->{resolvers})
-        unless assert_isa( $self->{resolvers}, 'Graph::QL::Resolvers' );
+    throw('The `resolvers` must be a as instance of `Graph::QL::Resolver::SchemaResolver`, not `%s`', $self->{resolvers})
+        unless assert_isa( $self->{resolvers}, 'Graph::QL::Resolver::SchemaResolver' );
 
     if ( $params->{context} ) {
         throw('The `context` must be a defined value, not `%s`', $self->{context})
@@ -134,7 +134,7 @@ sub execute_selections ($self, $schema_type, $selections, $type_resolver, $initi
         my $resolver     = $type_resolver->get_field( $schema_field->name );
 
         throw('Unable to find a resolver for type(%s).field(%s)', $schema_type->name, $schema_field->name)
-            unless assert_isa($resolver, 'Graph::QL::Resolvers::FieldResolver');
+            unless assert_isa($resolver, 'Graph::QL::Resolver::FieldResolver');
 
         $results{ $response_key } = $self->execute_field(
             $schema_field,
