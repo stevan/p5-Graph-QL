@@ -57,6 +57,7 @@ sub guess_literal_to_ast_node ($literal) {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
+    # TODO: Handle ListValue and ObjectValue
 }
 
 # If you know the type, then we can wrap
@@ -87,6 +88,7 @@ sub literal_to_ast_node ($literal, $type) {
     else {
         throw('Do not recognize the expected type(%s), unable to convert to ast-node', $type->name);
     }
+    # TODO: Handle ListValue and ObjectValue
 }
 
 # This is basically just because NullValue does
@@ -118,6 +120,7 @@ sub ast_node_to_type_language ($ast_node) {
     else {
         throw('Do not recognize the expected ast-node(%s), unable to convert to type-language', $ast_node);
     }
+    # TODO: Handle ListValue and ObjectValue
 }
 
 # When a type is referred to, we might need to convert
@@ -222,6 +225,7 @@ sub ast_value_to_schema_type ($ast_value) {
     else {
         throw('Do not recognize the ast-value(%s), unable to convert to schema type', $ast_value);
     }
+    # TODO: Handle ListValue and ObjectValue
 }
 
 ## ----------------------------------------------
