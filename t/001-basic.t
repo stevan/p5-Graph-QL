@@ -118,10 +118,10 @@ my $operation = Graph::QL::Operation->new_from_source(q[
     query TestQuery {
         findPerson( name : "Will" ) {
             name
-            birth {
+            birth_date: birth {
                 ...Birthday
             }
-            death {
+            death_year: death {
                 ...YearOfDeath
             }
         }
@@ -183,14 +183,14 @@ eq_or_diff(
         findPerson => [
             {
                 name  => 'Willem De Kooning',
-                birth => {
+                birth_date => {
                     date => {
                         day   => 24,
                         month => 'April',
                         year  => 1904,
                     }
                 },
-                death => {
+                death_year => {
                     date => {
                         year => 1997
                     }
