@@ -1,19 +1,35 @@
 #!/usr/bin/env perl
 
 # PODNAME: bin/util/generate-ast-classes
-# ABSTRACT: Generate a set of AST classes from the share/ast/ast.ast file
+# ABSTRACT: Generate a set of AST classes from an AST description file
 
 use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
+
 use Data::Dumper;
 
 use List::Util ();
 use Path::Tiny ();
+use HTTP::Tiny ();
 
 use Graph::QL::AST::Node;
 use Graph::QL::Util::Strings;
+use Graph::QL::Util::Errors 'throw';
+
+## ...
+
+use constant DEBUG => $ENV{GRAPHQL_AST_CLASS_GEN_DEBUG} // 0;
+
+# NOTE:
+# We are fetching this particular
+# version of the file since it is
+# the one we know to work, we can
+# control the updating then.
+use constant AST_FILE_URL => 'https://raw.githubusercontent.com/graphql/libgraphqlparser/252b9c768a131739c7777122153e41b36fdc2309/ast/ast.ast';
 
 ## ...
 
@@ -35,15 +51,21 @@ $role_dir->mkpath unless -e $role_dir && -d $role_dir;
 
 ## ...
 
-my @ast_lines = Path::Tiny::path('share/ast/ast.ast')->lines({ chomp => 1 });
+
+my $r = HTTP::Tiny->new->get( AST_FILE_URL );
+
+throw('Unable to download AST file (%s) because ',  AST_FILE_URL, $r->{status}, $r->{reason} )
+    unless $r->{success};
+
+my @ast_lines = split /\n/ => $r->{content};
+
+warn Dumper \@ast_lines if DEBUG;
 
 my (%roles, %classes);
 
 my $current;
 while ( @ast_lines ) {
     my $line = shift @ast_lines;
-
-    #warn $line;
 
     next if $line =~ /^#/;
 
@@ -78,15 +100,15 @@ while ( @ast_lines ) {
             name        => Graph::QL::Util::Strings::camel_to_snake( $name ),
             type        => $type,
             is_plural   => $is_plural,
-            is_nullable => $is_nullable
+            is_nullable => $is_nullable,
         };
     }
 }
 
 ## ...
 
-warn Dumper \%roles;
-warn Dumper \%classes;
+warn Dumper \%roles   if DEBUG;
+warn Dumper \%classes if DEBUG;
 
 foreach my $role ( keys %roles ) {
     $role_dir->child( $role.'.pm' )
@@ -97,6 +119,8 @@ foreach my $class ( keys %classes ) {
     $class_dir->child( $class.'.pm' )
               ->spew( generate_class( $class, $classes{ $class } ) );
 }
+
+say 'All done.';
 
 exit;
 
@@ -265,4 +289,5 @@ sub BUILD ($self, $params) {
 __END__
 ]."\n=pod\n\n=cut\n";
 }
+
 
