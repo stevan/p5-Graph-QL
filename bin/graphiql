@@ -1,13 +1,21 @@
-#!/usr/bin/env perl
+#!/usr/bin/env plackup
+
+# PODNAME: bin/graphiql
+# ABSTRACT: A demo of Graph::QL::Web using the graphiql client
 
 use v5.24;
 use warnings;
 use experimental 'signatures';
 
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
 use Plack;
 use Plack::Builder;
 use Plack::Request;
 use Plack::App::File;
+
+use Graph::QL::Web;
 
 use Graph::QL::Schema;
 use Graph::QL::Operation;
@@ -49,9 +57,9 @@ $resolvers = Graph::QL::Introspection->enable_for_resolvers( $resolvers );
 
 builder {
 
-    mount '/css/graphiql.css'   => Plack::App::File->new( file => './root/static/css/graphiql.css'   )->to_app;
-    mount '/js/graphiql.min.js' => Plack::App::File->new( file => './root/static/js/graphiql.min.js' )->to_app;
-    mount '/index.html'         => Plack::App::File->new( file => './root/static/index.html'         )->to_app;
+    mount '/css/graphiql.css'   => Plack::App::File->new( file => $FindBin::Bin.'/../root/static/css/graphiql.css'   )->to_app;
+    mount '/js/graphiql.min.js' => Plack::App::File->new( file => $FindBin::Bin.'/../root/static/js/graphiql.min.js' )->to_app;
+    mount '/index.html'         => Plack::App::File->new( file => $FindBin::Bin.'/../root/static/index.html'         )->to_app;
 
     mount '/graphql' => sub {
         my $r = Plack::Request->new( $_[0] );
