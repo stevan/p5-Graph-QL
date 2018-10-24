@@ -7,6 +7,9 @@ use decorators ':constructor';
 
 use Plack::Request;
 
+use Graph::QL::Util::Errors     'throw';
+use Graph::QL::Util::Assertions 'assert_isa';
+
 use Graph::QL::Operation;
 use Graph::QL::Introspection;
 use Graph::QL::Execution::ExecuteQuery;
@@ -29,8 +32,11 @@ sub BUILDARGS : strict(
 
 sub BUILD ($self, $) {
 
-    # TODO:
-    # type check the schema and resolvers
+    throw('The `schema` must be of an instance of `Graph::QL::Schema`, not `%s`', $self->{_schema})
+        unless assert_isa( $self->{_schema}, 'Graph::QL::Schema' );
+
+    throw('The `resolvers` must be of an instance of `Graph::QL::Resolver::SchemaResolver`, not `%s`', $self->{_resolvers})
+        unless assert_isa( $self->{_resolvers}, 'Graph::QL::Resolver::SchemaResolver' );
 
     # NOTE:
     # make sure to enable introspection features
