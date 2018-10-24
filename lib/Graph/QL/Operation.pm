@@ -67,6 +67,15 @@ sub definitions : ro(_);
 sub has_fragments ($self) { !! scalar grep $_->isa('Graph::QL::Operation::Fragment'), $self->{_definitions}->@* }
 sub get_fragments ($self) {           grep $_->isa('Graph::QL::Operation::Fragment'), $self->{_definitions}->@* }
 
+# FIXME:
+# the code below makes the assumption that the
+# query is going to always be at index 0, which
+# shouldn't need to be the case.
+#
+# All this should be fixed, probably within the
+# BUILD method actually. hmmm.
+# - SL
+
 sub has_query ($self) { !! scalar grep $_->isa('Graph::QL::Operation::Query'), $self->{_definitions}->@*     }
 sub get_query ($self) {          (grep $_->isa('Graph::QL::Operation::Query'), $self->{_definitions}->@*)[0] }
 

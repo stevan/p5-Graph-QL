@@ -63,7 +63,7 @@ sub new_from_namespace ($class, $root_namespace) {
     foreach my $namespace ( @namespaces ) {
         my $r = MOP::Role->new( "${root_namespace}${namespace}" );
 
-        my @fields = 
+        my @fields =
             map {
                 my ($field) = $_->get_code_attributes('Field');
 
@@ -85,8 +85,8 @@ sub new_from_namespace ($class, $root_namespace) {
                     type => Graph::QL::Util::Schemas::construct_type_from_name( $field->args->[0] ),
                     (@args ? (args => \@args) : ())
                 );
-            } grep { 
-                $_->has_code_attributes('Field') 
+            } grep {
+                $_->has_code_attributes('Field')
             } $r->methods;
 
         push @types => Graph::QL::Schema::Object->new(
@@ -97,7 +97,7 @@ sub new_from_namespace ($class, $root_namespace) {
 
     my ($query_type) = grep $_->name eq 'Query', @types;
 
-    return $class->new( 
+    return $class->new(
         types      => \@types,
         query_type => Graph::QL::Util::Schemas::construct_type_from_name( $query_type->name ),
     );
@@ -255,6 +255,17 @@ sub to_type_language ($self) {
 }
 
 ## ...
+
+# FIXME:
+# There are some dangerous assumptions encoded below,
+# such as the location of the schema defintion always
+# being at index 0, and the order of the operations
+# within the schema definiton being query, mutation,
+# subscription, in that exact order.
+#
+# All this should be fixed, probably within the
+# BUILD method actually. hmmm.
+# - SL
 
 sub _schema_definition    ($self) { ( grep  $_->isa('Graph::QL::AST::Node::SchemaDefinition'), $self->ast->definitions->@* )[0] }
 sub _type_definitions     ($self) { [ grep !$_->isa('Graph::QL::AST::Node::SchemaDefinition'), $self->ast->definitions->@* ]    }
