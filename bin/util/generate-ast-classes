@@ -54,8 +54,12 @@ $role_dir->mkpath unless -e $role_dir && -d $role_dir;
 
 my $r = HTTP::Tiny->new->get( AST_FILE_URL );
 
-throw('Unable to download AST file (%s) because ',  AST_FILE_URL, $r->{status}, $r->{reason} )
-    unless $r->{success};
+throw(
+    'Unable to download AST file (%s) because (%d) %s',
+    AST_FILE_URL,
+    $r->{status},
+    $r->{reason}
+) unless $r->{success};
 
 my @ast_lines = split /\n/ => $r->{content};
 
