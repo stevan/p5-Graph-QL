@@ -29,7 +29,7 @@ sub BUILD ($self, $params) {
 
     if ( exists $params->{type_condition} ) {
         throw('The `type_condition` must be of type(Graph::QL::AST::Node::NamedType), not `%s`', $self->{type_condition})
-            unless assert_isa( $self->{type_condition}, 'Graph::QL::AST::Node::NamedType');
+            unless assert_isa( $self->{type_condition}, 'Graph::QL::AST::Node::NamedType' );
     }
     
     throw('The `directives` value must be an ARRAY ref')
@@ -37,11 +37,11 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{directives}->@* ) {
         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive' );
     }
     
     throw('The `selection_set` must be of type(Graph::QL::AST::Node::SelectionSet), not `%s`', $self->{selection_set})
-        unless assert_isa( $self->{selection_set}, 'Graph::QL::AST::Node::SelectionSet');
+        unless assert_isa( $self->{selection_set}, 'Graph::QL::AST::Node::SelectionSet' );
     
 }
 

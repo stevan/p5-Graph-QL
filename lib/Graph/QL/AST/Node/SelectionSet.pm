@@ -27,7 +27,7 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{selections}->@* ) {
         throw('The values in `selections` must all be of type(Graph::QL::AST::Node::Role::Selection), not `%s`', $_ )
-            unless assert_does( $_, 'Graph::QL::AST::Node::Role::Selection');
+            unless assert_does( $_, 'Graph::QL::AST::Node::Role::Selection' );
     }
     
 }

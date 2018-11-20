@@ -24,7 +24,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
-        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name');
+        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name' );
     
 }
 

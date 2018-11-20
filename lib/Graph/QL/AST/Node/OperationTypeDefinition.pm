@@ -30,7 +30,7 @@ sub BUILD ($self, $params) {
         unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{operation} );
     
     throw('The `type` must be of type(Graph::QL::AST::Node::NamedType), not `%s`', $self->{type})
-        unless assert_isa( $self->{type}, 'Graph::QL::AST::Node::NamedType');
+        unless assert_isa( $self->{type}, 'Graph::QL::AST::Node::NamedType' );
     
 }
 

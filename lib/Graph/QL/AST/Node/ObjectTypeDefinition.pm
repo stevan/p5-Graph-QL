@@ -30,14 +30,14 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
-        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name');
+        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name' );
     
     throw('The `interfaces` value must be an ARRAY ref')
         unless assert_arrayref( $self->{interfaces} );
     
     foreach ( $self->{interfaces}->@* ) {
         throw('The values in `interfaces` must all be of type(Graph::QL::AST::Node::NamedType), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::NamedType');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::NamedType' );
     }
     
     throw('The `directives` value must be an ARRAY ref')
@@ -45,7 +45,7 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{directives}->@* ) {
         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive' );
     }
     
     throw('The `fields` value must be an ARRAY ref')
@@ -53,7 +53,7 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{fields}->@* ) {
         throw('The values in `fields` must all be of type(Graph::QL::AST::Node::FieldDefinition), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::FieldDefinition');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::FieldDefinition' );
     }
     
 }

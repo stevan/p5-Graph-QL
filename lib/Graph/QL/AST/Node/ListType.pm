@@ -24,7 +24,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
-        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type');
+        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type' );
     
 }
 

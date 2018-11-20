@@ -24,11 +24,13 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `value` must be of type(boolean), not `%s`', $self->{value})
-        unless defined $self->{value};
+        unless assert_type_language_literal( $self->{value}, 'boolean' );
     
 }
 
 sub value : ro;
+
+sub parsed_value ($self) { GraphQL::Util::Literals::parse_boolean( $self->value ) }
 
 1;
 

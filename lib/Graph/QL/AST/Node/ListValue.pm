@@ -28,12 +28,14 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{values}->@* ) {
         throw('The values in `values` must all be of type(Graph::QL::AST::Node::Role::Value), not `%s`', $_ )
-            unless assert_does( $_, 'Graph::QL::AST::Node::Role::Value');
+            unless assert_does( $_, 'Graph::QL::AST::Node::Role::Value' );
     }
     
 }
 
 sub values : ro;
+
+sub parsed_value ($self) { GraphQL::Util::Literals::parse_Value( $self->value ) }
 
 1;
 

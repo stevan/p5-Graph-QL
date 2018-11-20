@@ -27,14 +27,14 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `variable` must be of type(Graph::QL::AST::Node::Variable), not `%s`', $self->{variable})
-        unless assert_isa( $self->{variable}, 'Graph::QL::AST::Node::Variable');
+        unless assert_isa( $self->{variable}, 'Graph::QL::AST::Node::Variable' );
     
     throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
-        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type');
+        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type' );
     
     if ( exists $params->{default_value} ) {
         throw('The `default_value` must be of type(Graph::QL::AST::Node::Role::Value), not `%s`', $self->{default_value})
-            unless assert_does( $self->{default_value}, 'Graph::QL::AST::Node::Role::Value');
+            unless assert_does( $self->{default_value}, 'Graph::QL::AST::Node::Role::Value' );
     }
     
 }

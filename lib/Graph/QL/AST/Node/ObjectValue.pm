@@ -28,12 +28,14 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{fields}->@* ) {
         throw('The values in `fields` must all be of type(Graph::QL::AST::Node::ObjectField), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::ObjectField');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::ObjectField' );
     }
     
 }
 
 sub fields : ro;
+
+sub parsed_value ($self) { GraphQL::Util::Literals::parse_ObjectField( $self->value ) }
 
 1;
 

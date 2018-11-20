@@ -23,7 +23,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `value` must be of type(string), not `%s`', $self->{value})
-        unless defined $self->{value};
+        unless assert_type_language_literal( $self->{value}, 'string' );
     
 }
 

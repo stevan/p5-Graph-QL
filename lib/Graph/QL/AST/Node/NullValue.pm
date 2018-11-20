@@ -19,6 +19,8 @@ sub BUILDARGS : strict(
 );
 
 
+sub parsed_value ($self) { GraphQL::Util::Literals::parse_( $self->value ) }
+
 1;
 
 __END__

@@ -4,18 +4,24 @@ use v5.24;
 use warnings;
 use experimental 'signatures', 'postderef';
 
-use Ref::Util ();
+use Ref::Util                 ();
+use Graph::QL::Util::Literals ();
+
+use Graph::QL::Util::Errors 'throw';
 
 our $VERSION = '0.01';
 
 our @EXPORT_OK; BEGIN {
     @EXPORT_OK = (
+        # General checks ...
         'assert_isa',
         'assert_does',
         'assert_arrayref',
         'assert_hashref',
         'assert_coderef',
         'assert_non_empty',
+        # check GraphQL stuff ...
+        'assert_type_language_literal',
     );
 }
 
@@ -48,6 +54,14 @@ sub assert_non_empty ($t) {
     return !! keys   $t->%* if Ref::Util::is_hashref( $t );
     return !! scalar $t->@* if Ref::Util::is_arrayref( $t );
     return;
+}
+
+sub assert_type_language_literal ($o, $t) {
+    return Graph::QL::Util::Literals::validate_string( $o )  if $t eq 'string';
+    return Graph::QL::Util::Literals::validate_boolean( $o ) if $t eq 'boolean';
+    return Graph::QL::Util::Literals::validate_int( $o )     if $t eq 'int';
+    return Graph::QL::Util::Literals::validate_float( $o )   if $t eq 'float';
+    die 'Do not recognize type('.$t.')';
 }
 
 1;

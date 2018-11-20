@@ -38,7 +38,7 @@ sub BUILD ($self, $params) {
     
     if ( exists $params->{name} ) {
         throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
-            unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name');
+            unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name' );
     }
     
     throw('The `variable_definitions` value must be an ARRAY ref')
@@ -46,7 +46,7 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{variable_definitions}->@* ) {
         throw('The values in `variable_definitions` must all be of type(Graph::QL::AST::Node::VariableDefinition), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::VariableDefinition');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::VariableDefinition' );
     }
     
     throw('The `directives` value must be an ARRAY ref')
@@ -54,11 +54,11 @@ sub BUILD ($self, $params) {
     
     foreach ( $self->{directives}->@* ) {
         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive' );
     }
     
     throw('The `selection_set` must be of type(Graph::QL::AST::Node::SelectionSet), not `%s`', $self->{selection_set})
-        unless assert_isa( $self->{selection_set}, 'Graph::QL::AST::Node::SelectionSet');
+        unless assert_isa( $self->{selection_set}, 'Graph::QL::AST::Node::SelectionSet' );
     
 }
 

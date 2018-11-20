@@ -24,7 +24,7 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `definition` must be of type(Graph::QL::AST::Node::ObjectTypeDefinition), not `%s`', $self->{definition})
-        unless assert_isa( $self->{definition}, 'Graph::QL::AST::Node::ObjectTypeDefinition');
+        unless assert_isa( $self->{definition}, 'Graph::QL::AST::Node::ObjectTypeDefinition' );
     
 }
 

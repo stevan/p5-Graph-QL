@@ -149,7 +149,7 @@ sub get_introspection_objects_for_schema () {
                     Graph::QL::Schema::InputObject::InputValue->new(
                         name => 'includeDeprecated',
                         type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'),
-                        default_value => 'false'
+                        default_value => Graph::QL::Util::JSON::FALSE(),
                     )
                 ],
             ),
@@ -162,7 +162,7 @@ sub get_introspection_objects_for_schema () {
                     Graph::QL::Schema::InputObject::InputValue->new(
                         name => 'includeDeprecated',
                         type => Graph::QL::Util::Schemas::construct_type_from_name('Boolean'),
-                        default_value => 'false'
+                        default_value => Graph::QL::Util::JSON::FALSE(),
                     )
                 ],
             ),

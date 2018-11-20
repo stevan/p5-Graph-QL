@@ -29,25 +29,25 @@ sub BUILDARGS : strict(
 sub BUILD ($self, $params) {
 
     throw('The `name` must be of type(Graph::QL::AST::Node::Name), not `%s`', $self->{name})
-        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name');
+        unless assert_isa( $self->{name}, 'Graph::QL::AST::Node::Name' );
     
     throw('The `arguments` value must be an ARRAY ref')
         unless assert_arrayref( $self->{arguments} );
     
     foreach ( $self->{arguments}->@* ) {
         throw('The values in `arguments` must all be of type(Graph::QL::AST::Node::InputValueDefinition), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::InputValueDefinition');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::InputValueDefinition' );
     }
     
     throw('The `type` must be of type(Graph::QL::AST::Node::Role::Type), not `%s`', $self->{type})
-        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type');
+        unless assert_does( $self->{type}, 'Graph::QL::AST::Node::Role::Type' );
     
     throw('The `directives` value must be an ARRAY ref')
         unless assert_arrayref( $self->{directives} );
     
     foreach ( $self->{directives}->@* ) {
         throw('The values in `directives` must all be of type(Graph::QL::AST::Node::Directive), not `%s`', $_ )
-            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive');
+            unless assert_isa( $_, 'Graph::QL::AST::Node::Directive' );
     }
     
 }

@@ -14,7 +14,6 @@ use Data::Dumper;
 
 use List::Util ();
 use Path::Tiny ();
-use HTTP::Tiny ();
 
 use Graph::QL::AST::Node;
 use Graph::QL::Util::Strings;
@@ -23,13 +22,6 @@ use Graph::QL::Util::Errors 'throw';
 ## ...
 
 use constant DEBUG => $ENV{GRAPHQL_AST_CLASS_GEN_DEBUG} // 0;
-
-# NOTE:
-# We are fetching this particular
-# version of the file since it is
-# the one we know to work, we can
-# control the updating then.
-use constant AST_FILE_URL => 'https://raw.githubusercontent.com/graphql/libgraphqlparser/252b9c768a131739c7777122153e41b36fdc2309/ast/ast.ast';
 
 ## ...
 
@@ -51,17 +43,9 @@ $role_dir->mkpath unless -e $role_dir && -d $role_dir;
 
 ## ...
 
+my $r = Path::Tiny::path( "$FindBin::Bin/../../share/ast/ast.ast" );
 
-my $r = HTTP::Tiny->new->get( AST_FILE_URL );
-
-throw(
-    'Unable to download AST file (%s) because (%d) %s',
-    AST_FILE_URL,
-    $r->{status},
-    $r->{reason}
-) unless $r->{success};
-
-my @ast_lines = split /\n/ => $r->{content};
+my @ast_lines = split /\n/ => $r->slurp;
 
 warn Dumper \@ast_lines if DEBUG;
 
@@ -178,8 +162,10 @@ sub generate_class ($name, $definition) {
 
     my @inherited_fields = qw[ location ];
 
-    my $has_nullable = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
-    my $uses_op_kind = 0;
+    my $has_nullable  = List::Util::any { $_->{is_nullable} || $_->{is_plural} } $definition->{fields}->@*;
+    my $uses_op_kind  = 0;
+    my $is_value_type = 0;
+    my $value_type    = '';
 
     my $name_width      = List::Util::max( map length $_->{name}, $definition->{fields}->@* );
     my $ctor_name_width = List::Util::max( map { $_ + ($has_nullable ? 1 : 0) } ($name_width || ()), map length $_, @inherited_fields );
@@ -188,7 +174,9 @@ sub generate_class ($name, $definition) {
     foreach my $field ( $definition->{fields}->@* ) {
 
         my $type      = expand_type( $field->{type} );
-        my $validator = (is_role($field->{type}) ? 'does' : 'isa');
+        my $validator = (is_blessed( $field->{type} )
+            ? (is_role($field->{type}) ? 'does' : 'isa')
+            : 'type_language_literal');
 
         # ugly, sorry ...
         $uses_op_kind++ if $field->{type} eq 'OperationKind';
@@ -202,9 +190,7 @@ sub generate_class ($name, $definition) {
                 (''),
                 (sprintf 'foreach ( $self->{%s}->@* ) {', $field->{name}),
                 (sprintf '    throw(\'The values in `%s` must all be of type(%s), not `%%s`\', $_ )' => $field->{name}, $type ),
-                (is_blessed( $field->{type} )
-                    ? (sprintf '        unless assert_%s( $_, \'%s\');' => $validator, $type)
-                    : (        '        unless defined $_;')),
+                (sprintf '        unless assert_%s( $_, \'%s\' );' => $validator, $type),
                 ('}'),
                 (''),
             );
@@ -214,11 +200,9 @@ sub generate_class ($name, $definition) {
             push @type_checks => (
                 (sprintf 'if ( exists $params->{%s} ) {' => $field->{name}),
                 (sprintf '    throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name}),
-                (is_blessed( $field->{type} )
-                    ? (sprintf '        unless assert_%s( $self->{%s}, \'%s\');' => $validator, $field->{name}, $type)
-                    : ($field->{type} eq 'OperationKind')
-                            ? (sprintf '        unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{%s} );', $field->{name})
-                            : (sprintf '        unless defined $self->{%s};', $field->{name})),
+                ($field->{type} eq 'OperationKind'
+                        ? (sprintf '        unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{%s} );', $field->{name})
+                        : (sprintf '        unless assert_%s( $self->{%s}, \'%s\' );' => $validator, $field->{name}, $type)),
                 ('}'),
                 (''),
             );
@@ -227,11 +211,9 @@ sub generate_class ($name, $definition) {
             push @slots       => sprintf "%-${name_width}s => sub { die \'You must supply a `%s`\'}," => $field->{name}, $field->{name};
             push @type_checks => (
                 (sprintf 'throw(\'The `%s` must be of type(%s), not `%%s`\', $self->{%s})' => $field->{name}, $type, $field->{name}),
-                (is_blessed( $field->{type} )
-                    ? (sprintf '    unless assert_%s( $self->{%s}, \'%s\');' => $validator, $field->{name}, $type)
-                    : ($field->{type} eq 'OperationKind')
+                ($field->{type} eq 'OperationKind'
                         ? (sprintf '    unless Graph::QL::Core::OperationKind->is_operation_kind( $self->{%s} );', $field->{name})
-                        : (sprintf '    unless defined $self->{%s};', $field->{name})),
+                        : (sprintf '    unless assert_%s( $self->{%s}, \'%s\' );' => $validator, $field->{name}, $type)),
                 (''),
             );
         }
@@ -251,6 +233,15 @@ sub generate_class ($name, $definition) {
     foreach my $role ( keys %roles ) {
         if ( exists $roles{ $role }->{ $name } ) {
             $add_role_if_needed = "\n".q[use roles  '].expand_type($role).q[';]."\n";
+            if ($role eq 'Value') {
+                $is_value_type++;
+                if ($definition->{fields}->@*) {
+                    # the value types usually only have one field
+                    # which is the `value` slot, but not in the
+                    # case of Null, so we have to guard this
+                    $value_type = $definition->{fields}->[0]->{type};
+                }
+            }
             last;
         }
     }
@@ -264,7 +255,7 @@ use decorators ':accessors', ':constructor';
 
 use Graph::QL::Util::Errors     'throw';
 use Graph::QL::Util::Assertions ':all';
-].($uses_op_kind ? "\nuse Graph::QL::Core::OperationKind;\n" : '').q[
+].($uses_op_kind  ? "\nuse Graph::QL::Core::OperationKind;\n" : '').q[
 our $VERSION = '].$Graph::QL::AST::Node::VERSION.q[';
 
 use parent 'Graph::QL::AST::Node';]
@@ -287,7 +278,11 @@ sub BUILD ($self, $params) {
 ] : '').
 (@accessors ? q[
 ].(join "\n" => @accessors) : '').q[
-
+].(
+    ($is_value_type)
+        ? ("\n".(sprintf 'sub parsed_value ($self) { GraphQL::Util::Literals::parse_%s( $self->value ) }', $value_type )."\n")
+        : ''
+).q[
 1;
 
 __END__
