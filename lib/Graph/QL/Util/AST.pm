@@ -52,17 +52,35 @@ sub guess_literal_to_ast_node ($literal) {
         require Graph::QL::AST::Node::BooleanValue;
         return Graph::QL::AST::Node::BooleanValue->new( value => $$literal );
     }
+    elsif ( ref $literal eq 'ARRAY' ) {
+        require Graph::QL::AST::Node::ListValue;
+        return Graph::QL::AST::Node::ListValue->new( values => [map {guess_literal_to_ast_node($_)} @$literal] );
+    }
+    elsif ( ref $literal eq 'HASH' ) {
+        require Graph::QL::AST::Node::ObjectValue;
+        require Graph::QL::AST::Node::ObjectField;
+        require Graph::QL::AST::Node::Name;
+
+        my $object_fields = [];
+        foreach my $name (keys %$literal) {
+            push @$object_fields, Graph::QL::AST::Node::ObjectField->new(
+                                        name => Graph::QL::AST::Node::Name->new( value=> $name),
+                                        value => guess_literal_to_ast_node($literal->{$name})
+                                    );
+        }
+        return Graph::QL::AST::Node::ObjectValue->new( fields => $object_fields );
+    }
     # fuck it, it is probably a string ¯\_(ツ)_/¯
     else {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
-    # TODO: Handle ListValue and ObjectValue
 }
 
 # If you know the type, then we can wrap
 # it up accordingly and get you on your
 # way without trouble ...
+# TODO: Add item type checks for List elements and field type checks for objects
 sub literal_to_ast_node ($literal, $type) {
 
     if ( not defined $literal ) {
@@ -85,10 +103,28 @@ sub literal_to_ast_node ($literal, $type) {
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
+    elsif ( (ref $type eq 'Graph::QL::Schema::Type::List') and (ref $literal eq 'ARRAY') ) {
+        require Graph::QL::AST::Node::ListValue;
+        return Graph::QL::AST::Node::ListValue->new( values => [ map {guess_literal_to_ast_node($_)} @$literal ] );
+    }
+    # If it is a Named Type and if it is neither scalar nor List, then it must be an Object
+    elsif ( (ref $type eq 'Graph::QL::Schema::Type::Named') and (ref $literal eq 'HASH' )) {
+        require Graph::QL::AST::Node::ObjectValue;
+        require Graph::QL::AST::Node::ObjectField;
+        require Graph::QL::AST::Node::Name;
+
+        my $object_fields = [];
+        foreach my $name (keys %$literal) {
+            push @$object_fields, Graph::QL::AST::Node::ObjectField->new(
+                                        name => Graph::QL::AST::Node::Name->new( value=> $name),
+                                        value => guess_literal_to_ast_node($literal->{$name})
+                                    );
+        }
+        return Graph::QL::AST::Node::ObjectValue->new( fields => $object_fields );
+    }
     else {
         throw('Do not recognize the expected type(%s), unable to convert to ast-node', $type->name);
     }
-    # TODO: Handle ListValue and ObjectValue
 }
 
 # This is basically just because NullValue does
@@ -111,11 +147,19 @@ sub ast_node_to_type_language ($ast_node) {
     elsif ( $ast_node->isa('Graph::QL::AST::Node::BooleanValue') ) {
         return $ast_node->value ? 'true' : 'false';
     }
-    elsif ( $ast_node->isa('Graph::QL::AST::Node::FloatValue') || $ast_node->isa('Graph::QL::AST::Node::IntValue') ) {
+    elsif ( $ast_node->isa('Graph::QL::AST::Node::FloatValue')
+            || $ast_node->isa('Graph::QL::AST::Node::IntValue')
+            || $ast_node->isa('Graph::QL::AST::Node::Name')) {
         return $ast_node->value;
     }
     elsif ( $ast_node->isa('Graph::QL::AST::Node::StringValue') ) {
         return '"'.$ast_node->value.'"';
+    }
+    elsif ( $ast_node->isa('Graph::QL::AST::Node::ListValue') ) {
+        return '['.join(', ', map {ast_node_to_type_language($_)} @{$ast_node->values}).']';
+    }
+    elsif ( $ast_node->isa('Graph::QL::AST::Node::ObjectValue') ) {
+        return '{'.join(', ', map { ast_node_to_type_language($_->name).": ".ast_node_to_type_language($_->value) } @{$ast_node->fields}).'}';
     }
     else {
         throw('Do not recognize the expected ast-node(%s), unable to convert to type-language', $ast_node);
@@ -222,10 +266,16 @@ sub ast_value_to_schema_type ($ast_value) {
     elsif ( $ast_value->isa('Graph::QL::AST::Node::StringValue') ) {
         return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Core::ScalarType->STRING );
     }
+    elsif ( $ast_value->isa('Graph::QL::AST::Node::ListValue') ) {
+        return Graph::QL::Schema::Type::List->new( of_type => ast_value_to_schema_type($ast_value->value->[0]) );
+    }
+    # Not sure how to infer type from ObjectValue
+    #elsif ( $ast_value->isa('Graph::QL::AST::Node::ObjectValue') ) {
+    #    return Graph::QL::Schema::Type::Named->new( name => Graph::QL::Core::ScalarType->STRING );
+    #}
     else {
         throw('Do not recognize the ast-value(%s), unable to convert to schema type', $ast_value);
     }
-    # TODO: Handle ListValue and ObjectValue
 }
 
 ## ----------------------------------------------

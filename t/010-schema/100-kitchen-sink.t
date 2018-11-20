@@ -66,11 +66,16 @@ q[type Foo implements Bar {
     two(argument : InputType!) : Type
     three(argument : InputType, other : String) : Int
     four(argument : String = "string") : String
+    five(argument : [String] = ["string", "string"]) : String
+    six(argument : InputType = {key: "value", key_new: 123}) : Type
     seven(argument : Int = null) : Type
 }];
 
 # five(argument : [String] = ["string", "string"]) : String
 # six(argument : InputType = {key: "value"}) : Type
+
+    my $list_value = ["string", "string"];
+    my $object_value = { key => "value", key_new => 123 };
 
     my $type = Graph::QL::Schema::Object->new(
         name       => 'Foo',
@@ -101,20 +106,21 @@ q[type Foo implements Bar {
                 ],
                 type => $String
             ),
-            # Graph::QL::Schema::Field->new(
-            #     name => 'five',
-            #     args => [
-            #         Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $list_String, default_value => '["string", "string"]' ),
-            #     ],
-            #     type => $String
-            # ),
-            # Graph::QL::Schema::Field->new(
-            #     name => 'six',
-            #     args => [
-            #         Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $InputType, default_value => '{key: "value"}' ),
-            #     ],
-            #     type => $Type
-            # ),
+            Graph::QL::Schema::Field->new(
+                name => 'five',
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $list_String, default_value => $list_value ),
+                ],
+                type => $String
+            ),
+
+            Graph::QL::Schema::Field->new(
+                name => 'six',
+                args => [
+                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $InputType, default_value => $object_value ),
+                ],
+                type => $Type
+            ),
             Graph::QL::Schema::Field->new(
                 name => 'seven',
                 args => [
