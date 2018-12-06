@@ -303,6 +303,22 @@ sub null_out_source_locations ( $ast ) {
     }
 }
 
+sub prune_source_locations ( $ast ) {
+    delete $ast->{loc}         if $ast->{loc};
+    delete $ast->{name}->{loc} if $ast->{name};
+
+    foreach my $k ( keys $ast->%* ) {
+        my $v = $ast->{ $k };
+
+        if ( Ref::Util::is_arrayref( $v ) ) {
+            prune_source_locations( $_ ) foreach $v->@*;
+        }
+        elsif ( Ref::Util::is_ref( $v ) ) {
+            prune_source_locations( $v );
+        }
+    }
+}
+
 1;
 
 __END__
