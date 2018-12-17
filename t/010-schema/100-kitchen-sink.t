@@ -71,8 +71,6 @@ q[type Foo implements Bar {
     seven(argument : Int = null) : Type
 }];
 
-# five(argument : [String] = ["string", "string"]) : String
-# six(argument : InputType = {key: "value"}) : Type
 
     my $list_value = ["string", "string"];
     my $object_value = { key => "value", key_new => 123 };
@@ -109,7 +107,11 @@ q[type Foo implements Bar {
             Graph::QL::Schema::Field->new(
                 name => 'five',
                 args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $list_String, default_value => $list_value ),
+                    Graph::QL::Schema::InputObject::InputValue->new( 
+                        name          => 'argument', 
+                        type          => $list_String, 
+                        default_value => $list_value 
+                    )
                 ],
                 type => $String
             ),
@@ -117,7 +119,11 @@ q[type Foo implements Bar {
             Graph::QL::Schema::Field->new(
                 name => 'six',
                 args => [
-                    Graph::QL::Schema::InputObject::InputValue->new( name => 'argument', type => $InputType, default_value => $object_value ),
+                    Graph::QL::Schema::InputObject::InputValue->new( 
+                        name          => 'argument', 
+                        type          => $InputType, 
+                        default_value => $object_value 
+                    ),
                 ],
                 type => $Type
             ),

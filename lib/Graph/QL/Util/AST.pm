@@ -8,6 +8,7 @@ use Ref::Util ();
 
 use Graph::QL::Util::Errors 'throw';
 
+use Graph::QL::Util::AST::Literals;
 use Graph::QL::Core::ScalarType;
 
 our $VERSION = '0.01';
@@ -20,6 +21,7 @@ our $VERSION = '0.01';
 # value, so want to have the system guess for you
 # on what is the right Value node.
 sub guess_literal_to_ast_node ($literal) {
+
     # NOTE:
     # this needs help, lots of help. Perhaps
     # we can rely on the Parser to do the right
@@ -31,47 +33,51 @@ sub guess_literal_to_ast_node ($literal) {
         return Graph::QL::AST::Node::NullValue->new;
     }
     # float values have floating point values
-    elsif ( $literal =~ /^\d+\.\d+$/ ) {
+    elsif ( Graph::QL::Util::AST::Literals::validate_float( $literal ) ) {
         require Graph::QL::AST::Node::FloatValue;
         return Graph::QL::AST::Node::FloatValue->new( value => $literal );
     }
     # this is a very simplistic view of numbers,
     # and ignores scientific notation, etc.
-    elsif ( $literal =~ /^\d+$/ ) {
+    elsif ( Graph::QL::Util::AST::Literals::validate_int( $literal ) ) {
         require Graph::QL::AST::Node::IntValue;
         return Graph::QL::AST::Node::IntValue->new( value => $literal );
     }
-    # this is a bad way to handle Booleans, should
-    # likely also check for JSON::PP::Booleans and
-    # other such esoteria ...
-    elsif ( $literal eq '' || $literal =~ /^1$/ || $literal =~ /^0$/ ) {
+    # we have to check for Perl booleans here, ... 
+    elsif ( Graph::QL::Util::AST::Literals::validate_perl_boolean( $literal ) ) {
         require Graph::QL::AST::Node::BooleanValue;
         return Graph::QL::AST::Node::BooleanValue->new( value => $literal );
     }
-    elsif ( ref $literal eq 'SCALAR' && ($$literal == 1 || $$literal == 0) ) {
+    # and also check for JSON booleans as well 
+    elsif ( Graph::QL::Util::AST::Literals::validate_json_boolean( $literal ) ) {
+        #use Data::Dumper;
+        #warn Dumper $literal;        
         require Graph::QL::AST::Node::BooleanValue;
-        return Graph::QL::AST::Node::BooleanValue->new( value => $$literal );
+        return Graph::QL::AST::Node::BooleanValue->new( value => $literal );
     }
-    elsif ( ref $literal eq 'ARRAY' ) {
+    elsif ( Graph::QL::Util::AST::Literals::validate_list( $literal ) ) {
         require Graph::QL::AST::Node::ListValue;
-        return Graph::QL::AST::Node::ListValue->new( values => [map {guess_literal_to_ast_node($_)} @$literal] );
+        return Graph::QL::AST::Node::ListValue->new( values => [ map guess_literal_to_ast_node( $_ ), $literal->@* ] );
     }
-    elsif ( ref $literal eq 'HASH' ) {
+    elsif ( Graph::QL::Util::AST::Literals::validate_object( $literal ) ) {
         require Graph::QL::AST::Node::ObjectValue;
         require Graph::QL::AST::Node::ObjectField;
         require Graph::QL::AST::Node::Name;
-
-        my $object_fields = [];
-        foreach my $name (keys %$literal) {
-            push @$object_fields, Graph::QL::AST::Node::ObjectField->new(
-                                        name => Graph::QL::AST::Node::Name->new( value=> $name),
-                                        value => guess_literal_to_ast_node($literal->{$name})
-                                    );
-        }
-        return Graph::QL::AST::Node::ObjectValue->new( fields => $object_fields );
+        return Graph::QL::AST::Node::ObjectValue->new( 
+            fields => [
+                map {
+                    Graph::QL::AST::Node::ObjectField->new(
+                        name  => Graph::QL::AST::Node::Name->new( value => $_ ),
+                        value => guess_literal_to_ast_node( $literal->{ $_ } ) 
+                    )
+                } sort keys $literal->%*
+            ]
+        );
     }
     # fuck it, it is probably a string ¯\_(ツ)_/¯
     else {
+        #use Data::Dumper;
+        #warn Dumper [ "WTF", $literal ];
         require Graph::QL::AST::Node::StringValue;
         return Graph::QL::AST::Node::StringValue->new( value => $literal );
     }
@@ -105,22 +111,23 @@ sub literal_to_ast_node ($literal, $type) {
     }
     elsif ( (ref $type eq 'Graph::QL::Schema::Type::List') and (ref $literal eq 'ARRAY') ) {
         require Graph::QL::AST::Node::ListValue;
-        return Graph::QL::AST::Node::ListValue->new( values => [ map {guess_literal_to_ast_node($_)} @$literal ] );
+        return Graph::QL::AST::Node::ListValue->new( values => [ map guess_literal_to_ast_node( $_ ), $literal->@* ] );
     }
     # If it is a Named Type and if it is neither scalar nor List, then it must be an Object
     elsif ( (ref $type eq 'Graph::QL::Schema::Type::Named') and (ref $literal eq 'HASH' )) {
         require Graph::QL::AST::Node::ObjectValue;
         require Graph::QL::AST::Node::ObjectField;
         require Graph::QL::AST::Node::Name;
-
-        my $object_fields = [];
-        foreach my $name (keys %$literal) {
-            push @$object_fields, Graph::QL::AST::Node::ObjectField->new(
-                                        name => Graph::QL::AST::Node::Name->new( value=> $name),
-                                        value => guess_literal_to_ast_node($literal->{$name})
-                                    );
-        }
-        return Graph::QL::AST::Node::ObjectValue->new( fields => $object_fields );
+        return Graph::QL::AST::Node::ObjectValue->new( 
+            fields => [
+                map {
+                    Graph::QL::AST::Node::ObjectField->new(
+                        name  => Graph::QL::AST::Node::Name->new( value => $_ ),
+                        value => guess_literal_to_ast_node( $literal->{ $_ } )
+                    )
+                } sort keys $literal->%*
+            ]
+        );
     }
     else {
         throw('Do not recognize the expected type(%s), unable to convert to ast-node', $type->name);
@@ -156,10 +163,16 @@ sub ast_node_to_type_language ($ast_node) {
         return '"'.$ast_node->value.'"';
     }
     elsif ( $ast_node->isa('Graph::QL::AST::Node::ListValue') ) {
-        return '['.join(', ', map {ast_node_to_type_language($_)} @{$ast_node->values}).']';
+        return '['.(join ', ' => map ast_node_to_type_language( $_ ), $ast_node->values->@* ).']';
     }
-    elsif ( $ast_node->isa('Graph::QL::AST::Node::ObjectValue') ) {
-        return '{'.join(', ', map { ast_node_to_type_language($_->name).": ".ast_node_to_type_language($_->value) } @{$ast_node->fields}).'}';
+    elsif ( $ast_node->isa('Graph::QL::AST::Node::ObjectValue') ) {      
+        return '{'.
+            (join ', ' => map { 
+                ast_node_to_type_language( $_->name )
+                .": ".
+                ast_node_to_type_language( $_->value ) 
+            } $ast_node->fields->@*)
+        .'}';
     }
     else {
         throw('Do not recognize the expected ast-node(%s), unable to convert to type-language', $ast_node);
@@ -310,10 +323,10 @@ sub prune_source_locations ( $ast ) {
     foreach my $k ( keys $ast->%* ) {
         my $v = $ast->{ $k };
 
-        if ( Ref::Util::is_arrayref( $v ) ) {
+        if ( Ref::Util::is_plain_arrayref( $v ) ) {
             prune_source_locations( $_ ) foreach $v->@*;
         }
-        elsif ( Ref::Util::is_ref( $v ) ) {
+        elsif ( Ref::Util::is_plain_ref( $v ) ) {
             prune_source_locations( $v );
         }
     }

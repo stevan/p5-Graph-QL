@@ -70,7 +70,12 @@ sub TO_JSON ($self, @) {
         }
 
         if ( ref $json{ $key } eq 'ARRAY' ) {
-            if ( scalar $json{ $key }->@* == 0 ) {
+            # FIXME:
+            # the hack for the 'values' key is to make sure that
+            # the ListValue types work correctly, this will likely 
+            # come back to bit us.
+            # - SL
+            if ( scalar $json{ $key }->@* == 0 && $key ne 'values' ) {
                 $json{ $key } = undef;
             }
             else {
